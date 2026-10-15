@@ -1,12 +1,6 @@
 # 第24讲｜RKNN-ToolkitLite2基本使用
 
-> 使用 Python 在 RK3588 板端执行 RKNN 模型。
-
-**课程模块：** 高级输入与板端 API　｜　**目标平台：** RK3588
-
-**视频：** [Bilibili 原课程](https://www.bilibili.com/video/BV11DjT6uEhc)　｜　**原始转写：** [TXT](../%E6%96%87%E6%9C%AC/24_RKNN-ToolkitLite2%E5%9F%BA%E6%9C%AC%E4%BD%BF%E7%94%A8.txt)
-
-> 本文件由原课程语音字幕整理。原始字幕存在自动识别误差，涉及 SDK 命令、接口和芯片兼容性请以当前官方版本说明为准。
+> 原创重编自学版：重视输入输出、可复现步骤、实际实验日志和故障排除。原视频字幕保留供资料核对。
 
 ## 学习目标
 
@@ -14,32 +8,112 @@
 - 安装板端 Python 推理接口
 - 完成模型加载和推理结果解析
 
-## 核心知识
+## 从原理到工程
 
-RKNN-Toolkit-Lite2 为开发板提供 Python 推理接口，适合快速验证与原型开发，通常不用于主机端的 ONNX → RKNN 转换。模型应先通过 PC 端 Toolkit2 导出。板端 RK3588 往往采用 aarch64 架构，安装包必须与 Python ABI、系统和驱动版本匹配。
+### Lite2 在哪里使用
 
-## 实践步骤
+RKNN-Toolkit-Lite2 是运行在支持的 Rockchip 板端系统上的 Python 推理接口，常用于模型加载、快速验证和板端原型。主机 Toolkit2 负责源模型到 `.rknn` 的构建；Lite2 一般不负责将 ONNX 转成 RKNN。运行前应确认开发板 Python 版本、aarch64 wheel 和 runtime/驱动配套关系。
 
-1. 确认开发板 Python、CPU 架构、驱动和 librknnrt 版本
-2. 从对应 SDK 安装板端适配的 RKNN-Toolkit-Lite2
-3. 准备已转换的 RKNN 模型和固定测试图片
-4. 按官方 API 加载模型、初始化运行时并执行推理
-5. 完成分类或检测输出解析，并释放资源
+**必须理解：** 不能把主机工具链和板端 Python 运行库混成一个 pip 包。
+
+### 推理结果需要解释
+
+通过 Lite2 加载 RKNN、初始化运行时并传入 NumPy 输入。输出通常为 ndarray 列表，具体排列、shape 和 dtype 按模型与版本决定。分类常需 top-k 和标签映射；检测常需框解码、置信度过滤及 NMS。
+
+**必须理解：** 打印每个输出的 shape、dtype 以及一小段数值，别只看 ‘inference success’。
+
+### 从 Python 过渡到 C++
+
+Python 更适合算法与预处理验证、调试和教学。稳定后可把前后处理接口封装并迁移到 RKNPU2 C API，但迁移时要保持图像颜色、插值、layout、量化属性与标签映射一致。性能比较也应在相同输入和设备条件下进行。
+
+**必须理解：** 把 Python 结果保存为 C++ 版本回归测试的黄金样本。
+
+## 实验与预期结果
+
+### 实验 1：核对 Lite2 环境
+
+在板端确认 Python 与 wheel 的架构匹配，完成 `from rknnlite.api import RKNNLite` 的导入检查。
+
+**检查标准：** 无 ABI 错误；日志记录了版本。
+
+### 实验 2：跑最小推理
+
+加载兼容的模型、调用 init_runtime，再用 shape/dtype 正确的 NumPy 数组执行 inference。
+
+**检查标准：** 输出张量属性与样例模型定义一致。
+
+### 实验 3：建立可移植基线
+
+保存输入图片、预处理后的数组统计、输出数组摘要以及标签映射。
+
+**检查标准：** C++ 实现可以逐项对照这些结果。
+
+### 参考代码
+
+```python
+from rknnlite.api import RKNNLite
+lite=RKNNLite()
+try:
+    ret=lite.load_rknn('model.rknn')
+    if ret: raise RuntimeError(ret)
+    ret=lite.init_runtime()
+    if ret: raise RuntimeError(ret)
+    # 此处构造与模型输入 shape/dtype 匹配的 numpy 数据
+finally:
+    lite.release()
+```
+
+> 若示例中没有配置模型路径、设备、输入 shape，请先完成这些前置条件；示例不一定是完整可执行工程。
+
+## 典型报错与诊断
+
+### Lite2 无法安装
+
+- 可能原因：下载的 wheel 与 Python ABI 或 CPU 架构不匹配。
+- 定位方法：核对板端 Python 版本和 aarch64 标签。
+
+### 输出数组存在但类别错误
+
+- 可能原因：缺失后处理、标签顺序或预处理不一致。
+- 定位方法：与同版本官方模型实例的输出和输入协议比较。
+
+## 案例演练
+
+**问题：** Lite2 推理返回三个 ndarray，你准备直接将最大值作为目标检测坐标。可能出错在哪里？
+
+**思路：** 输出是 tensor，不直接等于完成后的检测框。需要理解模型检测头语义、反量化、decode、阈值与坐标还原。先用对应的 Model Zoo 后处理对照验证。
+
+**作业证据：** tensor shape/dtype/scale、完整后处理流程和图像检测结果。
+
+## 自学测试
+
+Toolkit-Lite2 主要做什么？
+
+- A. PC 端 ONNX 导出
+- B. 板端 Python 模型推理
+- C. 训练模型
+
+<details><summary>查看答案</summary>
+
+**B。** 模型转换应由相应的主机工具负责。
+
+</details>
 
 ## 完成标准
 
 - [ ] 能在目标板正常导入 Lite2
 - [ ] 在板端得到与源模型预期一致的输出
 
-## 常见问题与注意事项
+## 拓展练习
 
-- PC 的 Toolkit2 wheel 通常不能直接安装到 ARM 板端
-- 应用仍需处理模型专用的预处理和后处理
-- API 和运行时兼容关系随 SDK 版本变化
+- 记录一个可复现的板端 Python 推理环境与测试用例
 
-## 课后练习
+## 官方资料与延伸阅读
 
-1. 记录一个可复现的板端 Python 推理环境与测试用例
+- [RKNN-Toolkit-Lite2 官方仓库](https://github.com/airockchip/rknn-toolkit2/tree/master/rknn_toolkit_lite2)
+- [模型与 Python 案例](https://github.com/airockchip/rknn_model_zoo)
+
+> 版本敏感功能请依赖当前 SDK 的官方文档；实际运行结果需要用户在目标板上验证。
 
 ## 原始字幕附录（仅供核对）
 
