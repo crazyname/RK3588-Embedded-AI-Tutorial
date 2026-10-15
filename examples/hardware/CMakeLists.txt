@@ -14,3 +14,9 @@ add_executable(rknn_classifier rknn_classify.cpp)
 target_include_directories(rknn_classifier PRIVATE "${RKNN_INCLUDE_DIR}")
 target_link_libraries(rknn_classifier PRIVATE "${RKNN_LIB}")
 set_target_properties(rknn_classifier PROPERTIES BUILD_RPATH "$ORIGIN")
+
+# Lesson 26 zero-copy inference. Requires native target runtime with matching headers.
+add_executable(rknn_zero_copy rknn_zero_copy.cpp)
+target_include_directories(rknn_zero_copy PRIVATE "${RKNN_INCLUDE_DIR}")
+target_link_libraries(rknn_zero_copy PRIVATE "${RKNN_LIB}")
+set_target_properties(rknn_zero_copy PROPERTIES BUILD_RPATH "$ORIGIN")

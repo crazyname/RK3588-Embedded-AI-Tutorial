@@ -21,3 +21,14 @@ python3 examples/lesson_26.py --model m.rknn --input-raw x.raw --native-input-by
 ## 错误处理
 
 首先检查依赖安装、系统架构、模型/输入格式与命令返回码。缺失模型或不符合 tensor 大小时程序会失败，而非产生虚假样本。
+
+## 零拷贝实际 NPU 推理（需 RK3588 开发板）
+
+新增 [独立 C++ 源码](../hardware/rknn_zero_copy.cpp)，代码实际调用 `rknn_create_mem`、`rknn_set_io_mem`、`rknn_run` 与 `rknn_destroy_mem`。用真实 SDK 头文件和动态库编译，支持单输入单输出 uint8 NHWC 分类模型。请先在板端通过 `rknn_query` 核实输入原生 stride 与 size，再构造包含填充的数据文件。
+
+```bash
+python3 examples/lesson_26.py --model model.rknn --input-raw padded_input.raw \
+  --execute --include /sdk/include --library /sdk/lib/librknnrt.so --runs 20
+```
+
+SDK 可能要求额外的 cache sync、native stride 对齐或专用图像预处理；当前仓库**尚未拿真实 RK3588 与匹配模型跑过这一实现**。编译/运行失败时需要保存返回码、tensor query、driver/runtime 版本。不能以源码存在就宣称零拷贝性能提高。源码运行时间仅覆盖 `rknn_run`，不包含调用前的数据拷贝。
