@@ -115,6 +115,15 @@ rknn_context ctx = 0;
 
 > 未经板端测试的示例不代表可直接用于生产环境。
 
+## 配套可运行源码
+
+- [本节可运行 Python 基础实验](../examples/lesson_25.py)（算法实现于 [labs.py](../examples/labs.py)）
+- [真实 SDK / 板端代码：rknn_classify.cpp](../examples/hardware/rknn_classify.cpp)
+- [真实 SDK / 板端代码：CMakeLists.txt](../examples/hardware/CMakeLists.txt)
+- [环境准备、运行命令及限制](../examples/README.md)
+
+从根目录执行 `python3 examples/lesson_25.py --help`。RKNPU2 C/C++、Lite2 与零拷贝相关环节需要实际 RK3588 SDK/模型/驱动；当前仅提供完整单输入分类 C API 程序，零拷贝专用 API 还应对照官方同版本示例，不把一般 C API 误称为零拷贝实现。
+
 ## 原始字幕附录（仅供核对）
 
 <details>
