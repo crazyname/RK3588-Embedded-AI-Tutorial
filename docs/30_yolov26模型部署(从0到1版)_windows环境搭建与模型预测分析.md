@@ -4,7 +4,7 @@
 
 **所属单元：** YOLOv26 从零到一（1/3）　｜　**目标平台：** RK3588
 
-**课程视频：** [Bilibili 原课程](https://www.bilibili.com/video/BV11DjT6uEhc)　｜　**原始文本：** [TXT](../%E6%96%87%E6%9C%AC/30_yolov26%E6%A8%A1%E5%9E%8B%E9%83%A8%E7%BD%B2(%E4%BB%8E0%E5%88%B01%E7%89%88)_windows%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E4%B8%8E%E6%A8%A1%E5%9E%8B%E9%A2%84%E6%B5%8B%E5%88%86%E6%9E%90.txt)
+**课程视频：** [Bilibili 原课程](https://www.bilibili.com/video/BV11DjT6uEhc)　｜　**原始文本：** [TXT](../%E6%96%87%E6%9C%AC/30_yolov26%E6%A8%A1%E5%9E%8B%E9%83%A8%E7%BD%B2%28%E4%BB%8E0%E5%88%B01%E7%89%88%29_windows%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E4%B8%8E%E6%A8%A1%E5%9E%8B%E9%A2%84%E6%B5%8B%E5%88%86%E6%9E%90.txt)
 
 > 本文件由视频口播转写提炼；代码、API、模型版本及兼容性请以对应 SDK 文档为准。原始 TXT 含自动语音识别错误，仅供核对。
 

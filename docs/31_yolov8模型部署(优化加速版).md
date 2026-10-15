@@ -4,7 +4,7 @@
 
 **所属单元：** 检测模型优化与加速　｜　**目标平台：** RK3588
 
-**课程视频：** [Bilibili 原课程](https://www.bilibili.com/video/BV11DjT6uEhc)　｜　**原始文本：** [TXT](../%E6%96%87%E6%9C%AC/31_yolov8%E6%A8%A1%E5%9E%8B%E9%83%A8%E7%BD%B2(%E4%BC%98%E5%8C%96%E5%8A%A0%E9%80%9F%E7%89%88).txt)
+**课程视频：** [Bilibili 原课程](https://www.bilibili.com/video/BV11DjT6uEhc)　｜　**原始文本：** [TXT](../%E6%96%87%E6%9C%AC/31_yolov8%E6%A8%A1%E5%9E%8B%E9%83%A8%E7%BD%B2%28%E4%BC%98%E5%8C%96%E5%8A%A0%E9%80%9F%E7%89%88%29.txt)
 
 > 本文件由视频口播转写提炼；代码、API、模型版本及兼容性请以对应 SDK 文档为准。原始 TXT 含自动语音识别错误，仅供核对。
 
