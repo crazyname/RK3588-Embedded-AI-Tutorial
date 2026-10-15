@@ -23,6 +23,7 @@ const flow=extra.flow&&extra.flow.length?extra.flow:data.steps.slice(0,5).map(s=
 add("FLOW","核心技术路线",'<div class="flow">'+flow.map((s,i)=>(i?'<div class="arrow">→</div>':"")+'<div class="flow-box"><span class="count">STEP '+(i+1)+'</span><span>'+fmt(s)+'</span></div>').join("")+'</div><div class="panel soft"><h3>沿数据路径检查</h3><p>每个节点的输入是什么、输出是什么、失败时可以检查哪些证据？</p></div>',"请学生指出哪些步骤发生在主机、哪些发生在目标板上。");
 const core=(data.core||"").trim(),ss=core.match(/[^。！？；]+[。！？；]?/g)||[core],half=Math.max(1,Math.ceil(ss.length/2));
 const p1=ss.slice(0,half).join(""),p2=ss.slice(half).join("")||core;
+if(!Array.isArray(depth.concepts)||!depth.concepts.length){
 add("THEORY","核心原理 · 机制",'<div class="panel"><h3>技术解释</h3><p class="big">'+fmt(p1)+'</p></div>'+cards(['<h3>输入侧要核对</h3><p>来源、类型、格式、尺寸和版本。</p>','<h3>输出侧要核对</h3><p>结果是否能解释、能量化、能复现。</p>']),"引导学生把术语说成可观察的接口行为。");
 add("THEORY","核心原理 · 工程约束",'<div class="panel"><p class="big">'+fmt(p2)+'</p></div>'+cards(['<h3>先建立基线</h3><p>在明确测试条件下保存一个正确结果。</p>','<h3>再判断取舍</h3><p>根据精度、时间、资源与兼容性评估方案。</p>']),"不能把模型转换成功、速度变快与业务精度合格混为一谈。");
 
@@ -35,6 +36,7 @@ depth.concepts.forEach((c,i)=>{
 });
 }
 
+}
 const mid=Math.ceil(data.steps.length/2);
 add("LAB","实践 01 · 准备与运行",'<p>先核对运行环境、输入文件和所需依赖，再按照下面的步骤开始实验。</p>'+stepList(data.steps.slice(0,mid),0),"先有稳定的最小可运行路径；涉及刷机或设备写操作要有回退方案。");
 add("LAB","实践 02 · 运行与检查",'<p>继续完成实验，对照预期结果逐项核验，并记录失败的真实现象。</p>'+stepList(data.steps.slice(mid),mid),"每一步让学生说明：运行了什么、看到了什么、凭什么认为成功。");
@@ -70,6 +72,16 @@ if(extra.quiz){
 const q=extra.quiz;
 add("CHECK","课堂互动测验",'<div class="panel"><h3>'+fmt(q[0])+'</h3><div class="quiz-options">'+q[1].map((x,i)=>'<label class="quiz-option"><input type="radio" name="quiz" value="'+i+'">'+String.fromCharCode(65+i)+'. '+fmt(x)+'</label>').join("")+'</div><button id="checkQuiz" type="button" class="btn">提交并解释</button><div id="quizFeedback" class="quiz-feedback" role="status"></div></div>',"先让学生独立作答，再请一位同学解释原因。");
 }else add("CHECK","课堂讨论",'<div class="panel"><h3>从下面的目标中选一项，用自己的话解释其工作原理和验证方式。</h3>'+list(data.goals.slice(0,2))+'</div>',"讨论的目标是解释因果，而非复述术语。");
+
+if(Array.isArray(depth.refs)&&depth.refs.length){
+add("READING","学习资料与权威参考",
+'<div class="panel"><h3>按照主题选择阅读资料</h3><ul>'+depth.refs.map(r=>{
+const safeUrl=/^https:\/\/[a-zA-Z0-9.-]+\//.test(r[1])?r[1]:"#";
+return '<li><a href="'+esc(safeUrl)+'" target="_blank" rel="noopener noreferrer">'+esc(r[0])+' ↗</a></li>';
+}).join("")+'</ul><p>先以 RKNN 官方 SDK 与示例确定版本兼容性，再读理论书籍理解算子、张量与优化原理。外部网页需联网。</p></div>',
+"请学生辨别：官方工具与版本契约、模型框架文档、原理教材分别解决不同问题。");
+}
+
 add("ACCEPT","本节验收标准",'<p>以下勾选仅用于辅助复习，实际完成请提供可观察的证据。</p><div id="checks">'+data.checks.map((s,i)=>'<label class="check-item"><input data-check="'+i+'" type="checkbox">'+fmt(s)+'</label>').join("")+'</div><p class="footnote">学习进度仅存储在当前浏览器本地；不会上传到服务器。</p>',"未达标的部分对应哪一张幻灯片？请学生指出具体位置。");
 add("TRANSFER","课后练习与知识迁移",'<div class="panel">'+list(data.homework)+'</div><div class="panel soft"><h3>提交建议</h3><p>提交版本说明、数据与模型来源、关键步骤、结果截图、问题记录和复盘。涉及代码时提供可运行的最小示例。</p></div>',"下节课尽可能沿用本节的模型、日志和环境记录。");
 const nx=db[data.id+1];
