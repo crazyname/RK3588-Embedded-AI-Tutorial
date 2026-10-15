@@ -4,13 +4,13 @@
 
 ## HTML 互动课件（新增）
 
-已为全部 **35 节课** 制作可离线使用的 HTML 互动课件：支持逐页讲授、课堂案例、知识流程、操作步骤、课堂测验、讲师提示、验收清单和上一讲/下一讲导航。
+已为全部 **35 节课** 制作可离线使用的 HTML 互动课件：采用单页长文、上下滚动的阅读方式，支持章节目录锚点跳转、课堂案例、知识流程、操作步骤、课堂测验、讲师提示、验收清单和上一讲/下一讲导航。
 
 - [打开 HTML 课件总入口](courseware/index.html)
 - [查看详细教学规划、建议课时与考核方案](courseware/TEACHING_PLAN.md)
 - [浏览全部 HTML 课件](courseware/lessons/)
 
-**使用方法：** 克隆或下载整个仓库，保持 `courseware/assets/` 与 `courseware/lessons/` 相对路径不变，然后使用浏览器打开 `courseware/index.html`。课件使用原生 HTML/CSS/JavaScript，不要求运行后端服务器。
+**使用方法：** 克隆或下载整个仓库，保持 `courseware/assets/` 与 `courseware/lessons/` 相对路径不变，然后使用浏览器打开 `courseware/index.html`。课件使用原生 HTML/CSS/JavaScript，不要求运行后端服务器。每一讲只需向下滚动即可阅读全部内容，不再使用逐页翻页播放器。
 
 **注意：** GitHub 的文件查看页不等同于在线 HTML 演示。需要直接通过浏览器打开本地文件，或另行部署到静态站点托管服务。课件里的示范步骤并非全都完成真实板端验证。
 
