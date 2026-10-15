@@ -110,6 +110,14 @@ rknn_convert 命令参数最可信的来源是？
 
 > 以当前官方 SDK 的文档和模型兼容矩阵为准；教学示例并非用户开发板的实际运行认证。
 
+## 配套可运行源码
+
+- [本节可运行 Python 实验](../examples/lesson_11.py)（实现于 [labs.py](../examples/labs.py)）
+- [真实 SDK / 模型程序：convert_onnx.py](../examples/hardware/convert_onnx.py)
+- [代码环境、依赖、输入输出及使用说明](../examples/README.md)
+
+先从仓库根目录运行 `python3 examples/lesson_11.py --help`。需要 SDK 的程序只有在提供真实模型、匹配的 Toolkit2/ONNX Runtime 与正确输入后才能验证；不能把便携算法演示当作 NPU 性能实测。
+
 ## 原始字幕（仅供核对）
 
 <details>

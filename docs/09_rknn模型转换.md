@@ -116,6 +116,14 @@ finally:
 
 > 以具体 release 的官方文档为准；本教程中的设备结果尚未在你的硬件环境实测。
 
+## 配套可运行源码
+
+- [本节可运行 Python 实验](../examples/lesson_09.py)（实现于 [labs.py](../examples/labs.py)）
+- [真实 SDK / 模型程序：convert_onnx.py](../examples/hardware/convert_onnx.py)
+- [代码环境、依赖、输入输出及使用说明](../examples/README.md)
+
+先从仓库根目录运行 `python3 examples/lesson_09.py --help`。需要 SDK 的程序只有在提供真实模型、匹配的 Toolkit2/ONNX Runtime 与正确输入后才能验证；不能把便携算法演示当作 NPU 性能实测。
+
 ## 原始字幕（仅供核对）
 
 <details>
