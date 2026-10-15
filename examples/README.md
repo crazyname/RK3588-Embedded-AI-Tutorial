@@ -140,6 +140,18 @@ input.npy 必须是按实际模型协议准备的真实 tensor，并非随意生
 该程序真实导出并用 ONNX checker 检查。能导出 ONNX 不意味着特定 YOLO26 模型已经得到 RK3588 RKNN 编译器支持；继续做 ONNX Runtime 与 RKNN 兼容验证。对于官方支持的检测模型完整图像采集与解码，优先使用同一版本的 RKNN Model Zoo 官方 YOLOv5/YOLOv8 完整示例。
 
 
+## 第26讲：真正的零拷贝 C API（设备专用）
+
+已提供 [rknn_zero_copy.cpp](hardware/rknn_zero_copy.cpp)；它将真实模型载入 RKNPU2，调用 `rknn_create_mem`、`rknn_set_io_mem` 绑定输入输出缓冲，执行 `rknn_run` 并清理资源。该示例**仅适用于满足 uint8 NHWC 输入与所用 RKNN Runtime 兼容要求的单输入单输出模型**。它需要按 SDK 查询的 `size_with_stride` 准备含对齐填充的 raw 输入，而不是普通图像文件。
+
+```bash
+python3 examples/lesson_26.py --model model.rknn \
+  --input-raw padded_input.raw --execute \
+  --include /sdk/include --library /sdk/librknnrt.so --runs 20
+```
+
+GitHub CI 仅执行与官方 RK3588 SDK `rknn_api.h` 的 **C++ 语法/接口检查**。只有在你的开发板上真正运行后，才能进一步声称 SDK 接口适配与性能指标已验收；编译通过本身不代表零拷贝性能收益。
+
 ## 生成真实图片输入与检查差异
 
 上面 Lite2 和 ONNX Runtime 的 input.npy 不能随意填充，必须从真实图片生成，并与具体模型的预处理保持一致。需要安装 Pillow、NumPy：

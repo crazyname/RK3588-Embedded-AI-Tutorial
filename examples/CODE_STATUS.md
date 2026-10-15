@@ -37,7 +37,7 @@
 | 23 | [lesson_23.py](lesson_23.py) | [操作手册](notes/lesson_23.md) | 真实 ONNX 生成 C++ 接口头 |
 | 24 | [lesson_24.py](lesson_24.py) | [操作手册](notes/lesson_24.md) | RKNNLite 板端推理（需板卡） |
 | 25 | [lesson_25.py](lesson_25.py) | [操作手册](notes/lesson_25.md) | RKNPU2 C++ 编译及推理（需板卡） |
-| 26 | [lesson_26.py](lesson_26.py) | [操作手册](notes/lesson_26.md) | 真实缓冲字节校验；零拷贝 NPU 推理尚未实现 |
+| 26 | [lesson_26.py](lesson_26.py) | [操作手册](notes/lesson_26.md) | 已提供 RKNPU2 真正零拷贝内存绑定 C++ 程序；尚未在真实 RK3588 上运行 |
 | 27 | [lesson_27.py](lesson_27.py) | [操作手册](LESSON_27.md) | MobileNet 分类 ONNX CI 通过；RKNNLite 待板测 |
 | 28 | [lesson_28.py](lesson_28.py) | [操作手册](notes/lesson_28.md) | MobileNet ONNX 分类封装及批图处理 |
 | 29 | [lesson_29.py](lesson_29.py) | [操作手册](notes/lesson_29.md) | Ultralytics 真正检测或官方 RKNN Demo（需模型） |
