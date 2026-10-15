@@ -115,6 +115,14 @@ private:
 
 > 未经板端测试的示例不代表可直接用于生产环境。
 
+## 配套可运行源码
+
+- [本节可执行 Python 实验](../examples/lesson_28.py)（基础算法实现在 [labs.py](../examples/labs.py)）
+- [配套实际模型工具：rknn_classify.cpp](../examples/hardware/rknn_classify.cpp)
+- [完整运行说明和 SDK/模型前置条件](../examples/README.md)
+
+先从仓库根目录运行 `python3 examples/lesson_28.py --help`。训练、ONNX 与 SDK 实例需要真实模型文件、数据和匹配环境。YOLO26 的 ONNX 导出不保证 RKNN 兼容；YOLOv5/v8 检测头和后处理应以同一版本官方 Model Zoo 为准。RKLLM 仍需使用官方匹配模型与板端运行 SDK，当前示例只实现真实内存估算，没有伪造的大模型部署结果。
+
 ## 原始字幕附录（仅供核对）
 
 <details>

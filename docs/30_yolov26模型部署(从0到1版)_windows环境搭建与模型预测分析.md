@@ -113,6 +113,14 @@ for result in results:
 
 > 资料会随发布版本更新；请先阅读官方当前说明，不要对未经验证的模型或者量化格式直接保证板端兼容。
 
+## 配套可运行源码
+
+- [本节可执行 Python 实验](../examples/lesson_30.py)（基础算法实现在 [labs.py](../examples/labs.py)）
+- [配套实际模型工具：export_yolo_onnx.py](../examples/hardware/export_yolo_onnx.py)
+- [完整运行说明和 SDK/模型前置条件](../examples/README.md)
+
+先从仓库根目录运行 `python3 examples/lesson_30.py --help`。训练、ONNX 与 SDK 实例需要真实模型文件、数据和匹配环境。YOLO26 的 ONNX 导出不保证 RKNN 兼容；YOLOv5/v8 检测头和后处理应以同一版本官方 Model Zoo 为准。RKLLM 仍需使用官方匹配模型与板端运行 SDK，当前示例只实现真实内存估算，没有伪造的大模型部署结果。
+
 ## 原始字幕（仅供核对）
 
 <details>
