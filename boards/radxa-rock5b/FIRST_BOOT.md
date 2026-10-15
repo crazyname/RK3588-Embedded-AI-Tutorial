@@ -26,7 +26,7 @@
 从仓库根目录运行：
 
     python3 boards/radxa-rock5b/tools/board_probe.py --strict
-    python3 boards/radxa-rock5b/tools/board_probe.py --strict --output results/rock5b-board.json
+    python3 boards/radxa-rock5b/tools/board_probe.py --strict --output boards/radxa-rock5b/results/rock5b-board.json
 
 `--strict` 在非原版 ROCK 5B ARM64 环境拒绝通过，但该脚本只根据设备树判断；最终仍需核对 PCB 丝印。采集数据中不包含唯一序列号、MAC 或 Wi-Fi 密码；日志公开前仍请人工审核。
 
@@ -74,9 +74,9 @@ Radxa 官方 [YOLOv8 板端教程](https://docs.radxa.com/en/rock5/rock5b/app-de
 插入自己选择的 USB UVC 摄像头后，在板端查看：
 
     ls -l /dev/video*
-    python3 boards/radxa-rock5b/tools/usb_camera_check.py --source /dev/video0 --frames 60 --save-json results/camera.json
+    python3 boards/radxa-rock5b/tools/usb_camera_check.py --source /dev/video0 --frames 60 --save-json boards/radxa-rock5b/results/camera.json
 
-`/dev/video0` 只是示例，必须按设备实际枚举的节点选择。某些 `/dev/videoX` 是编解码器或 ISP 的视频节点，并不代表 USB 摄像头；通过系统设备名称和真实读帧来确认。脚本只测帧采集，不执行 AI 推理。可选 `--save-image results/camera.jpg` 保存一张图片供检查，注意隐私。
+`/dev/video0` 只是示例，必须按设备实际枚举的节点选择。某些 `/dev/videoX` 是编解码器或 ISP 的视频节点，并不代表 USB 摄像头；通过系统设备名称和真实读帧来确认。脚本只测帧采集，不执行 AI 推理。可选 `--save-image boards/radxa-rock5b/results/camera.jpg` 保存一张图片供检查，注意隐私。
 
 ## 学习验收与记录
 

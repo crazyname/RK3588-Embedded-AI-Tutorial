@@ -30,8 +30,8 @@
 
 1. [检查官方资料和型号差异](MANUAL_MAP.md)
 2. [首次上电、系统镜像与无侵入检查](FIRST_BOOT.md)
-3. 在板上执行：`python3 boards/radxa-rock5b/tools/board_probe.py --strict --output results/rock5b-board.json`
-4. 可选摄像头：`python3 boards/radxa-rock5b/tools/usb_camera_check.py --source /dev/video0 --frames 30 --save-json results/camera.json`
+3. 在板上执行：`python3 boards/radxa-rock5b/tools/board_probe.py --strict --output boards/radxa-rock5b/results/rock5b-board.json`
+4. 可选摄像头：`python3 boards/radxa-rock5b/tools/usb_camera_check.py --source /dev/video0 --frames 30 --save-json boards/radxa-rock5b/results/camera.json`
 5. 在 **Radxa OS** 中按厂商文档安装 `rknn-model-zoo-rk3588`，运行预训练 YOLOv8 实例；可用 [厂商实例启动器](tools/run_official_yolov8.py) 检查路径并启动。
 6. [第二阶段硬件专项开发与验收](NEXT_PROJECTS.md)：MobileNet 图像分类、USB 摄像头取帧、NPU 推理、性能测试、YOLO 自定义模型、RGA、C++ 与 RKLLM。
 
@@ -51,7 +51,7 @@
     python3 boards/radxa-rock5b/apps/mobilenet_image_lite.py \
       --model /path/to/mobilenet_v2.rknn --image /path/to/bell.jpg \
       --confirm-rgb-uint8-nhwc --resize center-crop \
-      --runs 10 --warmup 3 --json results/mobilenet.json
+      --runs 10 --warmup 3 --json boards/radxa-rock5b/results/mobilenet.json
 
 实际 resize/crop 规则应与用于对照的官方 C 示例统一。这个 Python 应用会进行真实的 RKNNLite 推理并打印 Top-K 类索引与分数；如果提供 `--labels`，只有标签行数与模型输出类别数一致才映射类名，避免把偏移错误强行打印为正确类别。分类分数未经 softmax，不应直接称为概率。
 
