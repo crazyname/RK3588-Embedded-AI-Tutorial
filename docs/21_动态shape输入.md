@@ -112,6 +112,8 @@ for h,w in ((320,320),(640,640)):
 
 ## 配套可运行源码
 
+- [本讲独立操作手册（只含运行、参数与验收）](../examples/notes/lesson_21.md)
+
 - [本节可运行 Python 基础实验](../examples/lesson_21.py)（算法实现于 [labs.py](../examples/labs.py)）
 - [环境准备、运行命令及限制](../examples/README.md)
 

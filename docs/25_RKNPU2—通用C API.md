@@ -117,6 +117,8 @@ rknn_context ctx = 0;
 
 ## 配套可运行源码
 
+- [本讲独立操作手册（只含运行、参数与验收）](../examples/notes/lesson_25.md)
+
 - [本节可运行 Python 基础实验](../examples/lesson_25.py)（算法实现于 [labs.py](../examples/labs.py)）
 - [真实 SDK / 板端代码：rknn_classify.cpp](../examples/hardware/rknn_classify.cpp)
 - [真实 SDK / 板端代码：CMakeLists.txt](../examples/hardware/CMakeLists.txt)

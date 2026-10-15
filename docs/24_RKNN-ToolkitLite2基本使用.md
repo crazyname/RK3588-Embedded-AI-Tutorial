@@ -117,6 +117,8 @@ Toolkit-Lite2 主要做什么？
 
 ## 配套可运行源码
 
+- [本讲独立操作手册（只含运行、参数与验收）](../examples/notes/lesson_24.md)
+
 - [本节可运行 Python 基础实验](../examples/lesson_24.py)（算法实现于 [labs.py](../examples/labs.py)）
 - [真实 SDK / 板端代码：lite_infer.py](../examples/hardware/lite_infer.py)
 - [真实 SDK / 板端代码：prepare_image.py](../examples/hardware/prepare_image.py)

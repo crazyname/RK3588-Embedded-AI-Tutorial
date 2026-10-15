@@ -114,6 +114,8 @@ CPU 写入共享数据后，NPU 需要看到最新内容；NPU 写输出后，CP
 
 ## 配套可运行源码
 
+- [本讲独立操作手册（只含运行、参数与验收）](../examples/notes/lesson_26.md)
+
 - [本节可运行 Python 基础实验](../examples/lesson_26.py)（算法实现于 [labs.py](../examples/labs.py)）
 - [真实 SDK / 板端代码：rknn_classify.cpp](../examples/hardware/rknn_classify.cpp)
 - [环境准备、运行命令及限制](../examples/README.md)
