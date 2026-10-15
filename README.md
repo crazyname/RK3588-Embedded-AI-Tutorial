@@ -2,6 +2,19 @@
 
 本仓库是一套围绕 **Rockchip RK3588 / RKNPU** 的中文嵌入式 AI 教学资料，从基础理论、RKNN 工具链到目标检测部署与边缘大模型实践。
 
+## ROCK 5B 16GB：官方手册驱动的板级实战（新增）
+
+课程选定 **Radxa ROCK 5B（原版，非 5B+）16GB** 作为参考目标板，并依据 Radxa 官方中文文档、系统镜像、电源要求、RKNN 安装和 YOLOv8/MobileNet 部署教程编写了板级实践。
+
+- [ROCK 5B 硬件清单和完整入口](boards/radxa-rock5b/README.md)
+- [官方手册对照索引](boards/radxa-rock5b/MANUAL_MAP.md)
+- [从 SD 启动到首次真实 NPU 结果的步骤](boards/radxa-rock5b/FIRST_BOOT.md)
+- [只读设备审计与 USB 摄像头检查](boards/radxa-rock5b/tools/)
+- [ROCK 5B MobileNet 图片分类源码](boards/radxa-rock5b/apps/mobilenet_image_lite.py)
+- [下一阶段硬件专题项目与验收条件](boards/radxa-rock5b/NEXT_PROJECTS.md)
+
+**明确边界：** 这些脚本已按官方手册具体化，但仍需实际开发板运行并保存真实日志。不要把 GitHub CI 的离线测试误称为 RK3588 NPU 实机验收。
+
 ## 课程实操源码（新增）
 
 现在包含 [35 个可执行 Python 课程入口](examples/)、[公共算法实现](examples/labs.py)、[自动化测试](examples/tests/) 以及 [ONNX 转换、真实模型推理与 C++ 示例](examples/hardware/)。**这些不是 35 个全部完成的板端项目**：部分课次的代码是可以在普通电脑运行的数学/系统实验，RKNN/YOLO/RKLLM 等专用硬件功能需要真实 SDK、模型和设备。
