@@ -1,12 +1,6 @@
-# 第30讲｜yolov26模型部署(从0到1版)_导出onnx与rknn模型并板端推理
+# 第30讲·专题3｜yolov26模型部署(从0到1版) · 导出onnx与rknn模型并板端推理
 
-> 完成训练权重 → ONNX → RKNN → RK3588 C++ 推理。
-
-**所属单元：** YOLOv26 从零到一（3/3）　｜　**目标平台：** RK3588
-
-**课程视频：** [Bilibili 原课程](https://www.bilibili.com/video/BV11DjT6uEhc)　｜　**原始文本：** [TXT](../%E6%96%87%E6%9C%AC/30_yolov26%E6%A8%A1%E5%9E%8B%E9%83%A8%E7%BD%B2%28%E4%BB%8E0%E5%88%B01%E7%89%88%29_%E5%AF%BC%E5%87%BAonnx%E4%B8%8Erknn%E6%A8%A1%E5%9E%8B%E5%B9%B6%E6%9D%BF%E7%AB%AF%E6%8E%A8%E7%90%86.txt)
-
-> 本文件由视频口播转写提炼；代码、API、模型版本及兼容性请以对应 SDK 文档为准。原始 TXT 含自动语音识别错误，仅供核对。
+> 面向自学者的原创重编教材。建议按照原理→实验→数值回归→排障→自测的顺序操作。原视频转写在文末，仅供溯源。
 
 ## 学习目标
 
@@ -14,34 +8,109 @@
 - 执行 RKNN 模型转换与量化决策
 - 部署与特定检测头对应的板端后处理
 
-## 核心知识
+## 核心知识精讲
 
-这是第 30 讲的收尾专题。训练权重本身不一定适合直接给 RKNN 工具链，需要先确定稳定的 ONNX 导出方式，并检查导出后的检测头输出形状。有时教程采用特定源码补丁调整导出头，但源码修改有框架版本依赖，应以具体代码版本为准，并对每个转换阶段做结果回归。最终板端程序需要完成输入预处理、RKNN 推理、检测结果解码、NMS 和坐标映射。
+### 每次导出都要验证模型语义
 
-## 实践步骤
+从 `best.pt` 到 ONNX，建议显式记录 imgsz、opset、dynamic、simplify、是否将 NMS 包进图以及导出工具版本。Ultralytics 支持 ONNX 导出不保证该 ONNX 所有节点都可在 RKNPU2 上编译；YOLO26 目标板适配要特别关注模型检测头和后处理方式。第一步先用 ONNX Runtime 对固定图片比较源框架输出或最终检测结果。
 
-1. 固定训练框架、最优权重、导出脚本版本和测试图片
-2. 导出 ONNX 并在 ONNX Runtime 中对照源框架测试
-3. 通过 Netron 检查输入输出 shape、dtype 与输出头
-4. 使用 RKNN-Toolkit2 转换目标 RK3588 模型，按需准备校准数据
-5. 在板端使用 C/C++ 运行时加载模型，正确构造预处理输入
-6. 按对应模型版本完成检测头解码、置信度筛选、NMS 和坐标还原
-7. 比较 PyTorch、ONNX 与 RKNN 输出的精度和性能
+**你应该能解释：** 导出成功只是文件格式转换通过，不代表 RK3588 一定支持。
 
-## 完成标准
+### RKNN 转换与算子兼容性
+
+ONNX 图经过 RKNN-Toolkit2 编译时，算子集合、动态 shape、量化和内存要求要匹配当前 SDK。优先尝试非量化转换以隔离精度问题，遇到不支持算子时记录具体节点再考虑重导出、图改写或使用官方支持的替代模型。不能宣称未经验证的 YOLO26 改写可直接上板。
+
+**你应该能解释：** 准备一个官方 Model Zoo YOLOv5/YOLOv8 作为已知可用的 RK3588 基线，用以分离环境与模型兼容问题。
+
+### 端到端检测结果回归
+
+对比 PyTorch、ONNX Runtime、RKNN 模拟和真实板端时，必须使用相同图像、前处理、框坐标系统、阈值与 NMS 定义。输出张量不同格式要先采用各自正确的后处理，再比较同一评估集的 mAP 与漏检，而不是直接比较两个未对齐的 raw tensor。
+
+**你应该能解释：** 一张部署对照表包含精度、耗时、输入 shape、导出参数、SDK 版本和前后处理实现。
+
+## 跟做实验与交付物
+
+### 实验 1：导出并校验 ONNX
+
+用当前 Ultralytics 版本导出 ONNX，运行 ONNX checker 和 ONNX Runtime，对已保存的训练框架测试图比较最终检测结果。
+
+**验收证据：** 保留 ONNX opset、input/output shape、结果差异和文件 SHA。
+
+### 实验 2：尝试 RKNN 转换
+
+在受支持 Linux 主机上以 RKNN-Toolkit2 进行非量化编译。若失败，记录错误算子、日志与更改记录，不伪造成功产物。
+
+**验收证据：** 清楚说明已支持的算子路径及障碍；转换成功再开始量化。
+
+### 实验 3：上板验收
+
+用与当前模型输出匹配的 C/Python 推理代码加载 `.rknn`，对固定验证集统计 mAP、端到端 FPS 和内存。
+
+**验收证据：** PyTorch/ONNX/RKNN 的可比任务指标与问题样例完整归档。
+
+### 参考实验片段
+
+```python
+from ultralytics import YOLO
+model=YOLO('runs/detect/train/weights/best.pt')
+model.export(format='onnx', imgsz=640, dynamic=False)
+# 下一步：使用 ONNX Runtime 校验；之后在兼容的 Linux 主机转换 RKNN。
+# 仅 ONNX 导出成功，不代表 YOLO26 已得到 RK3588 官方支持。
+```
+
+> 第30讲涉及的 YOLO26 → RKNN 流程需核对对应 SDK 的算子兼容性；并非官方已验证直接支持的承诺。训练权重与数据集需要自行按许可获取。
+
+## 排查失败场景
+
+### RKNN build 报不支持算子
+
+- 可能原因：YOLO26 导出图包含当前 Toolkit2 不支持或不兼容的算子。
+- 验证方法：用日志定位节点；检查导出 opset、nms 设置与工具链支持列表。
+
+### 板端框正确性下降
+
+- 可能原因：量化、前处理、检测头 decode 或坐标逆变换不一致。
+- 验证方法：先对非量化版本和少量固定样本做逐阶段回归。
+
+## 综合案例分析
+
+**问题：** 你在 Windows 训练得到 best.pt，导出 ONNX 后 ONNX Runtime 正常，但 RKNN build 失败。接下来应该刷驱动吗？
+
+**推理过程：** 先不要刷驱动，build 阶段发生在主机，主要应检查 opset、算子兼容、shape 和转换日志。驱动问题通常在板端加载或推理阶段定位。
+
+**提交材料：** PyTorch/ONNX 结果、失败节点、SDK release、修改策略与转换日志。
+
+## 复习与自测
+
+导出 ONNX 之后首先应？
+
+- A. 运行 ONNX Runtime 验证
+- B. 直接删除权重
+- C. 只修改扩展名
+
+<details><summary>展开答案与说明</summary>
+
+**A。** 分阶段测试才能定位转换导致的差异。
+
+</details>
+
+## 课程完成标准
 
 - [ ] 同一张图在三个阶段均有可解释的预测结果
 - [ ] 板端结果与训练/验证基线差异可定位
 
-## 常见问题与注意事项
+## 课后实践
 
-- 不同 YOLO 版本的输出头不能直接套用同一段后处理
-- ONNX 生成成功不代表量化 RKNN 精度一定合格
-- 改动框架源码前应备份并记录补丁
+- 做一张三阶段结果对照表，包含模型哈希、指标、耗时
 
-## 课后练习
+## 官方参考与教材
 
-1. 做一张三阶段结果对照表，包含模型哈希、指标、耗时
+- [Ultralytics 模型导出](https://docs.ultralytics.com/modes/export/)
+- [Ultralytics ONNX 集成](https://docs.ultralytics.com/integrations/onnx/)
+- [RKNN 官方工具链](https://github.com/airockchip/rknn-toolkit2)
+- [RKNN 官方 Model Zoo](https://github.com/airockchip/rknn_model_zoo)
+
+> 资料会随发布版本更新；请先阅读官方当前说明，不要对未经验证的模型或者量化格式直接保证板端兼容。
 
 ## 原始字幕（仅供核对）
 
