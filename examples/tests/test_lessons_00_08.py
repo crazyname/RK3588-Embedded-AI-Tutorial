@@ -49,7 +49,7 @@ class RewrittenEarlyLessons(unittest.TestCase):
             status.write_text('{"onnx":true,"convert":false}',encoding="utf8")
             output=p/"plan.dot"
             result=run_lesson(3,"--status",status,"--dot",output)
-            self.assertIn("convert",json.loads(result.stdout)["remaining"])
+            self.assertIn("convert",json.JSONDecoder().raw_decode(result.stdout.lstrip())[0]["remaining"])
             graph=output.read_text(encoding="utf8")
             self.assertIn("digraph RKNN",graph)
             self.assertIn("onnx -> convert;",graph)
