@@ -118,7 +118,7 @@ jobs:
           python examples/lesson_10.py --image build/test-onnx/test.png --width 4 --height 4
           python examples/lesson_12.py --onnx build/test-onnx/tiny.onnx
           python examples/lesson_14.py --float build/test-onnx/out.npz --quantized build/test-onnx/out.npz
-          python examples/lesson_16.py --pid $ --samples 1 --interval 0
+          python examples/lesson_16.py --pid 1 --samples 1 --interval 0
           python examples/lesson_17.py --output build/smoke/pruned.npz
           python examples/lesson_19.py --images build/test-onnx/test.png build/test-onnx/test.png --batch 2 --width 4 --height 4
           python examples/lesson_22.py --onnx build/test-onnx/tiny.onnx --output build/smoke/optimized.onnx --input-npy build/test-onnx/input.npy
