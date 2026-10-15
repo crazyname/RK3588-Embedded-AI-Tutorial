@@ -40,3 +40,5 @@ jobs:
           python examples/hardware/onnx_reference.py --help
           python examples/hardware/lite_infer.py --help
           python examples/hardware/export_yolo_onnx.py --help
+          python examples/hardware/prepare_image.py --help
+          python examples/hardware/compare_outputs.py --help

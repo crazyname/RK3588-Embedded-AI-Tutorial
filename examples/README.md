@@ -78,6 +78,22 @@ input.npy 必须是按实际模型协议准备的真实 tensor，并非随意生
 
 该程序真实导出并用 ONNX checker 检查。能导出 ONNX 不意味着特定 YOLO26 模型已经得到 RK3588 RKNN 编译器支持；继续做 ONNX Runtime 与 RKNN 兼容验证。对于官方支持的检测模型完整图像采集与解码，优先使用同一版本的 RKNN Model Zoo 官方 YOLOv5/YOLOv8 完整示例。
 
+
+## 生成真实图片输入与检查差异
+
+上面 Lite2 和 ONNX Runtime 的 input.npy 不能随意填充，必须从真实图片生成，并与具体模型的预处理保持一致。需要安装 Pillow、NumPy：
+
+    python3 -m pip install numpy pillow
+    python3 examples/hardware/prepare_image.py --image test.jpg --width 224 --height 224 --color RGB --layout NHWC --dtype uint8 --output input.npy --raw input_tensor.raw
+
+若模型真正要求 float32 NCHW，且训练输入按 0–1 做标准化，应把 --dtype 设置为 float32、--layout 设为 NCHW、--scale 设为 0.0039215686，并按该模型的 mean/std 传参数。不要对已经由 RKNN config 完成归一化的输入再重复执行这些变换。
+
+比较真正推理产生的两个 NPZ 文件：
+
+    python3 examples/hardware/compare_outputs.py --reference reference.npz --candidate board.npz --atol 0.01 --rtol 0.01
+
+差异输出可用于排错，但量化模型不能仅凭逐元素 allclose 作为任务精度结论；检测模型还需使用匹配后处理比较 mAP 和漏检。
+
 ## 代码与测试状态
 
 - 35 个 Python 文件只是对应的课程实验入口，算法实现在公用 labs.py。并非 35 套独立模型部署工程。
