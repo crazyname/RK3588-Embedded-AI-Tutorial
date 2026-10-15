@@ -117,6 +117,8 @@ private:
 
 ## 配套可运行源码
 
+- [本讲独立操作手册（只含运行、参数与验收）](../examples/notes/lesson_28.md)
+
 - [本节可执行 Python 实验](../examples/lesson_28.py)（基础算法实现在 [labs.py](../examples/labs.py)）
 - [配套实际模型工具：rknn_classify.cpp](../examples/hardware/rknn_classify.cpp)
 - [完整运行说明和 SDK/模型前置条件](../examples/README.md)

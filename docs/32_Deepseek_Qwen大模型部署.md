@@ -113,6 +113,8 @@ print(f'1.5B 参数 4-bit 权重理论下界约 {weight_gb:.2f} GB')
 
 ## 配套可运行源码
 
+- [本讲独立操作手册（只含运行、参数与验收）](../examples/notes/lesson_34.md)
+
 - [本节可执行 Python 实验](../examples/lesson_34.py)（基础算法实现在 [labs.py](../examples/labs.py)）
 - [完整运行说明和 SDK/模型前置条件](../examples/README.md)
 

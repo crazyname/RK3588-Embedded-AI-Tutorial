@@ -113,6 +113,8 @@ print([(int(i),float(scores[i])) for i in idx])
 
 ## 配套可运行源码
 
+- [本讲独立操作手册（只含运行、参数与验收）](../examples/LESSON_27.md)
+
 **第 27 讲已重写为实际分类推理工程**，不再是原来的 `from labs import main` 包装脚本。程序直接读取 JPG/PNG，完成明确的颜色、缩放、归一化、布局处理，用 ONNX Runtime（PC）或 RKNNLite（RK3588）执行真实模型，最后输出 Top-5 与 JSON/NPZ。
 
 - [第 27 讲完整 MobileNet 推理源码（支持 ONNX 和 RKNN）](../examples/lesson_27.py)

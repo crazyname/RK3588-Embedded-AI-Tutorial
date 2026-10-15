@@ -115,6 +115,8 @@ for result in results:
 
 ## 配套可运行源码
 
+- [本讲独立操作手册（只含运行、参数与验收）](../examples/notes/lesson_30.md)
+
 - [本节可执行 Python 实验](../examples/lesson_30.py)（基础算法实现在 [labs.py](../examples/labs.py)）
 - [配套实际模型工具：export_yolo_onnx.py](../examples/hardware/export_yolo_onnx.py)
 - [完整运行说明和 SDK/模型前置条件](../examples/README.md)

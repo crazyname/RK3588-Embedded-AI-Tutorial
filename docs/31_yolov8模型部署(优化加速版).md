@@ -113,6 +113,8 @@ Model Zoo 的 benchmark 可能只统计特定条件下的推理时间，不能�
 
 ## 配套可运行源码
 
+- [本讲独立操作手册（只含运行、参数与验收）](../examples/notes/lesson_33.md)
+
 - [本节可执行 Python 实验](../examples/lesson_33.py)（基础算法实现在 [labs.py](../examples/labs.py)）
 - [配套实际模型工具：lite_infer.py](../examples/hardware/lite_infer.py)
 - [配套实际模型工具：compare_outputs.py](../examples/hardware/compare_outputs.py)

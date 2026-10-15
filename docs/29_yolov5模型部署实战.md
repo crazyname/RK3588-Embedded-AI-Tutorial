@@ -115,6 +115,8 @@ print((x_model-pad_x)/scale,(y_model-pad_y)/scale)
 
 ## 配套可运行源码
 
+- [本讲独立操作手册（只含运行、参数与验收）](../examples/notes/lesson_29.md)
+
 - [本节可执行 Python 实验](../examples/lesson_29.py)（基础算法实现在 [labs.py](../examples/labs.py)）
 - [配套实际模型工具：lite_infer.py](../examples/hardware/lite_infer.py)
 - [配套实际模型工具：prepare_image.py](../examples/hardware/prepare_image.py)
