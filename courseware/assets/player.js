@@ -14,7 +14,7 @@ const stepList=(a,start)=>'<ol class="steps-list">'+a.map((s,i)=>'<li><span clas
 const slides=[];
 function add(cat,title,body,note){slides.push({cat,title,body,note:note||"根据实际设备和软件版本判断，不要用未经验证的结果替代课堂证据。"});}
 const name=data.title||m.title,intro=data.intro||"把理论、转换与运行验证连接成可重复的学习闭环。";
-add("OPENING","本讲课程介绍",'<div class="eyebrow">'+esc(m.unit)+'</div><h1>'+esc(name)+'</h1><p class="big">'+fmt(intro)+'</p><div class="stats"><div><strong>'+m.duration+'<small> 分钟</small></strong><small>建议课堂时间</small></div><div><strong>'+data.goals.length+'</strong><small>目标数量</small></div><div><strong>'+data.steps.length+'</strong><small>实践步骤</small></div></div><p class="footnote">方向键 / 空格翻页 · N 切换讲师提示 · P 打印</p>',"问学生：本节课最想解决的一个实际工程问题是什么？");
+add("OPENING","本讲课程介绍",'<div class="eyebrow">'+esc(m.unit)+'</div><h1>'+esc(name)+'</h1><p class="big">'+fmt(intro)+'</p><div class="stats"><div><strong>'+m.duration+'<small> 分钟</small></strong><small>建议课堂时间</small></div><div><strong>'+data.goals.length+'</strong><small>目标数量</small></div><div><strong>'+data.steps.length+'</strong><small>实践步骤</small></div></div><p class="footnote">上下滚动阅读 · N 切换讲师提示 · P 打印</p>',"问学生：本节课最想解决的一个实际工程问题是什么？");
 add("SCENARIO","从一个工程问题出发",'<div class="panel good"><span class="pill">课堂情境</span><h2>'+fmt(extra.scene||intro)+'</h2></div>'+cards(['<h3>学前预测</h3><p>如果跳过本讲，后续模型部署最可能在什么环节失败？</p>','<h3>如何证明成功</h3><p>除了程序退出码，还应保留输入、输出、版本及过程日志。</p>']),"用思维实验引导学生讨论，需要可观察结果而非猜测。");
 add("GOALS","学习目标与验收方向",'<div class="panel">'+list(data.goals)+'</div><p class="footnote">每个目标对应可被检查的解释、操作、图示或运行证据。</p>',"把目标转为三个问题：知道什么、能够做什么、如何验证。");
 add("CLASS","课堂安排",'<div class="three-cols">'+[["10%","问题引导","从工程场景切入"],["30%","原理与架构","术语、机制和限制"],["40%","教师演示 / 学生实操","对照步骤逐一验证"],["10%","排障与提问","反事实推理"],["10%","验收与作业","保留证据并迁移"]].map(x=>'<div class="panel soft"><span class="pill">'+x[0]+'</span><h3 style="margin-top:12px">'+x[1]+'</h3><p>'+x[2]+'</p></div>').join("")+'</div>',"原则：先验证一个基线，再改变一个变量，不要多项同时修改。");
@@ -89,9 +89,9 @@ const hardwareByLesson={
 9:["convert_onnx.py"],11:["convert_onnx.py"],12:["onnx_reference.py"],
 13:["onnx_reference.py"],23:["rknn_classify.cpp"],
 24:["lite_infer.py"],25:["rknn_classify.cpp","CMakeLists.txt"],
-26:["rknn_classify.cpp"],27:["lite_infer.py"],28:["rknn_classify.cpp"],
-29:["lite_infer.py"],30:["export_yolo_onnx.py"],31:["export_yolo_onnx.py"],
-32:["export_yolo_onnx.py","convert_onnx.py"],33:["lite_infer.py"],
+26:[],27:["lite_infer.py","prepare_image.py"],28:["rknn_classify.cpp"],
+29:["lite_infer.py","prepare_image.py"],30:["export_yolo_onnx.py"],31:["export_yolo_onnx.py"],
+32:["export_yolo_onnx.py","convert_onnx.py","onnx_reference.py"],33:["lite_infer.py","compare_outputs.py"],
 34:[]
 };
 const sdkFiles=hardwareByLesson[data.id]||[];

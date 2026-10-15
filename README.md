@@ -2,6 +2,16 @@
 
 本仓库是一套围绕 **Rockchip RK3588 / RKNPU** 的中文嵌入式 AI 教学资料，从基础理论、RKNN 工具链到目标检测部署与边缘大模型实践。
 
+## 课程实操源码（新增）
+
+现在包含 [35 个可执行 Python 课程入口](examples/)、[公共算法实现](examples/labs.py)、[自动化测试](examples/tests/) 以及 [ONNX 转换、真实模型推理与 C++ 示例](examples/hardware/)。**这些不是 35 个全部完成的板端项目**：部分课次的代码是可以在普通电脑运行的数学/系统实验，RKNN/YOLO/RKLLM 等专用硬件功能需要真实 SDK、模型和设备。
+
+- [从零运行示例的完整指南](examples/README.md)
+- [最小真实 ONNX 模型生成器](examples/hardware/create_tiny_onnx.py)
+- [GitHub Actions 自动测试](.github/workflows/examples-ci.yml)
+
+**快速体验：** 在仓库根目录运行 `python3 examples/lesson_00.py`、`python3 examples/lesson_29.py`；再运行 `python3 -m unittest discover -s examples/tests -v`。详见代码说明中对纯 Python、ONNX Runtime 和 RK3588 板端三个执行环境的区分。
+
 ## 35 节重编自学教材
 
 全部 HTML 与 Markdown 已按自学需求重编：原理讲解、3 个实操任务、预期检查、故障诊断、完整案例、课堂测试及官方参考。HTML 采用整篇连续滚动，MD 在末尾保留原始视频转写。实验片段并未全部在实际 RK3588 上运行验证，应按 SDK 版本核对。
