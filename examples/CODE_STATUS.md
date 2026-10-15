@@ -1,60 +1,52 @@
-# 35 节实操源码实际完成度审计
+# 35 节代码完成度与文档去重审计
 
-> **以下表格只是历史快照，会随着其他提交变旧。** 以运行 `python3 examples/audit_course.py` 得到的最新状态为准；具体功能是否合格还要看测试与板端日志。参见 [源码验收标准](ACCEPTANCE.md)。
+更新：2026-10-16。此前 34 个包装入口已全部重写，现在 35 个编号入口均包含本讲实际业务逻辑。每个实例配一份操作 MD，**课程 MD 只讲理论与案例，实验 MD 只写安装、命令、真实输入输出和验证**。
 
-核查日期：2026-10-16（自动复核 GitHub main）。核查的是实际源码，不是讲义段落长度。状态不能以‘Python 文件存在’替代实际执行验证。
+## 状态含义
 
-**判定原则**：‘包装入口’表示脚本只调用 `labs.main(N)`；`labs.py` 中即使有真实计算，也不等于课程所要求的完整 RK3588 工程。‘完整实现（PC）’需读取真实模型和数据、调用推理框架并测试输出；‘已上板验证’还需真实 RK3588 设备与匹配 SDK 的测试日志。
+- **已独立实现**：不再只有 `from labs import main`，可查看对应脚本业务逻辑。
+- **PC 可测**：可在 CI、Linux 或 Windows 运行真实算法、输入、模型处理或系统诊断。
+- **依赖实机**：需要有目标硬件、Toolkit2/Lite2/RKNPU2/RKLLM、匹配模型和板级驱动。
+- **不可冒充完成**：单纯运行参数帮助、模拟数据输出、ONNX Runtime 的成功，不等于 NPU、零拷贝或 RKLLM 真正上板验收。
 
-| 编号 | 课程 | lesson_XX.py 状态 | 专业硬件工作状态 |
+| ID | 本讲实例源码 | 非重复实操 MD | 目前能验证的范围 |
 |---|---|---|---|
-| 00 | 导学 | 真实环境清单生成与模型 SHA256；可独立运行，有单独的输入输出回归测试 | 尚无本讲专属已实机验收的工程 |
-| 01 | 快速了解rk3588 | 板端 CPU/内存/设备树只读审计；无板卡时可读取主机，实机信息待核对 | 尚无本讲专属已实机验收的工程 |
-| 02 | NPU原理及对比 | 可配置 Conv/Depthwise/Pointwise MAC 与输出维度计算；含数值断言 | 尚无本讲专属已实机验收的工程 |
-| 03 | RKNPU推理软件架构与模型部署流程 | 依赖状态 JSON → Graphviz DOT 流程图；有实际文件产物 | 尚无本讲专属已实机验收的工程 |
-| 04 | 瑞芯微github仓库介绍 | 通过 git ls-remote 获取真实上游 ref SHA；需要网络；离线测试只验证仓库映射 | 尚无本讲专属已实机验收的工程 |
-| 05 | 搭建rknn · toolkit2开发环境 | 检查 Python ABI/架构与 Toolkit2 安装；真 SDK import 需兼容主机 | 尚无本讲专属已实机验收的工程 |
-| 06 | 设备端npu环境搭建与npu驱动更新 | 读取驱动候选节点与 Runtime ELF 信息；只读，不自动升级 | 尚无本讲专属已实机验收的工程 |
-| 07 | 查看和调整CPU · NPU · DDR频率 | 采集 sysfs 频率/温度 CSV 时间序列；实际节点需板端测试 | 尚无本讲专属已实机验收的工程 |
-| 08 | 快速体验rknn · demo | 运行真实外部 Model Zoo 可执行程序，记录返回码与日志；CI 用假可执行文件测试程序调用 | 尚无本讲专属已实机验收的工程 |
-| 09 | rknn模型转换 | 7 行公共函数包装入口（非独立工程） | 有通用 RKNN 转换脚本，需真实模型与 SDK 验证 |
-| 10 | 均值和标准差 | 7 行公共函数包装入口（非独立工程） | 尚无本讲专属已实机验收的工程 |
-| 11 | 模型转换工具rknn · convert | 7 行公共函数包装入口（非独立工程） | 有通用 RKNN 转换脚本，需真实模型与 SDK 验证 |
-| 12 | Netron的基本使用 | 7 行公共函数包装入口（非独立工程） | 提供通用 ONNX 检查/推理工具，非完整板端工程 |
-| 13 | rknn-toolkit2模型推理 | 7 行公共函数包装入口（非独立工程） | 提供通用 ONNX 检查/推理工具，非完整板端工程 |
-| 14 | 模型量化精度分析 | 7 行公共函数包装入口（非独立工程） | 尚无本讲专属已实机验收的工程 |
-| 15 | 模型性能评估 | 7 行公共函数包装入口（非独立工程） | 尚无本讲专属已实机验收的工程 |
-| 16 | 模型内存评估 | 7 行公共函数包装入口（非独立工程） | 尚无本讲专属已实机验收的工程 |
-| 17 | 模型剪枝 | 7 行公共函数包装入口（非独立工程） | 尚无本讲专属已实机验收的工程 |
-| 18 | 模型加密 | 7 行公共函数包装入口（非独立工程） | 尚无本讲专属已实机验收的工程 |
-| 19 | 多Batch处理 | 7 行公共函数包装入口（非独立工程） | 尚无本讲专属已实机验收的工程 |
-| 20 | 多输入模型 | 7 行公共函数包装入口（非独立工程） | 尚无本讲专属已实机验收的工程 |
-| 21 | 动态shape输入 | 7 行公共函数包装入口（非独立工程） | 尚无本讲专属已实机验收的工程 |
-| 22 | ONNX模型编辑 | 7 行公共函数包装入口（非独立工程） | 提供通用 ONNX 检查/推理工具，非完整板端工程 |
-| 23 | 自动生成部署C代码 | 7 行公共函数包装入口（非独立工程） | 尚无本讲专属已实机验收的工程 |
-| 24 | RKNN-ToolkitLite2基本使用 | 7 行公共函数包装入口（非独立工程） | 提供通用 Lite2 工具；板端未实测 |
-| 25 | RKNPU2—通用C API | 7 行公共函数包装入口（非独立工程） | 提供通用 C++ 单输入分类程序；板端未实测 |
-| 26 | RKNPU2—零拷贝C API | 7 行公共函数包装入口（非独立工程） | 未完成专用零拷贝示例 |
-| 27 | mobilenet模型部署 | **完整 ONNX 推理源码；PC CI 通过** | 已实现真实 ONNX/RKNNLite 推理；ONNX CI 通过，RK3588 待实机验收 |
-| 28 | mobilenet模型代码封装 | 7 行公共函数包装入口（非独立工程） | 提供通用 C++ 单输入分类程序；板端未实测 |
-| 29 | yolov5模型部署实战 | 7 行公共函数包装入口（非独立工程） | 提供通用 Lite2 工具；板端未实测 |
-| 30 | yolov26模型部署(从0到1版) · windows环境搭建与模型预测分析 | 7 行公共函数包装入口（非独立工程） | 提供 YOLO ONNX 导出脚本；转换兼容性未实测 |
-| 31 | yolov26模型部署(从0到1版) · 数据集构建与模型训练 | 7 行公共函数包装入口（非独立工程） | 提供 YOLO ONNX 导出脚本；转换兼容性未实测 |
-| 32 | yolov26模型部署(从0到1版) · 导出onnx与rknn模型并板端推理 | 7 行公共函数包装入口（非独立工程） | 提供 YOLO ONNX 导出脚本；转换兼容性未实测 |
-| 33 | yolov8模型部署(优化加速版) | 7 行公共函数包装入口（非独立工程） | 提供通用 Lite2 工具；板端未实测 |
-| 34 | Deepseek · Qwen大模型部署 | 7 行公共函数包装入口（非独立工程） | 尚无独立可运行 RKLLM 推理工程 |
+| 00 | [lesson_00.py](lesson_00.py) | [操作手册](notes/lesson_00.md) | 本机环境 JSON |
+| 01 | [lesson_01.py](lesson_01.py) | [操作手册](notes/lesson_01.md) | CPU/设备树只读报告 |
+| 02 | [lesson_02.py](lesson_02.py) | [操作手册](notes/lesson_02.md) | 卷积 MAC 计算 |
+| 03 | [lesson_03.py](lesson_03.py) | [操作手册](notes/lesson_03.md) | 部署依赖 DOT 图 |
+| 04 | [lesson_04.py](lesson_04.py) | [操作手册](notes/lesson_04.md) | GitHub 远端 SHA |
+| 05 | [lesson_05.py](lesson_05.py) | [操作手册](notes/lesson_05.md) | Toolkit2 ABI/安装诊断 |
+| 06 | [lesson_06.py](lesson_06.py) | [操作手册](notes/lesson_06.md) | 驱动与 RT 只读状态 |
+| 07 | [lesson_07.py](lesson_07.py) | [操作手册](notes/lesson_07.md) | 频率与温度采样（板级节点需有） |
+| 08 | [lesson_08.py](lesson_08.py) | [操作手册](notes/lesson_08.md) | 真实模型 Demo 子进程执行（需板端） |
+| 09 | [lesson_09.py](lesson_09.py) | [操作手册](notes/lesson_09.md) | 真实 Toolkit2 转换（需 SDK） |
+| 10 | [lesson_10.py](lesson_10.py) | [操作手册](notes/lesson_10.md) | 真实图像归一化张量 |
+| 11 | [lesson_11.py](lesson_11.py) | [操作手册](notes/lesson_11.md) | 实际多任务转换日志 |
+| 12 | [lesson_12.py](lesson_12.py) | [操作手册](notes/lesson_12.md) | ONNX graph 算子统计 |
+| 13 | [lesson_13.py](lesson_13.py) | [操作手册](notes/lesson_13.md) | Toolkit2 模拟/目标推理（需 SDK） |
+| 14 | [lesson_14.py](lesson_14.py) | [操作手册](notes/lesson_14.md) | FP/INT8 真实数组误差 |
+| 15 | [lesson_15.py](lesson_15.py) | [操作手册](notes/lesson_15.md) | 外部程序延迟分布 |
+| 16 | [lesson_16.py](lesson_16.py) | [操作手册](notes/lesson_16.md) | Linux /proc 真实 PID 内存 |
+| 17 | [lesson_17.py](lesson_17.py) | [操作手册](notes/lesson_17.md) | 真实权重结构剪枝；缺输入使用明示合成权重 |
+| 18 | [lesson_18.py](lesson_18.py) | [操作手册](notes/lesson_18.md) | Fernet 文件加密解密；非 RKNN 原生加密 |
+| 19 | [lesson_19.py](lesson_19.py) | [操作手册](notes/lesson_19.md) | 真实图片多 Batch 输入 |
+| 20 | [lesson_20.py](lesson_20.py) | [操作手册](notes/lesson_20.md) | 多输入 ONNX Runtime |
+| 21 | [lesson_21.py](lesson_21.py) | [操作手册](notes/lesson_21.md) | 多 Shape ONNX Runtime |
+| 22 | [lesson_22.py](lesson_22.py) | [操作手册](notes/lesson_22.md) | ONNX Identity 移除及回归 |
+| 23 | [lesson_23.py](lesson_23.py) | [操作手册](notes/lesson_23.md) | 真实 ONNX 生成 C++ 接口头 |
+| 24 | [lesson_24.py](lesson_24.py) | [操作手册](notes/lesson_24.md) | RKNNLite 板端推理（需板卡） |
+| 25 | [lesson_25.py](lesson_25.py) | [操作手册](notes/lesson_25.md) | RKNPU2 C++ 编译及推理（需板卡） |
+| 26 | [lesson_26.py](lesson_26.py) | [操作手册](notes/lesson_26.md) | 真实缓冲字节校验；零拷贝 NPU 推理尚未实现 |
+| 27 | [lesson_27.py](lesson_27.py) | [操作手册](LESSON_27.md) | MobileNet 分类 ONNX CI 通过；RKNNLite 待板测 |
+| 28 | [lesson_28.py](lesson_28.py) | [操作手册](notes/lesson_28.md) | MobileNet ONNX 分类封装及批图处理 |
+| 29 | [lesson_29.py](lesson_29.py) | [操作手册](notes/lesson_29.md) | Ultralytics 真正检测或官方 RKNN Demo（需模型） |
+| 30 | [lesson_30.py](lesson_30.py) | [操作手册](notes/lesson_30.md) | Ultralytics 真正预测 |
+| 31 | [lesson_31.py](lesson_31.py) | [操作手册](notes/lesson_31.md) | YOLO 数据标注检查及可选真实训练 |
+| 32 | [lesson_32.py](lesson_32.py) | [操作手册](notes/lesson_32.md) | YOLO ONNX 导出与可选 RKNN 编译 |
+| 33 | [lesson_33.py](lesson_33.py) | [操作手册](notes/lesson_33.md) | 真实 YOLO 模型时延对照（主机，不是 NPU） |
+| 34 | [lesson_34.py](lesson_34.py) | [操作手册](notes/lesson_34.md) | 真实 RKLLM 进程驱动和日志；需适配实际 SDK CLI |
 
-## 最新状态：10 节已重写，25 个薄入口待替换
+## 实机交付仍缺的东西
 
-当前已重写编号：**00–08、27**。只有完成对应的实际产物检查与测试，才能从“薄入口”升级为“功能代码”；涉及板端的课程仍需要实机证据。
-
-## 当前已具备的验证证据
-
-- [第 27 讲完整源码](lesson_27.py) 与 [专项测试](tests/test_lesson_27.py)：真实图像 → ONNX Runtime → Top-K 输出。
-- [第 27 讲操作指南](LESSON_27.md)：有模型文件时运行 MobileNet，没有权重时先用微型卷积网络验证工具链。
-- [GitHub Actions](../.github/workflows/examples-ci.yml)：便携算法测试、35 个脚本命令行入口检查 + 前 9 讲真实产物与边界测试、真实 ONNX 卷积网络数值检查、第 27 讲完整 ONNX 推理测试。
-- 没有提交的：真实 RK3588 NPU 性能数据、零拷贝加速结果、完整 YOLO 视频流项目、RKLLM 长文本生成结果。
-
-## 后续工作验收要求
-
-剩余 25 个薄入口（09–26、28–34）应按各自教学目标分别补全：明确依赖、输入与输出、源码、可直接运行的命令、自动化/实机测试以及失败日志。理论课可提供足够完整的仿真或测量实验，不必硬凑 NPU 项目。模型部署课必须调用真实模型或真实 SDK，不得用硬编码数组冒充推理结果。
+NPU 的真实 Driver/Runtime 版本、SDK 构建兼容性、单变量性能报告、零拷贝实际 memcpy/DMA 同步及板端测量、完整 YOLO 端到端摄像头工程、RKLLM 长上下文真实输出，均需另行在明确的开发板上测试。不得把 PC 上输出的 JSON 当作 NPU 性能验收。

@@ -1,27 +1,53 @@
-# RK3588 课程的真实源码与运行说明
+# RK3588：35 节课程源码与去重实验手册
 
-这次增加的是真实 Python/C++ 文件，不再只是讲义伪代码。分为两类：
+## 文档分工：不重复
 
-1. examples/lesson_00.py 到 lesson_34.py（35 个可执行入口）及 labs.py：Python >=3.9 标准库。实现数学算法、数据格式检查、只读系统诊断、性能统计、YOLO NMS/letterbox 等真实计算。没有板卡时也能学习、运行和测试。它们不冒充 RK3588 上的真实模型推理。
-2. examples/hardware/：SDK/模型/硬件依赖的真实模型转换及推理代码。需要你自己的 ONNX、RKNN、输入 tensor、匹配的 Toolkit2/Lite2/RKNPU2。
+- **`docs/*.md`（35份课程 MD）**：负责学习目标、概念、原理、案例、自测、课程字幕与参考资料。
+- **`examples/notes/lesson_XX.md`（34份）+ `examples/LESSON_27.md`（1份）**：负责该实例需要哪些输入文件、如何安装依赖、精确运行命令、输出在哪、如何验收与排错。**不复制理论段落**。
+- **`examples/lesson_XX.py`（35个独立程序）**：负责真正执行各讲对应的算法、诊断、模型工具或 SDK 调用。代码文件不再使用原先的七行 `from labs import main` 包装。
+- **`examples/hardware/`**：保存可复用的 RKNN、ONNX、RKNNLite 和 C++ 工具代码；不需要在每个 lesson 文件中重复造轮子。
 
-## 代码完成度审计（2026-10-16）
+**验收边界**：35 个脚本独立重写≠35 个实机部署项目均已完成。无 RK3588 时可在 CI 实测 PC 部分；零拷贝、RKLLM、板端 YOLO 等必须有真实板卡及 SDK/模型才能做最终验收。
 
-**重要纠正：35 个编号脚本不等于 35 个完整独立实验工程。** 实测仓库源码发现：
+## 去重实例索引
 
-- **第 27 讲**：已从薄包装改为约 255 行真实推理程序，具有 ONNX Runtime 和 RKNNLite 路径；ONNX 路径在 GitHub Actions 使用真实 CNN 模型、真实 PNG 图像执行成功，RK3588 硬件运行尚未实测。
-- **其余 25 讲（09–26、28–34）**：编号脚本仍只是 `from labs import main` 加对应编号的 7 行入口；其中部分真实算法计算在公共 `labs.py`，另有部分工具代码存在于 `hardware/`，但不能说这些课程已有独立完整板端项目。
-- **硬件专项**：RKNN 模型转换、RKNNLite 推理、单输入 C++ 分类、Ultralytics 模型导出、ONNX 参考推理和输入张量准备等源码已提供，模型/SDK/硬件兼容性需目标环境检验。零拷贝完整工程、摄像头 YOLO 检测和 RKLLM 应用等仍未交付独立可验收实现。
-
-逐课状态参见 [CODE_STATUS.md](CODE_STATUS.md)。请不要仅凭脚本数量和 CI 的入口测试通过宣称全部课程代码完成。
-
-## 第 00–08 讲：各讲独立实验
-
-第 00–08 讲已从统一包装器改成针对课程目标的独立程序，包括环境记录、板级只读诊断、卷积计算量、部署流程图、官方仓库 ref 校验、Toolkit2 环境、NPU Runtime 检查、频率时间序列和真正调用外部 RKNN Demo。每讲还提供 [实验说明](notes/)，功能回归测试已加入持续集成。网络访问、真实 NPU 和驱动依赖仍然需要对应环境；不能把离线控制流程测试误写为实机通过。
-
-## 第 27 讲：真实 MobileNet 分类推理
-
-`lesson_27.py` 现为约 255 行独立工程，不再使用 `labs.py` 的模拟 Top-K。它需要真实 ONNX / RKNN 模型和图片；支持 ONNX Runtime CPU 与 RKNNLite 端侧路径。详见 [第 27 讲运行说明](LESSON_27.md)，包含可重复的微型 ONNX 模型测试及官方 MobileNetV2 权重获取地址。
+| 课次 | 实操源码 | 实操说明 | 对应理论 |
+|---|---|---|---|
+| 00 导学 | [Python](lesson_00.py) | [操作 MD](notes/lesson_00.md) | [课程 MD](../docs/00_%E5%AF%BC%E5%AD%A6.md) |
+| 01 快速了解rk3588 | [Python](lesson_01.py) | [操作 MD](notes/lesson_01.md) | [课程 MD](../docs/01_%E5%BF%AB%E9%80%9F%E4%BA%86%E8%A7%A3rk3588.md) |
+| 02 NPU原理及对比 | [Python](lesson_02.py) | [操作 MD](notes/lesson_02.md) | [课程 MD](../docs/02_NPU%E5%8E%9F%E7%90%86%E5%8F%8A%E5%AF%B9%E6%AF%94.md) |
+| 03 RKNPU推理软件架构与模型部署流程 | [Python](lesson_03.py) | [操作 MD](notes/lesson_03.md) | [课程 MD](../docs/03_RKNPU%E6%8E%A8%E7%90%86%E8%BD%AF%E4%BB%B6%E6%9E%B6%E6%9E%84%E4%B8%8E%E6%A8%A1%E5%9E%8B%E9%83%A8%E7%BD%B2%E6%B5%81%E7%A8%8B.md) |
+| 04 瑞芯微github仓库介绍 | [Python](lesson_04.py) | [操作 MD](notes/lesson_04.md) | [课程 MD](../docs/04_%E7%91%9E%E8%8A%AF%E5%BE%AEgithub%E4%BB%93%E5%BA%93%E4%BB%8B%E7%BB%8D.md) |
+| 05 搭建rknn · toolkit2开发环境 | [Python](lesson_05.py) | [操作 MD](notes/lesson_05.md) | [课程 MD](../docs/05_%E6%90%AD%E5%BB%BArknn_toolkit2%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83.md) |
+| 06 设备端npu环境搭建与npu驱动更新 | [Python](lesson_06.py) | [操作 MD](notes/lesson_06.md) | [课程 MD](../docs/06_%E8%AE%BE%E5%A4%87%E7%AB%AFnpu%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E4%B8%8Enpu%E9%A9%B1%E5%8A%A8%E6%9B%B4%E6%96%B0.md) |
+| 07 查看和调整CPU · NPU · DDR频率 | [Python](lesson_07.py) | [操作 MD](notes/lesson_07.md) | [课程 MD](../docs/07_%E6%9F%A5%E7%9C%8B%E5%92%8C%E8%B0%83%E6%95%B4CPU_NPU_DDR%E9%A2%91%E7%8E%87.md) |
+| 08 快速体验rknn · demo | [Python](lesson_08.py) | [操作 MD](notes/lesson_08.md) | [课程 MD](../docs/08_%E5%BF%AB%E9%80%9F%E4%BD%93%E9%AA%8Crknn_demo.md) |
+| 09 rknn模型转换 | [Python](lesson_09.py) | [操作 MD](notes/lesson_09.md) | [课程 MD](../docs/09_rknn%E6%A8%A1%E5%9E%8B%E8%BD%AC%E6%8D%A2.md) |
+| 10 均值和标准差 | [Python](lesson_10.py) | [操作 MD](notes/lesson_10.md) | [课程 MD](../docs/10_%E5%9D%87%E5%80%BC%E5%92%8C%E6%A0%87%E5%87%86%E5%B7%AE.md) |
+| 11 模型转换工具rknn · convert | [Python](lesson_11.py) | [操作 MD](notes/lesson_11.md) | [课程 MD](../docs/11_%E6%A8%A1%E5%9E%8B%E8%BD%AC%E6%8D%A2%E5%B7%A5%E5%85%B7rknn_convert.md) |
+| 12 Netron的基本使用 | [Python](lesson_12.py) | [操作 MD](notes/lesson_12.md) | [课程 MD](../docs/12_Netron%E7%9A%84%E5%9F%BA%E6%9C%AC%E4%BD%BF%E7%94%A8.md) |
+| 13 rknn-toolkit2模型推理 | [Python](lesson_13.py) | [操作 MD](notes/lesson_13.md) | [课程 MD](../docs/13_rknn-toolkit2%E6%A8%A1%E5%9E%8B%E6%8E%A8%E7%90%86.md) |
+| 14 模型量化精度分析 | [Python](lesson_14.py) | [操作 MD](notes/lesson_14.md) | [课程 MD](../docs/14_%E6%A8%A1%E5%9E%8B%E9%87%8F%E5%8C%96%E7%B2%BE%E5%BA%A6%E5%88%86%E6%9E%90.md) |
+| 15 模型性能评估 | [Python](lesson_15.py) | [操作 MD](notes/lesson_15.md) | [课程 MD](../docs/15_%E6%A8%A1%E5%9E%8B%E6%80%A7%E8%83%BD%E8%AF%84%E4%BC%B0.md) |
+| 16 模型内存评估 | [Python](lesson_16.py) | [操作 MD](notes/lesson_16.md) | [课程 MD](../docs/16_%E6%A8%A1%E5%9E%8B%E5%86%85%E5%AD%98%E8%AF%84%E4%BC%B0.md) |
+| 17 模型剪枝 | [Python](lesson_17.py) | [操作 MD](notes/lesson_17.md) | [课程 MD](../docs/17_%E6%A8%A1%E5%9E%8B%E5%89%AA%E6%9E%9D.md) |
+| 18 模型加密 | [Python](lesson_18.py) | [操作 MD](notes/lesson_18.md) | [课程 MD](../docs/18_%E6%A8%A1%E5%9E%8B%E5%8A%A0%E5%AF%86.md) |
+| 19 多Batch处理 | [Python](lesson_19.py) | [操作 MD](notes/lesson_19.md) | [课程 MD](../docs/19_%E5%A4%9ABatch%E5%A4%84%E7%90%86.md) |
+| 20 多输入模型 | [Python](lesson_20.py) | [操作 MD](notes/lesson_20.md) | [课程 MD](../docs/20_%E5%A4%9A%E8%BE%93%E5%85%A5%E6%A8%A1%E5%9E%8B.md) |
+| 21 动态shape输入 | [Python](lesson_21.py) | [操作 MD](notes/lesson_21.md) | [课程 MD](../docs/21_%E5%8A%A8%E6%80%81shape%E8%BE%93%E5%85%A5.md) |
+| 22 ONNX模型编辑 | [Python](lesson_22.py) | [操作 MD](notes/lesson_22.md) | [课程 MD](../docs/22_ONNX%E6%A8%A1%E5%9E%8B%E7%BC%96%E8%BE%91.md) |
+| 23 自动生成部署C代码 | [Python](lesson_23.py) | [操作 MD](notes/lesson_23.md) | [课程 MD](../docs/23_%E8%87%AA%E5%8A%A8%E7%94%9F%E6%88%90%E9%83%A8%E7%BD%B2C%E4%BB%A3%E7%A0%81.md) |
+| 24 RKNN-ToolkitLite2基本使用 | [Python](lesson_24.py) | [操作 MD](notes/lesson_24.md) | [课程 MD](../docs/24_RKNN-ToolkitLite2%E5%9F%BA%E6%9C%AC%E4%BD%BF%E7%94%A8.md) |
+| 25 RKNPU2—通用C API | [Python](lesson_25.py) | [操作 MD](notes/lesson_25.md) | [课程 MD](../docs/25_RKNPU2%E2%80%94%E9%80%9A%E7%94%A8C%20API.md) |
+| 26 RKNPU2—零拷贝C API | [Python](lesson_26.py) | [操作 MD](notes/lesson_26.md) | [课程 MD](../docs/26_RKNPU2%E2%80%94%E9%9B%B6%E6%8B%B7%E8%B4%9DC%20API.md) |
+| 27 mobilenet模型部署 | [Python](lesson_27.py) | [操作 MD](LESSON_27.md) | [课程 MD](../docs/27_mobilenet%E6%A8%A1%E5%9E%8B%E9%83%A8%E7%BD%B2.md) |
+| 28 mobilenet模型代码封装 | [Python](lesson_28.py) | [操作 MD](notes/lesson_28.md) | [课程 MD](../docs/28_mobilenet%E6%A8%A1%E5%9E%8B%E4%BB%A3%E7%A0%81%E5%B0%81%E8%A3%85.md) |
+| 29 yolov5模型部署实战 | [Python](lesson_29.py) | [操作 MD](notes/lesson_29.md) | [课程 MD](../docs/29_yolov5%E6%A8%A1%E5%9E%8B%E9%83%A8%E7%BD%B2%E5%AE%9E%E6%88%98.md) |
+| 30 yolov26模型部署(从0到1版) · windows环境搭建与模型预测分析 | [Python](lesson_30.py) | [操作 MD](notes/lesson_30.md) | [课程 MD](../docs/30_yolov26%E6%A8%A1%E5%9E%8B%E9%83%A8%E7%BD%B2(%E4%BB%8E0%E5%88%B01%E7%89%88)_windows%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E4%B8%8E%E6%A8%A1%E5%9E%8B%E9%A2%84%E6%B5%8B%E5%88%86%E6%9E%90.md) |
+| 31 yolov26模型部署(从0到1版) · 数据集构建与模型训练 | [Python](lesson_31.py) | [操作 MD](notes/lesson_31.md) | [课程 MD](../docs/30_yolov26%E6%A8%A1%E5%9E%8B%E9%83%A8%E7%BD%B2(%E4%BB%8E0%E5%88%B01%E7%89%88)_%E6%95%B0%E6%8D%AE%E9%9B%86%E6%9E%84%E5%BB%BA%E4%B8%8E%E6%A8%A1%E5%9E%8B%E8%AE%AD%E7%BB%83.md) |
+| 32 yolov26模型部署(从0到1版) · 导出onnx与rknn模型并板端推理 | [Python](lesson_32.py) | [操作 MD](notes/lesson_32.md) | [课程 MD](../docs/30_yolov26%E6%A8%A1%E5%9E%8B%E9%83%A8%E7%BD%B2(%E4%BB%8E0%E5%88%B01%E7%89%88)_%E5%AF%BC%E5%87%BAonnx%E4%B8%8Erknn%E6%A8%A1%E5%9E%8B%E5%B9%B6%E6%9D%BF%E7%AB%AF%E6%8E%A8%E7%90%86.md) |
+| 33 yolov8模型部署(优化加速版) | [Python](lesson_33.py) | [操作 MD](notes/lesson_33.md) | [课程 MD](../docs/31_yolov8%E6%A8%A1%E5%9E%8B%E9%83%A8%E7%BD%B2(%E4%BC%98%E5%8C%96%E5%8A%A0%E9%80%9F%E7%89%88).md) |
+| 34 Deepseek · Qwen大模型部署 | [Python](lesson_34.py) | [操作 MD](notes/lesson_34.md) | [课程 MD](../docs/32_Deepseek_Qwen%E5%A4%A7%E6%A8%A1%E5%9E%8B%E9%83%A8%E7%BD%B2.md) |
 
 ## 运行普通电脑实验
 
@@ -31,22 +57,22 @@
     python3 examples/lesson_02.py
     python3 examples/lesson_10.py
     python3 examples/lesson_14.py
-    python3 examples/lesson_29.py
-    python3 examples/lesson_31.py
+    python3 examples/lesson_02.py
+    python3 examples/lesson_03.py
     python3 -m unittest discover -s examples/tests -v
 
 Windows 可以使用 py -3 替代 python3。
 
 必须提供真实文件的实验：
 
-    python3 examples/lesson_09.py --input model.onnx
-    python3 examples/lesson_11.py --input README.md
-    python3 examples/lesson_18.py --input README.md
+    python3 examples/lesson_09.py --onnx model.onnx --output build/model.rknn
+    python3 examples/lesson_11.py --jobs jobs.json
+    python3 examples/lesson_18.py generate-key --key-file build/test.key
     python3 -m pip install onnx
-    python3 examples/lesson_12.py --input model.onnx
-    python3 examples/lesson_31.py --input dataset/labels/train
+    python3 examples/lesson_12.py --onnx model.onnx
+    python3 examples/lesson_31.py --labels dataset/labels/train
 
-第 18 讲执行 SHA-256 完整性检查，不是模型加密。第 08 等展示输出的实验采用标明的演示性数据，绝非实际 NPU 测量结果。
+第 18 讲新增对文件的真实 Fernet 加密/解密（非 RKNN 原生模型加密格式）；第 08 讲调用实际 Demo，不再生成虚拟推理数据。
 
 ## 真正的 RKNN 模型转换（开发机）
 

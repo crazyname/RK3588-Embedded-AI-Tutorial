@@ -95,14 +95,15 @@ const hardwareByLesson={
 34:[]
 };
 const sdkFiles=hardwareByLesson[data.id]||[];
+const practicalNote=data.id===27?"LESSON_27.md":("notes/lesson_"+String(data.id).padStart(2,"0")+".md");
 const codeLinks='<ul><li><a href="../../examples/'+codeFile+
-'">打开本讲基础实验入口（可能调用公共 labs.py）：'+codeFile+'</a></li>'+
+'">打开本讲实操源码：'+codeFile+'</a></li>'+
 sdkFiles.map(f=>'<li><a href="../../examples/hardware/'+f+
 '">查看配套 SDK 示例：'+f+'</a></li>').join("")+
-'<li><a href="../../examples/README.md">代码运行环境、依赖和验证说明</a></li><li><a href="../../examples/CODE_STATUS.md">35节代码真实完成度审计</a></li></ul>';
+'<li><a href="../../examples/'+practicalNote+'">本讲操作MD（不重复理论）</a></li><li><a href="../../examples/README.md">代码运行环境、依赖和验证说明</a></li><li><a href="../../examples/CODE_STATUS.md">35节代码真实完成度审计</a></li></ul>';
 add("SOURCE CODE","本讲可执行源码与运行环境",
 '<div class="panel good"><h3>先运行，再对照讲义</h3>'+codeLinks+
-'<p>请先检查源码真实完成度：除第 27 讲的新实现外，其余编号脚本大多是 7 行公共实验入口，并非独立模型工程。SDK 代码需要真实模型、匹配 Runtime 与开发板，模拟结果不得作为 NPU 实测。</p></div>'+
+'<p>35 个编号入口已重写为对应的实操程序；验证时请区分 PC 可测的算法、SDK 工具调用和 RK3588 上板验收。SDK 代码需要真实模型、匹配 Runtime 与开发板，模拟结果不得作为 NPU 实测。</p></div>'+
 '<div class="panel soft"><h3>第一条运行命令</h3><div class="code-wrap"><pre><code>python3 examples/'+codeFile+
 ' --help</code></pre></div><p>从仓库根目录执行，再根据 README 提供真实输入。Python 通用实现集中在 examples/labs.py。</p></div>',
 "必须确认课件代码是算法实验还是板端完整推理。遇到缺少模型、SDK 或驱动时应明确记录阻塞项。");
