@@ -5,6 +5,7 @@ const db=window.COURSE_CATALOG||[],el=document.getElementById("lesson-data"),hos
 if(!el||!host)return;
 let data;try{data=JSON.parse(el.textContent);}catch(e){host.textContent="课件数据读取失败";return;}
 const m=db[data.id]||{title:data.title,duration:90,unit:"嵌入式 AI"},extra=(window.COURSE_EXTRA||{})[data.id]||{};
+let depth={};try{const el=document.getElementById("lesson-depth");if(el)depth=JSON.parse(el.textContent);}catch(err){console.warn("Detailed lesson data could not be read",err);}
 const esc=s=>String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 const fmt=s=>esc(s).replace(/\u0060([^\u0060]+)\u0060/g,"<code>$1</code>");
 const list=a=>"<ul>"+(a||[]).map(t=>"<li>"+fmt(t)+"</li>").join("")+"</ul>";
@@ -24,13 +25,47 @@ const core=(data.core||"").trim(),ss=core.match(/[^。！？；]+[。！？；]?
 const p1=ss.slice(0,half).join(""),p2=ss.slice(half).join("")||core;
 add("THEORY","核心原理 · 机制",'<div class="panel"><h3>技术解释</h3><p class="big">'+fmt(p1)+'</p></div>'+cards(['<h3>输入侧要核对</h3><p>来源、类型、格式、尺寸和版本。</p>','<h3>输出侧要核对</h3><p>结果是否能解释、能量化、能复现。</p>']),"引导学生把术语说成可观察的接口行为。");
 add("THEORY","核心原理 · 工程约束",'<div class="panel"><p class="big">'+fmt(p2)+'</p></div>'+cards(['<h3>先建立基线</h3><p>在明确测试条件下保存一个正确结果。</p>','<h3>再判断取舍</h3><p>根据精度、时间、资源与兼容性评估方案。</p>']),"不能把模型转换成功、速度变快与业务精度合格混为一谈。");
+
+if(Array.isArray(depth.concepts)){
+depth.concepts.forEach((c,i)=>{
+ add("DEEP DIVE","专题精讲 "+(i+1)+" · "+c.title,
+   '<div class="panel good"><h3>'+fmt(c.title)+'</h3><p class="big">'+fmt(c.explain)+'</p></div>'+
+   '<div class="panel soft"><h3>理解要点 / 判断标准</h3><p>'+fmt(c.takeaway)+'</p></div>',
+   "引导学生说明概念如何影响真实工程中的输入、输出或资源使用；鼓励举反例。");
+});
+}
+
 const mid=Math.ceil(data.steps.length/2);
 add("LAB","实践 01 · 准备与运行",'<p>先核对运行环境、输入文件和所需依赖，再按照下面的步骤开始实验。</p>'+stepList(data.steps.slice(0,mid),0),"先有稳定的最小可运行路径；涉及刷机或设备写操作要有回退方案。");
 add("LAB","实践 02 · 运行与检查",'<p>继续完成实验，对照预期结果逐项核验，并记录失败的真实现象。</p>'+stepList(data.steps.slice(mid),mid),"每一步让学生说明：运行了什么、看到了什么、凭什么认为成功。");
 if(data.code)add("EXAMPLE","参考命令或代码",'<div class="code-wrap"><button type="button" class="copy-code">复制片段</button><pre><code>'+esc(data.code)+'</code></pre></div><p class="footnote">代码取自对应教学讲义，只作参考；实际运行前核对 SDK 版本、资源路径与模型格式。</p>',"对关键参数、返回值和资源释放逐行讲解。");
 else add("DEMO","示范操作 · 观察清单",cards(['<h3>演示前</h3>'+list(["确认型号、SDK 与板端驱动版本",data.steps[0]||"准备测试输入","确定预期输出和日志位置"]),'<h3>演示后</h3>'+list([data.steps[data.steps.length-1]||"核对程序结果","保存输入、输出与截图","列出未通过的验证项"])]),"缺少完整官方实验工程时用可复现的官方示例或概念演示，不编造运行证据。");
+
+if(Array.isArray(depth.lab)&&depth.lab.length){
+ add("LAB PLUS","细化实验 · 操作与预期",
+  '<div class="three-cols">'+depth.lab.map((s,i)=>'<div class="panel"><span class="eyebrow">TASK 0'+(i+1)+'</span><h3>'+fmt(s.title)+'</h3><p>'+fmt(s.action)+'</p><div class="panel good" style="margin-top:12px"><strong>验证证据</strong><p>'+fmt(s.verify)+'</p></div></div>').join("")+'</div>',
+  "每组保留实际观察值；未运行的示例写“未验证”，不要填写虚构截图。");
+}
+if(depth.snippet){
+ add("LAB PLUS","补充实验片段与解释",'<div class="code-wrap"><button type="button" class="copy-code">复制片段</button><pre><code>'+esc(depth.snippet)+'</code></pre></div><p class="footnote">实验片段为教学示例。核对路径、Python/SDK/驱动和模型属性后再使用；不要在未知硬件上执行写入或更新系统的命令。</p>',
+ "这一片段主要用于辅助理解；清楚说明依赖、可观察输出和修改范围。");
+}
+
 add("RECORD","实验报告需要记录什么？",'<div class="three-cols"><div class="panel"><div class="eyebrow">INPUT</div><h3>条件</h3><p>模型、硬件、版本、输入张量、启动参数。</p></div><div class="panel"><div class="eyebrow">PROCESS</div><h3>过程</h3><p>执行动作、返回码、输出日志与阶段耗时。</p></div><div class="panel"><div class="eyebrow">RESULT</div><h3>结论</h3><p>实际现象、与基线差异、待解决的问题。</p></div></div>',"请学生保存可共享的结果，而非仅回答“成功了”。");
 add("DEBUG","常见问题与错误诊断",'<div class="three-cols">'+data.pitfalls.slice(0,3).map((s,i)=>'<div class="panel warn"><div class="eyebrow">RISK 0'+(i+1)+'</div><h3>典型误区</h3><p>'+fmt(s)+'</p><small class="muted">复现 → 缩小范围 → 单变量修改 → 重新验证</small></div>').join("")+'</div>',"每个误区尝试列出最小复现步骤和一个可检查的证据。");
+
+if(Array.isArray(depth.diagnosis)&&depth.diagnosis.length){
+ add("DIAGNOSTIC","具体报错与定位路径",
+ '<div class="three-cols">'+depth.diagnosis.map((x,i)=>'<div class="panel warn"><span class="eyebrow">ISSUE 0'+(i+1)+'</span><h3>'+fmt(x.symptom)+'</h3><p><strong>可能原因：</strong>'+fmt(x.reason)+'</p><p><strong>如何查证：</strong>'+fmt(x.check)+'</p></div>').join("")+'</div>',
+ "帮助学生区分现象、假设和验证动作；从最小改动开始排查。");
+}
+if(depth.case){
+ const c=depth.case;
+ add("CASE STUDY","情境分析 · 从症状到证据",
+  '<div class="panel"><h3>情境题</h3><p class="big">'+fmt(c.problem)+'</p></div>'+cards(['<h3>建议推理过程</h3><p>'+fmt(c.analysis)+'</p>','<h3>需提交的证据</h3><p>'+fmt(c.evidence)+'</p>']),
+  "先隐藏讲解答案让学生讨论，再用诊断链逐步收束。");
+}
+
 if(extra.quiz){
 const q=extra.quiz;
 add("CHECK","课堂互动测验",'<div class="panel"><h3>'+fmt(q[0])+'</h3><div class="quiz-options">'+q[1].map((x,i)=>'<label class="quiz-option"><input type="radio" name="quiz" value="'+i+'">'+String.fromCharCode(65+i)+'. '+fmt(x)+'</label>').join("")+'</div><button id="checkQuiz" type="button" class="btn">提交并解释</button><div id="quizFeedback" class="quiz-feedback" role="status"></div></div>',"先让学生独立作答，再请一位同学解释原因。");
@@ -52,7 +87,7 @@ document.getElementById("prevBtn").disabled=pos===0;
 document.getElementById("nextBtn").textContent=pos===slides.length-1?"返回总目录":"下一页 →";
 document.querySelectorAll(".outline-item").forEach((n,i)=>n.classList.toggle("active",i===pos));
 const quizBtn=document.getElementById("checkQuiz");if(quizBtn){quizBtn.onclick=function(){const chosen=document.querySelector('input[name="quiz"]:checked'),f=document.getElementById("quizFeedback"),q=extra.quiz;if(!chosen)f.textContent="请先选择一个选项。";else{const ok=Number(chosen.value)===q[2];f.innerHTML=(ok?"<strong>回答正确。</strong> ":"<strong>再想一想。</strong> 正确选项："+String.fromCharCode(65+q[2])+"。 ")+fmt(q[3]);}f.classList.add("visible");};}
-const copy=v.querySelector(".copy-code");if(copy)copy.onclick=function(){if(navigator.clipboard)navigator.clipboard.writeText(data.code).then(()=>{copy.textContent="已复制";}).catch(()=>{copy.textContent="请手动选择复制";});};
+const copy=v.querySelector(".copy-code");if(copy)copy.onclick=function(){if(navigator.clipboard)navigator.clipboard.writeText(v.querySelector("pre").textContent).then(()=>{copy.textContent="已复制";}).catch(()=>{copy.textContent="请手动选择复制";});};
 v.querySelectorAll("input[data-check]").forEach(ch=>{const key="rk3588:"+data.id+":"+ch.dataset.check;try{ch.checked=localStorage.getItem(key)==="1";}catch(e){}ch.onchange=function(){try{localStorage.setItem(key,ch.checked?"1":"0");}catch(e){}};});
 try{localStorage.setItem("rk3588:"+data.id+":last",String(pos));}catch(e){}
 }
