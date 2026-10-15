@@ -110,6 +110,13 @@ dmesg | grep -Ei 'rknpu|npu' | tail -n 30
 
 > 以具体 release 的官方文档为准；本教程中的设备结果尚未在你的硬件环境实测。
 
+## 配套可运行源码
+
+- [本节实际 Python 程序](../examples/lesson_06.py)（基于 [labs.py](../examples/labs.py) 实现）
+- [全部源码、依赖与执行方法](../examples/README.md)
+
+从仓库根目录执行 `python3 examples/lesson_06.py --help`，然后按代码说明传入真实文件或直接运行该课程的数学/诊断实验。基础实验不等于已经在 RK3588 NPU 上真实运行过模型。
+
 ## 原始字幕（仅供核对）
 
 <details>
