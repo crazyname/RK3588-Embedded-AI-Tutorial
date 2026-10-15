@@ -35,6 +35,22 @@ jobs:
               assert "usage:" in result.stdout.lower(), (n, result.stdout, result.stderr)
           print("35 CLI interfaces checked; functional behavior is tested separately.")
           PY
+      - name: Ensure all lessons are substantive programs with practical MD
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import subprocess, sys
+          for i in range(35):
+              src=Path(f"examples/lesson_{i:02d}.py")
+              body=src.read_text(encoding="utf8")
+              assert len(body.splitlines()) >= 20, i
+              assert "from labs import main" not in body, i
+              note=Path("examples/LESSON_27.md" if i==27 else f"examples/notes/lesson_{i:02d}.md")
+              assert note.is_file() and len(note.read_text(encoding="utf8")) > 200, i
+              out=subprocess.run([sys.executable,str(src),"--help"],check=True,capture_output=True,text=True)
+              assert "usage:" in out.stdout.lower(), i
+          print("35 real CLI programs + 35 nonduplicative practical guides verified")
+          PY
       - name: Check hardware script argument parsers
         run: |
           python examples/hardware/convert_onnx.py --help
@@ -87,6 +103,28 @@ jobs:
           assert report["topk"][0]["score"] > report["topk"][1]["score"]
           print("Lesson27 real ONNX inference passed.")
           PY
+
+      - name: Execute independent software labs against real files
+        run: |
+          mkdir -p build/smoke/labels
+          printf '0 0.5 0.5 0.4 0.2\n' > build/smoke/labels/sample.txt
+          python examples/lesson_00.py --output build/smoke/env.json
+          python examples/lesson_01.py --output build/smoke/board.json
+          python examples/lesson_02.py --height 48 --width 48
+          python examples/lesson_03.py --dot build/smoke/deploy.dot
+          python examples/lesson_05.py --output build/smoke/python.json
+          python examples/lesson_06.py --output build/smoke/npu.json
+          python examples/lesson_07.py --samples 2 --interval 0 --output build/smoke/freq.csv
+          python examples/lesson_10.py --image build/test-onnx/test.png --width 4 --height 4
+          python examples/lesson_12.py --onnx build/test-onnx/tiny.onnx
+          python examples/lesson_14.py --float build/test-onnx/out.npz --quantized build/test-onnx/out.npz
+          python examples/lesson_16.py --pid $ --samples 1 --interval 0
+          python examples/lesson_17.py --output build/smoke/pruned.npz
+          python examples/lesson_19.py --images build/test-onnx/test.png build/test-onnx/test.png --batch 2 --width 4 --height 4
+          python examples/lesson_22.py --onnx build/test-onnx/tiny.onnx --output build/smoke/optimized.onnx --input-npy build/test-onnx/input.npy
+          python examples/lesson_23.py --onnx build/test-onnx/tiny.onnx --compile
+          python examples/lesson_28.py --onnx build/test-onnx/tiny.onnx --images build/test-onnx/test.png --labels build/test-onnx/labels.txt --width 4 --height 4
+          python examples/lesson_31.py --labels build/smoke/labels
 
       - name: Validate ROCK 5B reference tools with mocks and real numpy preprocessing
         run: |
