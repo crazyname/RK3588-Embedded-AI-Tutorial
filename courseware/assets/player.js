@@ -65,5 +65,15 @@ document.getElementById("noteBtn").onclick=()=>document.body.classList.toggle("s
 document.getElementById("printBtn").onclick=()=>window.print();
 document.addEventListener("keydown",e=>{if(/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName))return;if(e.key==="ArrowRight"||e.key===" "){e.preventDefault();jump(pos+1);}else if(e.key==="ArrowLeft")jump(pos-1);else if(e.key==="Home")jump(0);else if(e.key==="End")jump(slides.length-1);else if(e.key.toLowerCase()==="n")document.body.classList.toggle("show-notes");else if(e.key.toLowerCase()==="p")window.print();else if(e.key.toLowerCase()==="f"){if(!document.fullscreenElement)document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen();else document.exitFullscreen&&document.exitFullscreen();}});
 try{const last=Number(localStorage.getItem("rk3588:"+data.id+":last"));if(Number.isFinite(last)&&last>=0&&last<slides.length)pos=last;}catch(e){}
+
+(function setupPrintDeck(){
+const container=document.createElement("div");
+container.id="printDeck";
+container.innerHTML=slides.map(function(s,i){return '<section class="slide"><span class="kicker">'+esc(s.cat)+' / '+String(i+1).padStart(2,"0")+'</span><h2>'+esc(s.title)+'</h2>'+s.body+'</section>';}).join("");
+document.body.appendChild(container);
+const style=document.createElement("style");
+style.textContent="#printDeck{display:none}@media print{#app{display:none!important}#printDeck{display:block!important}#printDeck .slide{display:flex!important;break-after:page;page-break-after:always}#printDeck button{display:none!important}#printDeck .quiz-feedback{display:none!important}}";
+document.head.appendChild(style);
+})();
 show();
 })();
