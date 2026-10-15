@@ -117,6 +117,8 @@ python3 -c "import platform; print(platform.platform(), platform.machine())"
 
 ## 配套可运行源码
 
+- [本讲独立操作手册（只含运行、参数与验收）](../examples/notes/lesson_03.md)
+
 - [本节实际 Python 程序](../examples/lesson_03.py)（基于 [labs.py](../examples/labs.py) 实现）
 - [全部源码、依赖与执行方法](../examples/README.md)
 

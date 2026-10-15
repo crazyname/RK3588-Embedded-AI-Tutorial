@@ -112,6 +112,8 @@ dmesg | grep -Ei 'rknpu|npu' | tail -n 30
 
 ## 配套可运行源码
 
+- [本讲独立操作手册（只含运行、参数与验收）](../examples/notes/lesson_06.md)
+
 - [本节实际 Python 程序](../examples/lesson_06.py)（基于 [labs.py](../examples/labs.py) 实现）
 - [全部源码、依赖与执行方法](../examples/README.md)
 

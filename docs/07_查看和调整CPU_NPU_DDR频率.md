@@ -111,6 +111,8 @@ find /sys/devices/system/cpu -name scaling_cur_freq -print 2>/dev/null
 
 ## 配套可运行源码
 
+- [本讲独立操作手册（只含运行、参数与验收）](../examples/notes/lesson_07.md)
+
 - [本节可运行 Python 实验](../examples/lesson_07.py)（实现于 [labs.py](../examples/labs.py)）
 - [代码环境、依赖、输入输出及使用说明](../examples/README.md)
 
