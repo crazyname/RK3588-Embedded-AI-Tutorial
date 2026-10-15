@@ -1,0 +1,90 @@
+# RK3588 课程的真实源码与运行说明
+
+这次增加的是真实 Python/C++ 文件，不再只是讲义伪代码。分为两类：
+
+1. examples/lesson_00.py 到 lesson_34.py（35 个可执行入口）及 labs.py：Python >=3.9 标准库。实现数学算法、数据格式检查、只读系统诊断、性能统计、YOLO NMS/letterbox 等真实计算。没有板卡时也能学习、运行和测试。它们不冒充 RK3588 上的真实模型推理。
+2. examples/hardware/：SDK/模型/硬件依赖的真实模型转换及推理代码。需要你自己的 ONNX、RKNN、输入 tensor、匹配的 Toolkit2/Lite2/RKNPU2。
+
+## 运行普通电脑实验
+
+从仓库根目录执行以下命令：
+
+    python3 examples/lesson_00.py
+    python3 examples/lesson_02.py
+    python3 examples/lesson_10.py
+    python3 examples/lesson_14.py
+    python3 examples/lesson_29.py
+    python3 examples/lesson_31.py
+    python3 -m unittest discover -s examples/tests -v
+
+Windows 可以使用 py -3 替代 python3。
+
+必须提供真实文件的实验：
+
+    python3 examples/lesson_09.py --input model.onnx
+    python3 examples/lesson_11.py --input README.md
+    python3 examples/lesson_18.py --input README.md
+    python3 -m pip install onnx
+    python3 examples/lesson_12.py --input model.onnx
+    python3 examples/lesson_31.py --input dataset/labels/train
+
+第 18 讲执行 SHA-256 完整性检查，不是模型加密。第 08 等展示输出的实验采用标明的演示性数据，绝非实际 NPU 测量结果。
+
+## 真正的 RKNN 模型转换（开发机）
+
+先在官方 SDK 支持的 Linux x86_64/Python 环境安装 RKNN-Toolkit2。转换前核对源模型的 mean/std 与 RGB/BGR。下面的 mean/std 是某些官方 YOLOv5 实例使用的配置，不适用于所有模型：
+
+    python3 examples/hardware/convert_onnx.py --onnx model.onnx --output model.rknn --mean 0,0,0 --std 255,255,255
+
+INT8 量化还需真实校准图片列表：
+
+    python3 examples/hardware/convert_onnx.py --onnx model.onnx --output model_int8.rknn --mean 0,0,0 --std 255,255,255 --quantize --dataset calibration.txt
+
+## ONNX Runtime 参考推理（开发机）
+
+准备真实预处理后的输入 tensor 文件 input.npy，其 shape/dtype 必须匹配 ONNX：
+
+    python3 -m pip install numpy onnxruntime
+    python3 examples/hardware/onnx_reference.py --onnx model.onnx --input-npy input.npy --output reference.npz
+
+程序运行真实 ONNX Runtime 并将输出保存为 NPZ 文件，便于后续比较。
+
+## RK3588 上真实 Lite2 NPU 推理
+
+在 RK3588 板上安装匹配 BSP 的 RKNNLite wheel、NumPy、Runtime/Driver，然后执行：
+
+    python3 examples/hardware/lite_infer.py --rknn model.rknn --input-npy input.npy --output board.npz --warmup 5 --runs 20
+
+input.npy 必须是按实际模型协议准备的真实 tensor，并非随意生成的数据。程序打印 RKNNLite 接口耗时与输出 shape，输出不是摄像头端到端 FPS。
+
+## RKNPU2 C++ 推理
+
+硬件工程文件：examples/hardware/rknn_classify.cpp、examples/hardware/CMakeLists.txt。
+
+此程序适用于单输入单输出的分类模型，输入是预处理后的 raw tensor 文件而不是 JPG 图片。确保 SDK 的 rknn_api.h、适配 RK3588 ARM64 的 librknnrt.so、板端 Driver 与 RKNN 模型相兼容。示例命令：
+
+    cmake -S examples/hardware -B build/rknn -DRKNN_INCLUDE_DIR=/absolute/path/to/include -DRKNN_LIB=/absolute/path/to/librknnrt.so
+    cmake --build build/rknn -j
+    ./build/rknn/rknn_classifier model.rknn input_tensor.raw
+
+原始 tensor 的字节数、type、format 要与程序查询到的模型输入属性一致。示例输出类别索引与数值，具体类别名称须使用该模型配套的标签表。
+
+## Ultralytics 模型导出 ONNX
+
+在训练主机上安装 Ultralytics 与 ONNX，准备真实的 best.pt：
+
+    python3 -m pip install ultralytics onnx
+    python3 examples/hardware/export_yolo_onnx.py --weights best.pt --imgsz 640
+
+该程序真实导出并用 ONNX checker 检查。能导出 ONNX 不意味着特定 YOLO26 模型已经得到 RK3588 RKNN 编译器支持；继续做 ONNX Runtime 与 RKNN 兼容验证。对于官方支持的检测模型完整图像采集与解码，优先使用同一版本的 RKNN Model Zoo 官方 YOLOv5/YOLOv8 完整示例。
+
+## 代码与测试状态
+
+- 35 个 Python 文件只是对应的课程实验入口，算法实现在公用 labs.py。并非 35 套独立模型部署工程。
+- Python 自测：python3 -m unittest discover -s examples/tests -v
+- GitHub Actions：.github/workflows/examples-ci.yml 负责编译语法和测试 Python 入口。
+- hardware/ 是实际 SDK 代码，但没有所需模型/板卡就无法确认运行结果。本仓库未提供声称实测通过的 C++ 二进制、模型权重或产测日志。
+- 特定 SDK API 的行为请以官方发布版本的 rknn_api.h、RKNN-Toolkit2 文档为准。
+
+官方参考：https://github.com/airockchip/rknn-toolkit2
+模型示例：https://github.com/airockchip/rknn_model_zoo
