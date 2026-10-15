@@ -1,0 +1,10 @@
+results/
+__pycache__/
+*.rknn
+*.onnx
+*.npz
+*.npy
+*.raw
+*.jpg
+*.jpeg
+*.png

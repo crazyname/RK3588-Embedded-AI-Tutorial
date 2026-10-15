@@ -42,6 +42,21 @@
 - `run_official_yolov8.py` **不会自动 sudo、apt install、下载模型或刷写固件**。没有官方文件将明确报错，文件齐全才启动原版实例。
 - 真正的 RKNN 模型输出和 FPS，必须由实物板端运行记录来确认。板端路径不兼容时优先查官方发布说明。
 
+## MobileNet：真正的图片到 RKNNLite 分类源码
+
+厂商的 [MobileNet 示例](https://docs.radxa.com/en/rock5/rock5b/app-development/ai/mobilenet) 提供了模型转换和 C API 工程；此处补充一个本仓库自己实现的 [Python RKNNLite 图片分类程序](apps/mobilenet_image_lite.py)。
+
+先用官方 Model Zoo 的 `mobilenetv2-12.onnx` 与配套转换脚本生成适用于 `rk3588` 的 `mobilenet_v2.rknn`，并下载对应 `bell.jpg` 等样例文件。务必理解并核对该模型期望的 **224×224、RGB、UINT8、NHWC** 输入协议，以及是否已在 RKNN 编译阶段包含 mean/std。示例运行：
+
+    python3 boards/radxa-rock5b/apps/mobilenet_image_lite.py \
+      --model /path/to/mobilenet_v2.rknn --image /path/to/bell.jpg \
+      --confirm-rgb-uint8-nhwc --resize center-crop \
+      --runs 10 --warmup 3 --json results/mobilenet.json
+
+实际 resize/crop 规则应与用于对照的官方 C 示例统一。这个 Python 应用会进行真实的 RKNNLite 推理并打印 Top-K 类索引与分数；如果提供 `--labels`，只有标签行数与模型输出类别数一致才映射类名，避免把偏移错误强行打印为正确类别。分类分数未经 softmax，不应直接称为概率。
+
+**测试状态**：Python 代码可以在 CI 用伪运行时测试控制流程和预处理，但模型输出和速度仍需在 ROCK 5B 实机核对；不同 SDK release 的 RKNN 模型输入契约可能变化。
+
 ## 四、公开来源（请与自己的板卡版本核对）
 
 - [ROCK 5B/5B+ 官方中文手册](https://docs.radxa.com/rock5/rock5b)

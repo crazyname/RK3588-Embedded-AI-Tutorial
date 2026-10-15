@@ -3,6 +3,7 @@ on:
   push:
     paths:
       - "examples/**"
+      - "boards/**"
       - ".github/workflows/examples-ci.yml"
   workflow_dispatch:
 jobs:
@@ -14,7 +15,9 @@ jobs:
         with:
           python-version: "3.11"
       - name: Check Python syntax
-        run: python -m compileall -q examples
+        run: |
+          python -m compileall -q examples
+          python -m compileall -q boards/radxa-rock5b
       - name: Install dependencies for a REAL ONNX inference test
         run: python -m pip install --quiet numpy onnx onnxruntime pillow
       - name: Unit tests
@@ -88,3 +91,11 @@ jobs:
           assert report["topk"][0]["score"] > report["topk"][1]["score"]
           print("Lesson27 real ONNX inference passed.")
           PY
+
+      - name: Validate ROCK 5B reference tools with mocks and real numpy preprocessing
+        run: |
+          python -m unittest discover -s boards/radxa-rock5b/tests -v
+          python boards/radxa-rock5b/tools/board_probe.py --output build/test-onnx/rock5b-probe.json
+          python boards/radxa-rock5b/tools/usb_camera_check.py --help
+          python boards/radxa-rock5b/tools/run_official_yolov8.py --help
+          python boards/radxa-rock5b/apps/mobilenet_image_lite.py --help
