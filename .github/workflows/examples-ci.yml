@@ -22,8 +22,8 @@ jobs:
         run: python -m pip install --quiet numpy onnx onnxruntime pillow
       - name: Unit tests
         run: python -m unittest discover -s examples/tests -v
-      - name: Audit current lesson structure
-        run: python examples/audit_course.py
+      - name: Enforce all 35 dedicated sources and runbooks
+        run: python examples/audit_course.py --strict
       - name: Smoke 35 course CLI interfaces
         run: |
           python - <<'PY'
