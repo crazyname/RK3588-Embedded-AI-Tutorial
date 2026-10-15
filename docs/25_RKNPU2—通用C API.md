@@ -1,12 +1,6 @@
 # 第25讲｜RKNPU2—通用C API
 
-> 掌握板端 C/C++ 通用推理 API 的完整生命周期。
-
-**课程模块：** 高级输入与板端 API　｜　**目标平台：** RK3588
-
-**视频：** [Bilibili 原课程](https://www.bilibili.com/video/BV11DjT6uEhc)　｜　**原始转写：** [TXT](../%E6%96%87%E6%9C%AC/25_RKNPU2%E2%80%94%E9%80%9A%E7%94%A8C%20API.txt)
-
-> 本文件由原课程语音字幕整理。原始字幕存在自动识别误差，涉及 SDK 命令、接口和芯片兼容性请以当前官方版本说明为准。
+> 自学重编版：技术原理与板端实验并重。原视频字幕留作核对，需按当前官方 SDK 验证命令。
 
 ## 学习目标
 
@@ -14,49 +8,112 @@
 - 理解输入输出张量与资源所有权
 - 完成 RK3588 上的 CMake/交叉编译/推理
 
-## 核心知识
+## 核心原理与工程设计
 
-C API 的关键路径是初始化上下文 `rknn_init` → 查询输入输出属性 `rknn_query` → 设置输入 `rknn_inputs_set` → 执行 `rknn_run` → 取结果 `rknn_outputs_get` → 释放输出 `rknn_outputs_release` → 销毁上下文 `rknn_destroy`。具体还包括读取模型、预处理、结果解码以及每一步的错误码检查。
+### C API 的完整生命周期
 
-## 实践步骤
+典型路径是读取 RKNN 文件 → `rknn_init` 创建上下文 → `rknn_query` 获取输入输出个数和每个 tensor 的属性 → `rknn_inputs_set` 设置输入 → `rknn_run` 执行 → `rknn_outputs_get` 读取结果 → `rknn_outputs_release` 释放输出资源 → `rknn_destroy` 销毁上下文。任何一步失败都要处理返回码并释放已申请资源。
 
-1. 获取 RK3588 适配的头文件、librknnrt 和官方示例
-2. 初始化模型上下文并获取输入输出形状、dtype、format、量化参数
-3. 将图像转换为模型要求的输入张量并设置通用 I/O
-4. 运行推理、读取输出、完成 top-k 或检测解码
-5. 释放输出 buffer、上下文和临时图像缓存
-6. 在开发机交叉编译或直接在开发板编译，核对运行时链接
+**理解检查：** 能把每个 API 的责任、拥有的内存和可能失败条件列出来。
 
-### 参考结构
+### 张量属性决定程序是否正确
 
+`rknn_tensor_attr` 提供 dims、type、fmt、量化参数、size 等信息；不要假定所有模型都只有一个输入或输出，也不要依照过时教程硬写 NHWC、RGB、UINT8。对于量化输出，后处理必须考虑 scale/zero_point 或使用 SDK 支持的浮点输出路径。
+
+**理解检查：** 先打印实际张量属性，再分配 buffer 与解释输出，而不是反过来。
+
+### 资源所有权与异常清理
+
+`rknn_outputs_get` 的缓冲区在不同获取方式下由 SDK 或调用方管理，具体需读对应 API 文档。始终与 release 配对。读取模型字节流的内存、图像缓存和 RKNN 上下文也要在失败路径清理。C++ 可通过 RAII 封装资源，减少漏释放。
+
+**理解检查：** 对模型不存在、初始化失败、推理失败三种分支证明不会泄漏内存。
+
+## 动手实验
+
+### 实验 1：阅读官方代码
+
+在 Model Zoo 的 C++ 示例中定位 `rknn_init/query/run/outputs_get/outputs_release/destroy`，画一张资源生命周期图。
+
+**完成证据：** 所有申请/释放成对出现，包含错误分支。
+
+### 实验 2：查询 tensor 属性
+
+基于当前 SDK 头文件和已有的 C++ Demo 打印 input/output 的 dims、fmt、dtype、scale、zp。
+
+**完成证据：** 输出包含真实值，且应用分配的 buffer 大小与要求匹配。
+
+### 实验 3：做失败用例
+
+分别使用不存在的模型文件、错误输入尺寸和不兼容 runtime 测试，确认错误码被记录且程序安全退出。
+
+**完成证据：** 失败后重复运行不产生持续增长的内存占用。
+
+### 参考片段
+
+```cpp
+// 教学伪代码：细节以 SDK 的 rknn_api.h 为准
+rknn_context ctx = 0;
+// rknn_init(&ctx, model_data, model_len, 0, NULL);
+// rknn_query(ctx, RKNN_QUERY_IN_OUT_NUM, &io_num, sizeof(io_num));
+// rknn_inputs_set(ctx, input_count, inputs);
+// rknn_run(ctx, NULL);
+// rknn_outputs_get(ctx, output_count, outputs, NULL);
+// rknn_outputs_release(ctx, output_count, outputs);
+// rknn_destroy(ctx);
 ```
-rknn_init
-  ↓
-rknn_query（查询输入输出属性）
-  ↓
-rknn_inputs_set（设置输入）
-  ↓
-rknn_run（执行推理）
-  ↓
-rknn_outputs_get → 后处理 → rknn_outputs_release
-  ↓
-rknn_destroy（销毁上下文）
-```
 
-## 完成标准
+> C API 的片段含伪代码，非可独立编译程序；以本地 SDK 的头文件、示例工程和类型定义为准。
+
+## 排错技巧
+
+### rknn_run 成功但结果全零
+
+- 根因：输入 dtype、size、layout 或量化预处理与模型不符。
+- 如何核对：逐项打印 rknn_query 与实际 rknn_input 属性，再检查预处理 tensor。
+
+### 连续运行内存上涨
+
+- 根因：获取输出后没有释放，或图像/模型缓冲对象未清理。
+- 如何核对：对照每次 outputs_get 与 outputs_release，监控 VmHWM 的长期变化。
+
+## 工程案例
+
+**情境：** `rknn_outputs_get` 返回正常，你忘记 `rknn_outputs_release`，连续运行半小时内存不断上升。应如何修复？
+
+**分析过程：** 建立明确的输出资源释放规则，确保成功路径和中间错误路径都执行相应释放。在 C++ 中可将上下文与输出 buffer 管理封装在 RAII 对象中，避免多处分支遗漏。
+
+**提交证据：** 调用时序图、失败分支测试和修复前后 RSS/VmHWM 曲线。
+
+## 自测题
+
+读取输出后必须做什么？
+
+- A. 释放输出并销毁上下文
+- B. 只打印内容
+- C. 删除模型文件
+
+<details><summary>展开答案与解释</summary>
+
+**A。** 应按照资源生命周期配对释放。
+
+</details>
+
+## 本讲验收
 
 - [ ] 程序输出正确的模型输入输出属性
 - [ ] 任何失败分支都能正确释放资源
 
-## 常见问题与注意事项
+## 练习与扩展
 
-- 模型输入设置要与真实数据的 dtype、layout 一致
-- 在交叉编译环境中注意 aarch64 和 x86_64 库的区别
-- 通用 API 可能存在额外的数据拷贝与布局转换
+- 设计一份带错误处理与资源释放的 C API 调用顺序图
 
-## 课后练习
+## 权威资料
 
-1. 设计一份带错误处理与资源释放的 C API 调用顺序图
+- [RKNPU2 C 接口](https://github.com/rockchip-linux/rknpu2)
+- [Model Zoo C++ 运行代码](https://github.com/airockchip/rknn_model_zoo)
+- [RKNN SDK 用户指南](https://github.com/airockchip/rknn-toolkit2/tree/master/doc)
+
+> 未经板端测试的示例不代表可直接用于生产环境。
 
 ## 原始字幕附录（仅供核对）
 
