@@ -42,3 +42,20 @@ jobs:
           python examples/hardware/export_yolo_onnx.py --help
           python examples/hardware/prepare_image.py --help
           python examples/hardware/compare_outputs.py --help
+          python examples/hardware/create_tiny_onnx.py --help
+
+      - name: Install dependencies for a REAL ONNX inference test
+        run: python -m pip install --quiet numpy onnx onnxruntime pillow
+      - name: Generate and execute actual tiny ONNX CNN
+        run: |
+          mkdir -p build/test-onnx
+          python examples/hardware/create_tiny_onnx.py --onnx build/test-onnx/tiny.onnx --input-npy build/test-onnx/input.npy --input-raw build/test-onnx/input.raw
+          python examples/hardware/onnx_reference.py --onnx build/test-onnx/tiny.onnx --input-npy build/test-onnx/input.npy --output build/test-onnx/out.npz
+          python examples/hardware/compare_outputs.py --reference build/test-onnx/out.npz --candidate build/test-onnx/out.npz
+          python - <<'PY'
+          import numpy as np
+          y=np.load("build/test-onnx/out.npz")["output_0"]
+          assert y.shape == (1,2), y.shape
+          assert np.allclose(y, [[0.5,0.25]], atol=1e-6), y
+          print("Real ONNX Runtime output matches expected math:",y)
+          PY

@@ -40,6 +40,23 @@ INT8 量化还需真实校准图片列表：
 
     python3 examples/hardware/convert_onnx.py --onnx model.onnx --output model_int8.rknn --mean 0,0,0 --std 255,255,255 --quantize --dataset calibration.txt
 
+## 不下载预训练权重，也能跑通真实 ONNX 推理
+
+从仓库根目录运行以下命令，在普通 PC 使用真实 ONNX 计算图：
+
+    python3 -m pip install numpy onnx onnxruntime pillow
+    python3 examples/hardware/create_tiny_onnx.py --onnx build/tiny.onnx --input-npy build/input.npy --input-raw build/input.raw
+    python3 examples/hardware/onnx_reference.py --onnx build/tiny.onnx --input-npy build/input.npy --output build/onnx_output.npz
+    python3 examples/hardware/compare_outputs.py --reference build/onnx_output.npz --candidate build/onnx_output.npz
+
+生成的 toy CNN 由 Conv → GlobalAveragePool → Flatten 组成，权重被明确设置为输入红色和绿色通道各自的均值。预期输出约 [0.5, 0.25]，是真正的 ONNX Runtime 计算，而非在程序里打印硬编码推理结果。
+
+如需继续验证 RKNN 转换，准备主机 RKNN-Toolkit2：
+
+    python3 examples/hardware/convert_onnx.py --onnx build/tiny.onnx --output build/tiny.rknn --mean 0,0,0 --std 1,1,1
+
+注意这个生成模型接收的是 float32 NCHW，[1,3,4,4]。RKNN 转换、板端输入属性、运行时数值及算子支持必须再核对；不要在未经检查时直接假定 raw 文件能交给任何版本的 NPU Runtime。
+
 ## ONNX Runtime 参考推理（开发机）
 
 准备真实预处理后的输入 tensor 文件 input.npy，其 shape/dtype 必须匹配 ONNX：
