@@ -1,12 +1,6 @@
 # 第12讲｜Netron的基本使用
 
-> 可视化检查模型结构、输入输出与维度变换。
-
-**课程模块：** 模型转换与评估　｜　**实践平台：** RK3588 / RKNN
-
-**课程视频：** [Bilibili](https://www.bilibili.com/video/BV11DjT6uEhc)　｜　**源文件：** [原始 TXT](../%E6%96%87%E6%9C%AC/12_Netron%E7%9A%84%E5%9F%BA%E6%9C%AC%E4%BD%BF%E7%94%A8.txt)
-
-> 本讲义由视频自动转写整理。原始字幕含术语识别错误；具体命令和 API 以对应 SDK release 文档为准。
+> 自学教材重编版：阅读原理、完成可验证实验、分析真实问题，再做测验。原口播转写完整保留在文末。
 
 ## 学习目标
 
@@ -14,31 +8,110 @@
 - 定位输入、输出及关键算子
 - 比较修改前后的模型结构
 
-## 核心知识
+## 原理精讲
 
-[Netron](https://netron.app/) 可打开多种深度学习模型格式，展示节点、连接关系、权重和张量信息。它非常适合检查输入输出维度、Transpose、Reshape 等操作，帮助分析模型为什么在转换后出现形状问题或额外开销。不同模型格式的支持随软件版本变化。
+### 模型文件是有向计算图
 
-## 实践步骤
+ONNX 图由输入、算子节点、常量权重、输出构成。节点连接表达依赖，不等于运行时严格按屏幕中的从左到右逐节点执行；编译器可以融合与重排。Netron 是可视化和检查工具，主要用于确认输入输出 tensor 名称、shape、dtype、算子种类和异常布局转换。
 
-1. 打开 Netron 网页版或桌面版
-2. 导入一份自己保存的 ONNX 模型
-3. 记录所有输入输出的名称、dtype、shape
-4. 观察卷积、激活、池化、Reshape、Transpose 与多分支结构
-5. 比较两份模型是否新增/移除了关键节点
+**理解判据：** 可以据图解释‘这个模型期望什么输入、给出什么输出’。
+
+### 模型输入输出推断
+
+分类常见输出形状类似 [1,1000]；检测模型输出可能有多个尺度或不同的节点布局。单从‘共有几个输出’无法推断类别语义：需要结合训练框架、模型导出方式与对应后处理。Netron 显示的维度若是符号变量，表示静态信息不完整，不保证当前 NPU 版本接受所有尺寸。
+
+**理解判据：** 读懂节点名称并不等于理解其实际部署后处理。
+
+### 可视化与程序化检查结合
+
+Netron 容易定位 `Transpose`、`Reshape`、`Concat` 和输出层，ONNX 官方 checker 与 shape_inference 能做结构校验。某些算子的 shape 推导不完整；对真实运行协议的验证还需 ONNX Runtime 进行固定输入的数值推理。
+
+**理解判据：** 先可视化、再静态检查、最后运行比对，三者互补。
+
+## 实操实验
+
+### 实验 1：打开一个真实 ONNX
+
+选 Model Zoo 的 MobileNet 或 YOLO 模型，在 Netron 查看所有 input/output 的名称、数据类型、shape。
+
+**应该检查：** 截图或记录中能分辨 batch、channel、height、width。
+
+### 实验 2：找出维度转换节点
+
+搜索 `Transpose`、`Reshape`、`Concat`，解释哪些是布局重排、哪些是结果拼接。
+
+**应该检查：** 对至少一个 Transpose 写出其 perm 导致的维度变化。
+
+### 实验 3：用 ONNX API 校验
+
+用 onnx.load、onnx.checker.check_model 和 onnx.shape_inference.infer_shapes 检查图结构，保存输出信息。
+
+**应该检查：** 校验无错误；若形状无法完全推断，在日志说明未知维度。
+
+### 参考代码与命令
+
+```python
+import onnx
+m = onnx.load('model.onnx')
+onnx.checker.check_model(m)
+for v in m.graph.input:
+    print('input', v.name)
+for v in m.graph.output:
+    print('output', v.name)
+```
+
+> 参考示例会依赖具体模型、SDK 和设备设置；请先确认文件路径、输入协议与运行条件。
+
+## 诊断常见问题
+
+### 显示某些维度为 ? 或符号
+
+- 可能原因：模型使用动态或尚未推断的维度。
+- 如何验证：核查导出参数、opset 和 ONNX shape inference，避免猜成固定尺寸。
+
+### Netron 看着没问题但 RKNN build 失败
+
+- 可能原因：图语义可读不代表 NPU 支持其中全部算子。
+- 如何验证：以官方支持算子表和转换日志找到实际不支持的节点。
+
+## 案例推理
+
+**场景：** Netron 显示模型有三个输出，你便按 YOLOv5 的三层 anchor head 解码，却发现框全错。问题可能在哪里？
+
+**分析：** ‘三个输出’不是 YOLOv5 的唯一标志。核对模型版本、每个 tensor 的元素含义与官方 Model Zoo 示例，有些优化版模型将解码逻辑移到 CPU 或采用其他输出布局。
+
+**需要的证据：** 截图、每个输出的 shape/dtype、解码设计来源。
+
+## 自测题
+
+Netron 能直接证明什么？
+
+- A. 板端 FPS
+- B. 模型图和张量结构
+- C. 驱动版本
+
+<details><summary>查看答案与解析</summary>
+
+**B。** Netron 不是硬件运行时 profiler。
+
+</details>
 
 ## 完成标准
 
 - [ ] 能找到网络输入输出和一个维度变换节点
 - [ ] 能解释图可视化不是模型真实运行验证
 
-## 注意事项
+## 课后作业
 
-- 私有模型上传在线服务前应检查保密要求
-- 看起来正确的网络图仍可能包含不支持的算子
+- 制作一份模型输入输出信息表，供后续转换时使用
 
-## 课后练习
+## 深入阅读
 
-1. 制作一份模型输入输出信息表，供后续转换时使用
+- [Netron 官方仓库](https://github.com/lutzroeder/netron)
+- [ONNX 官方 Shape Inference](https://github.com/onnx/onnx/blob/main/docs/ShapeInference.md)
+- [ONNX Python 文档](https://onnx.ai/onnx/)
+
+> 以当前官方 SDK 的文档和模型兼容矩阵为准；教学示例并非用户开发板的实际运行认证。
 
 ## 原始字幕（仅供核对）
 

@@ -1,12 +1,6 @@
 # 第13讲｜rknn-toolkit2模型推理
 
-> 使用 Toolkit2 完成 PC 模拟器和 RK3588 联板推理。
-
-**课程模块：** 模型转换与评估　｜　**实践平台：** RK3588 / RKNN
-
-**课程视频：** [Bilibili](https://www.bilibili.com/video/BV11DjT6uEhc)　｜　**源文件：** [原始 TXT](../%E6%96%87%E6%9C%AC/13_rknn-toolkit2%E6%A8%A1%E5%9E%8B%E6%8E%A8%E7%90%86.txt)
-
-> 本讲义由视频自动转写整理。原始字幕含术语识别错误；具体命令和 API 以对应 SDK release 文档为准。
+> 自学教材重编版：阅读原理、完成可验证实验、分析真实问题，再做测验。原口播转写完整保留在文末。
 
 ## 学习目标
 
@@ -14,47 +8,113 @@
 - 区分模拟器与真实 NPU
 - 验证输入张量及推理结果
 
-## 核心知识
+## 原理精讲
 
-模型转换后可以利用 RKNN-Toolkit2 加载 `.rknn` 进行模拟器测试，也可以在主机连接目标开发板后指定 RK3588 进行联板推理。两种方式的执行位置不同，数值差异、性能和依赖条件也可能不同，尤其不能把模拟器耗时当作 NPU 吞吐。
+### RKNN Toolkit2 的推理角色
 
-## 实践步骤
+PC 端 RKNN-Toolkit2 可加载 `.rknn`，通过 `init_runtime` 等接口在受支持路径上验证模型，部分配置可通过板端 target 执行。运行位置影响所测性能。`inference` 接口通常返回模型输出 tensor，而不是已经转换成分类结果或检测框。要先确认输入 layout、format 和输出 tensor 数量。
 
-1. 准备已验证的 RKNN 模型和一组固定测试输入
-2. 在主机加载模型，初始化模拟器，执行推理并保存输出
-3. 检查输入大小、布局、dtype 和颜色通道
-4. 连接开发板并按 SDK 设置目标平台以执行联板推理
-5. 对比输入与输出，调查不一致的来源
+**理解判据：** 能解释为什么获取输出数组后仍需要模型专用的后处理。
 
-### 参考代码或参数说明
+### 模拟器与 NPU 的差异
 
-以下为独立整理的示例，并非完整实验工程；路径与版本应按实际环境修改。
+模拟执行、板端 NPU 实际执行及硬件驱动的数值行为可能因算子实现和 dtype 差异出现误差。模拟器耗时不能作为 NPU 性能结论；即使功能差异很小，也需在真实设备上测量。要分别记录 `init_runtime` 的 target 和 device 配置。
+
+**理解判据：** 将‘功能一致性’和‘运行速度’分开验收，避免把模拟器 FPS 写成硬件 FPS。
+
+### 最小结果回归
+
+分类可以比较 top-k 索引及置信度差；检测需要先还原 decoded boxes 再比较模型任务级指标。使用固定测试图和确定性预处理可重复得到输出摘要，定位变化是在加载、输入、执行还是后处理阶段。
+
+**理解判据：** 不要使用随机未保存输入来判断不同版本之间的精度。
+
+## 实操实验
+
+### 实验 1：打印张量协议
+
+读取可用 `.rknn` 文件并初始化运行时，打印输入输出数量与实际输出 shape、dtype。
+
+**应该检查：** 能说清输出数组第一维是否包含 batch。
+
+### 实验 2：固定输入做推理
+
+使用与模型约定匹配的单张测试图或 numpy 数组运行，保存输出前若干数值。
+
+**应该检查：** 重复运行对同一输入具有合理数值一致性。
+
+### 实验 3：板端核对
+
+如果已有可用 RK3588 设备和匹配运行库，分别在主机和板端执行同一模型，保存分环境结果。
+
+**应该检查：** 对差异作出定量说明，不把主机耗时用作 NPU FPS。
+
+### 参考代码与命令
 
 ```python
 from rknn.api import RKNN
-rknn = RKNN()
+r = RKNN()
 try:
-    assert rknn.load_rknn('model.rknn') == 0
-    assert rknn.init_runtime() == 0  # 模拟器；联板请按 SDK 指定 target
-    # outputs = rknn.inference(inputs=[input_tensor])
-    # input_tensor 应满足模型的 shape / dtype / layout
+    rc = r.load_rknn('model.rknn')
+    if rc != 0: raise RuntimeError(f'load={rc}')
+    rc = r.init_runtime()  # 主机模拟；若需目标板请核对 target 参数
+    if rc != 0: raise RuntimeError(f'init={rc}')
+    # 需准备 shape、dtype、layout 正确的 numpy 输入再调用 inference
 finally:
-    rknn.release()
+    r.release()
 ```
+
+> 参考示例会依赖具体模型、SDK 和设备设置；请先确认文件路径、输入协议与运行条件。
+
+## 诊断常见问题
+
+### init_runtime 报设备连接错误
+
+- 可能原因：target/device_id 配置、ADB/网络或目标板支持状态有问题。
+- 如何验证：区分模拟器模式与目标板模式，查看相应错误日志和连接状态。
+
+### inference 返回 shape 不符
+
+- 可能原因：输入 layout、dtype 与转换后模型实际要求不匹配。
+- 如何验证：打印输入原数组属性和 SDK 接口要求，必要时明确指定格式。
+
+## 案例推理
+
+**场景：** 在 PC `init_runtime()` 正常、推理为 35ms，是否能宣传 RK3588 上达到 28 FPS？
+
+**分析：** 不能。PC 模拟路径不等于 NPU。必须在真实 RK3588 上经 warm-up 多次测量 NPU 与端到端时间后，才能发布板端数据。
+
+**需要的证据：** 运行目标说明、版本、样本数和计时范围。
+
+## 自测题
+
+模拟器耗时能当作板端推理耗时吗？
+
+- A. 可以
+- B. 不可以
+- C. 小模型可以
+
+<details><summary>查看答案与解析</summary>
+
+**B。** 执行环境不同，测量必须分开。
+
+</details>
 
 ## 完成标准
 
 - [ ] 至少用同一输入完成一次模拟器和一次联板验证
 - [ ] 能说明何时必须检查设备端 runtime 和 driver
 
-## 注意事项
+## 课后作业
 
-- 联板驱动/运行时不匹配会导致初始化失败
-- 推理需要实际张量；不同于模型转换，不能省略输入预处理
+- 设计一张模拟器与联板输出和性能的对照表
 
-## 课后练习
+## 深入阅读
 
-1. 设计一张模拟器与联板输出和性能的对照表
+- [RKNN-Toolkit2 官方示例](https://github.com/airockchip/rknn-toolkit2)
+- [RKNN 用户指南](https://github.com/airockchip/rknn-toolkit2/tree/master/doc)
+- [RKNN Model Zoo 功能验证](https://github.com/airockchip/rknn_model_zoo)
+
+> 以当前官方 SDK 的文档和模型兼容矩阵为准；教学示例并非用户开发板的实际运行认证。
 
 ## 原始字幕（仅供核对）
 
