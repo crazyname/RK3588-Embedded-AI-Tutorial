@@ -5,6 +5,10 @@
 1. examples/lesson_00.py 到 lesson_34.py（35 个可执行入口）及 labs.py：Python >=3.9 标准库。实现数学算法、数据格式检查、只读系统诊断、性能统计、YOLO NMS/letterbox 等真实计算。没有板卡时也能学习、运行和测试。它们不冒充 RK3588 上的真实模型推理。
 2. examples/hardware/：SDK/模型/硬件依赖的真实模型转换及推理代码。需要你自己的 ONNX、RKNN、输入 tensor、匹配的 Toolkit2/Lite2/RKNPU2。
 
+## 第 27 讲：真实 MobileNet 分类推理
+
+`lesson_27.py` 现为约 255 行独立工程，不再使用 `labs.py` 的模拟 Top-K。它需要真实 ONNX / RKNN 模型和图片；支持 ONNX Runtime CPU 与 RKNNLite 端侧路径。详见 [第 27 讲运行说明](LESSON_27.md)，包含可重复的微型 ONNX 模型测试及官方 MobileNetV2 权重获取地址。
+
 ## 运行普通电脑实验
 
 从仓库根目录执行以下命令：

@@ -113,7 +113,28 @@ print([(int(i),float(scores[i])) for i in idx])
 
 ## 配套可运行源码
 
-- [本节可运行 Python 基础实验](../examples/lesson_27.py)（算法实现于 [labs.py](../examples/labs.py)）
+**第 27 讲已重写为实际分类推理工程**，不再是原来的 `from labs import main` 包装脚本。程序直接读取 JPG/PNG，完成明确的颜色、缩放、归一化、布局处理，用 ONNX Runtime（PC）或 RKNNLite（RK3588）执行真实模型，最后输出 Top-5 与 JSON/NPZ。
+
+- [第 27 讲完整 MobileNet 推理源码（支持 ONNX 和 RKNN）](../examples/lesson_27.py)
+- [第 27 讲专项使用说明及可重复验证步骤](../examples/LESSON_27.md)
+
+在开发机使用官方示例的 `mobilenetv2-12.onnx` 与 `synset.txt`：
+
+```bash
+python3 examples/lesson_27.py --backend onnx \
+  --model mobilenetv2-12.onnx --image bell.jpg --labels synset.txt \
+  --width 224 --height 224 --topk 5
+```
+
+在 RK3588 上使用配套转换的 `mobilenetv2-12.rknn`：
+
+```bash
+python3 examples/lesson_27.py --backend rknn \
+  --model mobilenetv2-12.rknn --image bell.jpg --labels synset.txt \
+  --width 224 --height 224 --topk 5
+```
+
+两条命令要求模型与图片文件确实存在，且模型、预处理、标签与 SDK 版本配套。RKNN 默认使用 uint8 NHWC，前提是模型转换时已配置相应 mean/std；实际板端结果尚未验证。
 - [真实 SDK / 板端代码：lite_infer.py](../examples/hardware/lite_infer.py)
 - [真实 SDK / 板端代码：prepare_image.py](../examples/hardware/prepare_image.py)
 - [环境准备、运行命令及限制](../examples/README.md)
