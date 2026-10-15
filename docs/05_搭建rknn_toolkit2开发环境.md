@@ -1,12 +1,6 @@
-# 第05讲｜搭建rknn_toolkit2开发环境
+# 第05讲｜搭建rknn · toolkit2开发环境
 
-> 在 Ubuntu x86_64 上配置 RKNN-Toolkit2。
-
-**课程模块：** 环境搭建与体验　｜　**实践平台：** RK3588 / RKNN
-
-**课程视频：** [Bilibili](https://www.bilibili.com/video/BV11DjT6uEhc)　｜　**源文件：** [原始 TXT](../%E6%96%87%E6%9C%AC/05_%E6%90%AD%E5%BB%BArknn_toolkit2%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83.txt)
-
-> 本讲义由原始视频口播转写整理，涉及命令与兼容性问题以实际版本文档为准；原始转写包含识别错误，作为附录存档。
+> 原创自学重编版，建议依次完成概念、实验、自测与复盘；保留原视频字幕作历史资料，不按口播错误猜测命令。
 
 ## 学习目标
 
@@ -14,32 +8,109 @@
 - 安装匹配的工具链依赖和 wheel
 - 完成 Python 包导入验证
 
-## 核心知识
+## 原理精讲
 
-课程以 Ubuntu 20.04、Miniconda、Python 3.8 为演示环境。PC 开发机通常为 x86_64，RK3588 开发板为 aarch64，安装包不能混用。实际可用 Python 版本、Ubuntu 版本和依赖请核对正在使用的 RKNN-Toolkit2 release 文档。
+### 主机工具链的运行边界
 
-## 实践步骤
+RKNN-Toolkit2 是开发主机侧转换工具，通常安装在 SDK 支持的 Linux x86_64 与特定 Python 版本组合中。wheel 包含编译扩展，文件名中的 cp310、manylinux、x86_64 等标签不是装饰。Python 解释器版本、glibc 和 CPU 架构不符时，即使 pip 显示安装成功，也可能在 import 时崩溃。
 
-1. 准备 Ubuntu 系统与网络环境
-2. 安装 Miniconda 并建立名为 rknn-toolkit2 的独立环境
-3. 从官方 SDK 下载适配本机架构与 Python 版本的依赖清单和 wheel
-4. 在激活的环境中安装 requirements 和 Toolkit2
-5. 尝试导入 RKNN，并记录版本与安装日志
+**理解检测：** 先确认 `uname -m`、`python -V`、官方支持矩阵，再选择同版本的 wheel 与依赖。
 
-## 完成标准
+### 隔离环境和锁定依赖
+
+建议通过 venv 或 Conda 为模型转换创建独立环境，避免与训练阶段的 PyTorch、NumPy、protobuf 等依赖相互覆盖。不要把某个视频出现的旧版本列表当成当前推荐值。优先使用官方仓库对应 release 的 requirements 与 Quick Start，并保存 pip freeze、wheel 文件名和安装日志。
+
+**理解检测：** 一次只升级一个关键组件，成功后冻结环境并记录其关联的 SDK tag。
+
+### 安装成功如何检验
+
+验证路径分三级：Python 能导入 `RKNN`、SDK 能实例化并打印版本信息、一个官方示例能够用受支持模型完成转换。只有第三级才验证模型构建所需依赖。主机转换成功也不能代替目标板的驱动及 Runtime 检查。
+
+**理解检测：** 把导入、构建、板端运行分别列出通过/失败状态，不把单一步骤当完整验收。
+
+## 操作实验（需记录证据）
+
+### 实验 1：检查主机架构
+
+运行 `uname -m`、`python3 -V`、`python3 -m pip -V`，记录实际调用的 Python 所在路径与版本。
+
+**验收方法：** 确认是官方支持的主机架构和 Python 版本，pip 与 python 指向同一虚拟环境。
+
+### 实验 2：建立干净环境
+
+通过 `python3 -m venv .venv` 建立新环境并激活；依据对应 SDK 的 Quick Start 安装官方 wheel 与依赖，记录 wheel 文件完整名称。
+
+**验收方法：** `pip show rknn-toolkit2` 可以定位安装信息；包名、版本以该 wheel 为准。
+
+### 实验 3：完成最小导入
+
+执行仅导入 `RKNN` 的 Python 片段，然后基于同一 SDK 的官方示例执行一次非量化转换。
+
+**验收方法：** 没有 ImportError，示例打印的返回码为成功；日志中能看到导出路径。
+
+### 参考命令或代码
+
+```bash
+uname -m
+python3 -V
+python3 -m venv .venv
+source .venv/bin/activate
+python -c 'from rknn.api import RKNN; print("RKNN import OK")'
+# 请先依据官方 Quick Start 安装与环境匹配的 wheel。
+```
+
+> 示例需结合具体 SDK 版本及实际目录核对；涉及驱动、频率或系统写入的命令不要直接照抄执行。
+
+## 故障排查
+
+### ImportError / undefined symbol
+
+- **可能根因：** wheel 的 Python ABI、NumPy 等二进制依赖不匹配。
+- **验证路径：** 使用 `python -V`、`pip -V`、`pip show` 与 wheel 标签逐项对照，不先全局升级依赖。
+
+### 安装一个包后另一个项目坏了
+
+- **可能根因：** 训练依赖和转换依赖装在同一个 site-packages 中发生冲突。
+- **验证路径：** 为转换独立新建虚拟环境，比较 `pip freeze` 变化。
+
+## 案例研讨
+
+**问题：** 你在 ARM64 板端执行 pip install 一个 x86_64 的 Toolkit2 wheel，提示 not a supported wheel。是网络问题吗？
+
+**推理：** 不是。wheel 明确声明所支持的 ABI 和系统架构。转换工具一般运行在兼容的开发主机上，板端 Python 推理应查看 Toolkit-Lite2 对应的安装说明。
+
+**交付证据：** 主机架构、wheel 标签、Python 版本和导入验证记录。
+
+## 自测题
+
+x86_64 Linux 开发机应选择哪种 wheel？
+
+- A. ARM64 wheel
+- B. 兼容 x86_64 与 Python 版本的 wheel
+- C. 任何 wheel
+
+<details><summary>展开答案与解析</summary>
+
+**B。** 架构和解释器 ABI 都必须匹配。
+
+</details>
+
+## 学习验收
 
 - [ ] `from rknn.api import RKNN` 能正常执行
 - [ ] 能说明 x86_64 和 aarch64 wheel 的差异
 
-## 注意事项
-
-- 不能凭视频口播推断 wheel 文件名或依赖版本
-- 先核对官方支持矩阵，避免污染全局 Python
-- 虚拟机与开发板要具备可达网络或可用的数据传输通道
-
 ## 课后练习
 
-1. 保存 Conda 环境配置和导入验证日志
+- 保存 Conda 环境配置和导入验证日志
+
+## 延伸阅读
+
+- [官方 Toolkit2 快速入门与支持矩阵](https://github.com/airockchip/rknn-toolkit2/tree/master/doc)
+- [Toolkit2 软件仓库](https://github.com/airockchip/rknn-toolkit2)
+- [Python venv 文档](https://docs.python.org/3/library/venv.html)
+
+> 以具体 release 的官方文档为准；本教程中的设备结果尚未在你的硬件环境实测。
 
 ## 原始字幕（仅供核对）
 
