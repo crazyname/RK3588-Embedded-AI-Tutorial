@@ -103,8 +103,13 @@ def read_frequency_nodes():
     return results
 
 def check_yolo_labels(path):
+    if not path.is_dir():
+        raise ValueError("YOLO labels directory does not exist: "+str(path))
+    files=list(sorted(path.rglob("*.txt")))
+    if not files:
+        raise ValueError("No YOLO .txt label files found: "+str(path))
     problems, labels = [], 0
-    for p in sorted(path.rglob("*.txt")):
+    for p in files:
         for ln, row in enumerate(p.read_text(encoding="utf-8").splitlines(), 1):
             if not row.strip():
                 continue
@@ -207,8 +212,12 @@ def exec_lesson(number, args):
             samples.append((time.perf_counter()-start)*1000)
         return {"cpu_demo_ms": percentiles(samples), "warning": "not RK3588 NPU FPS"}
     if number == 16:
-        usage = __import__("resource").getrusage(__import__("resource").RUSAGE_SELF)
-        return {"pid": os.getpid(), "ru_maxrss_platform_units": usage.ru_maxrss,
+        try:
+            import resource
+            memory = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+        except ImportError:
+            memory = None
+        return {"pid": os.getpid(), "ru_maxrss_platform_units": memory,
                 "memory_kib": Path("/proc/meminfo").read_text().splitlines()[0]
                 if Path("/proc/meminfo").exists() else "Linux only"}
     if number == 17:
