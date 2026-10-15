@@ -74,41 +74,117 @@ add("ACCEPT","本节验收标准",'<p>以下勾选仅用于辅助复习，实际
 add("TRANSFER","课后练习与知识迁移",'<div class="panel">'+list(data.homework)+'</div><div class="panel soft"><h3>提交建议</h3><p>提交版本说明、数据与模型来源、关键步骤、结果截图、问题记录和复盘。涉及代码时提供可运行的最小示例。</p></div>',"下节课尽可能沿用本节的模型、日志和环境记录。");
 const nx=db[data.id+1];
 add("SUMMARY","本节总结",cards(['<h3>三件需要记住的事</h3>'+list(data.goals),'<h3>下一步学习</h3><p>'+(nx?"下一讲："+esc(nx.title):"本系列课程已经完成，请整理项目成果。")+'</p><p>在下一次实验前，请确认本讲的完成标准。</p>']),"闭环复盘：输入是什么、发生了什么、有什么证据。");
-let pos=0;
-const prev=db[data.id-1],next=db[data.id+1];
-function other(x,label){return x?'<a class="btn ghost" href="'+encodeURIComponent(x.slug).replaceAll("(","%28").replaceAll(")","%29")+'.html">'+label+'</a>':"";}
-host.innerHTML='<header class="player-header"><div class="header-row"><a class="brand" href="../index.html">RK<b>3588</b> / COURSE</a><div class="lesson-name">'+esc(name)+'</div><div class="actions"><button class="btn ghost" id="menuBtn">目录</button><button class="btn ghost" id="noteBtn">讲师提示</button><button class="btn ghost" id="printBtn">打印</button></div></div><div class="player-progress"><i id="progressBar"></i></div></header><div class="player-layout"><aside id="slideOutline" class="slide-outline"><h3>SLIDE OUTLINE</h3>'+slides.map((s,i)=>'<button class="outline-item" data-i="'+i+'"><span>'+String(i+1).padStart(2,"0")+'</span>'+esc(s.title)+'</button>').join("")+'<p style="padding:12px"><a href="../../docs/'+encodeURIComponent(m.slug).replaceAll("(","%28").replaceAll(")","%29")+'.md">Markdown 详细讲义 ↗</a></p></aside><main class="player-main"><section class="slide active" id="slideView"></section><div class="controls"><div class="actions">'+other(prev,"← 上一讲")+'<button id="prevBtn" type="button" class="btn ghost">← 上一页</button></div><span id="counter" class="middle"></span><div class="actions"><button id="nextBtn" type="button" class="btn">下一页 →</button>'+other(next,"下一讲 →")+'</div></div><div class="hotkeys">快捷键：← / → / 空格翻页 · N 显示讲师提示 · F 全屏 · P 打印</div></main></div>';
-function show(){
-const slide=slides[pos],v=document.getElementById("slideView");
-v.innerHTML='<span class="kicker">'+esc(slide.cat)+' / '+String(pos+1).padStart(2,"0")+'</span><h2>'+esc(slide.title)+'</h2>'+slide.body+'<div class="teacher-note"><strong>讲师提示：</strong>'+fmt(slide.note)+'</div>';
-document.getElementById("counter").textContent=(pos+1)+" / "+slides.length;
-document.getElementById("progressBar").style.width=(100*(pos+1)/slides.length)+"%";
-document.getElementById("prevBtn").disabled=pos===0;
-document.getElementById("nextBtn").textContent=pos===slides.length-1?"返回总目录":"下一页 →";
-document.querySelectorAll(".outline-item").forEach((n,i)=>n.classList.toggle("active",i===pos));
-const quizBtn=document.getElementById("checkQuiz");if(quizBtn){quizBtn.onclick=function(){const chosen=document.querySelector('input[name="quiz"]:checked'),f=document.getElementById("quizFeedback"),q=extra.quiz;if(!chosen)f.textContent="请先选择一个选项。";else{const ok=Number(chosen.value)===q[2];f.innerHTML=(ok?"<strong>回答正确。</strong> ":"<strong>再想一想。</strong> 正确选项："+String.fromCharCode(65+q[2])+"。 ")+fmt(q[3]);}f.classList.add("visible");};}
-const copy=v.querySelector(".copy-code");if(copy)copy.onclick=function(){if(navigator.clipboard)navigator.clipboard.writeText(v.querySelector("pre").textContent).then(()=>{copy.textContent="已复制";}).catch(()=>{copy.textContent="请手动选择复制";});};
-v.querySelectorAll("input[data-check]").forEach(ch=>{const key="rk3588:"+data.id+":"+ch.dataset.check;try{ch.checked=localStorage.getItem(key)==="1";}catch(e){}ch.onchange=function(){try{localStorage.setItem(key,ch.checked?"1":"0");}catch(e){}};});
-try{localStorage.setItem("rk3588:"+data.id+":last",String(pos));}catch(e){}
-}
-function jump(n){if(n<0||n>=slides.length)return;pos=n;show();window.scrollTo(0,0);}
-document.querySelectorAll(".outline-item").forEach(b=>b.onclick=()=>{jump(Number(b.dataset.i));document.getElementById("slideOutline").classList.remove("open");});
-document.getElementById("prevBtn").onclick=()=>jump(pos-1);
-document.getElementById("nextBtn").onclick=()=>pos===slides.length-1?location.href="../index.html":jump(pos+1);
-document.getElementById("menuBtn").onclick=()=>document.getElementById("slideOutline").classList.toggle("open");
-document.getElementById("noteBtn").onclick=()=>document.body.classList.toggle("show-notes");
-document.getElementById("printBtn").onclick=()=>window.print();
-document.addEventListener("keydown",e=>{if(/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName))return;if(e.key==="ArrowRight"||e.key===" "){e.preventDefault();jump(pos+1);}else if(e.key==="ArrowLeft")jump(pos-1);else if(e.key==="Home")jump(0);else if(e.key==="End")jump(slides.length-1);else if(e.key.toLowerCase()==="n")document.body.classList.toggle("show-notes");else if(e.key.toLowerCase()==="p")window.print();else if(e.key.toLowerCase()==="f"){if(!document.fullscreenElement)document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen();else document.exitFullscreen&&document.exitFullscreen();}});
-try{const last=Number(localStorage.getItem("rk3588:"+data.id+":last"));if(Number.isFinite(last)&&last>=0&&last<slides.length)pos=last;}catch(e){}
 
-(function setupPrintDeck(){
-const container=document.createElement("div");
-container.id="printDeck";
-container.innerHTML=slides.map(function(s,i){return '<section class="slide"><span class="kicker">'+esc(s.cat)+' / '+String(i+1).padStart(2,"0")+'</span><h2>'+esc(s.title)+'</h2>'+s.body+'</section>';}).join("");
-document.body.appendChild(container);
-const style=document.createElement("style");
-style.textContent="#printDeck{display:none}@media print{#app{display:none!important}#printDeck{display:block!important}#printDeck .slide{display:flex!important;break-after:page;page-break-after:always}#printDeck button{display:none!important}#printDeck .quiz-feedback{display:none!important}}";
-document.head.appendChild(style);
-})();
-show();
+const prev=db[data.id-1],next=db[data.id+1];
+const sectionId=i=>"lesson-section-"+(i+1);
+function lessonLink(x,label){return x?'<a class="btn ghost" href="'+encodeURIComponent(x.slug).replaceAll("(","%28").replaceAll(")","%29")+'.html">'+label+'</a>':"";}
+const toc=slides.map((s,i)=>'<a class="outline-item" href="#'+sectionId(i)+'" data-section="'+i+'"><span>'+String(i+1).padStart(2,"0")+'</span>'+esc(s.title)+'</a>').join("");
+const content=slides.map((s,i)=>'<section id="'+sectionId(i)+'" class="slide lesson-section" aria-labelledby="section-heading-'+i+'"><div class="kicker">'+esc(s.cat)+' / '+String(i+1).padStart(2,"0")+'</div><h2 id="section-heading-'+i+'">'+esc(s.title)+'</h2>'+s.body+'<div class="teacher-note"><strong>讲师提示：</strong> '+fmt(s.note)+'</div></section>').join("");
+document.body.classList.add("continuous");
+host.innerHTML='<header class="player-header"><div class="header-row"><a class="brand" href="../index.html">RK<b>3588</b> / COURSE</a><div class="lesson-name">'+esc(name)+'</div><div class="actions"><button class="btn ghost" id="menuBtn" type="button" aria-expanded="false" aria-controls="slideOutline">章节目录</button><button class="btn ghost" id="noteBtn" type="button" aria-pressed="false">讲师提示</button><button class="btn ghost" id="printBtn" type="button">打印全文</button></div></div><div class="player-progress"><i id="progressBar"></i></div></header><div class="player-layout"><nav id="slideOutline" class="slide-outline" aria-label="本节课目录"><h3>本节课程目录</h3>'+toc+'<p style="padding:12px"><a href="../../docs/'+encodeURIComponent(m.slug).replaceAll("(","%28").replaceAll(")","%29")+'.md">Markdown 详细讲义 ↗</a></p></nav><main class="player-main"><div class="longform-intro"><span class="eyebrow">CONTINUOUS READING</span><p>本节课的全部内容已展开在同一页面。向下滚动阅读，或点击左侧目录快速定位；课堂测验、代码复制和验收清单可直接操作。</p></div><article id="lessonArticle" class="lesson-article">'+content+'</article><nav class="lesson-footer-nav" aria-label="课程导航">'+lessonLink(prev,"← 上一讲")+'<a class="btn ghost" href="../index.html">全部课程</a>'+lessonLink(next,"下一讲 →")+'</nav><p class="hotkeys">使用浏览器正常滚动阅读 · 点击目录跳转 · N 显示讲师提示 · P 打印整篇 · F 全屏</p></main></div><button id="backTop" class="back-top" type="button" aria-label="返回顶部">↑ 顶部</button>';
+const nav=document.getElementById("slideOutline");
+const menu=document.getElementById("menuBtn");
+menu.onclick=()=>{
+ const open=nav.classList.toggle("open");
+ menu.setAttribute("aria-expanded",open?"true":"false");
+};
+nav.querySelectorAll(".outline-item").forEach(link=>{
+ link.onclick=()=>{
+   nav.classList.remove("open");
+   menu.setAttribute("aria-expanded","false");
+ };
+});
+const noteBtn=document.getElementById("noteBtn");
+noteBtn.onclick=()=>{
+ const on=document.body.classList.toggle("show-notes");
+ noteBtn.setAttribute("aria-pressed",on?"true":"false");
+};
+document.getElementById("printBtn").onclick=()=>window.print();
+const back=document.getElementById("backTop");
+back.onclick=()=>window.scrollTo({top:0,behavior:"smooth"});
+const lessonSections=[...document.querySelectorAll(".lesson-section")];
+const tocLinks=[...nav.querySelectorAll(".outline-item")];
+let rafPending=false;
+function updateScrollState(){
+ rafPending=false;
+ const root=document.documentElement;
+ const scrollable=Math.max(1,root.scrollHeight-root.clientHeight);
+ const progress=Math.max(0,Math.min(100,100*window.scrollY/scrollable));
+ document.getElementById("progressBar").style.width=progress+"%";
+ back.classList.toggle("is-visible",window.scrollY>520);
+ let active=0;
+ for(let i=0;i<lessonSections.length;i++){
+  if(lessonSections[i].getBoundingClientRect().top<180)active=i;
+  else break;
+ }
+ tocLinks.forEach((link,i)=>{
+  const current=i===active;
+  link.classList.toggle("active",current);
+  if(current)link.setAttribute("aria-current","location");
+  else link.removeAttribute("aria-current");
+ });
+}
+window.addEventListener("scroll",()=>{
+ if(!rafPending){rafPending=true;window.requestAnimationFrame(updateScrollState);}
+},{passive:true});
+window.addEventListener("resize",updateScrollState);
+updateScrollState();
+document.querySelectorAll(".lesson-section").forEach(section=>{
+ const quizBtn=section.querySelector("#checkQuiz");
+ if(quizBtn&&extra.quiz){
+  const q=extra.quiz;
+  quizBtn.onclick=()=>{
+   const chosen=section.querySelector('input[name="quiz"]:checked');
+   const feedback=section.querySelector("#quizFeedback");
+   if(!chosen)feedback.textContent="请先选择一个选项。";
+   else{
+    const okay=Number(chosen.value)===q[2];
+    feedback.innerHTML=(okay?"<strong>回答正确。</strong> ":"<strong>再想一想。</strong> 正确选项："+String.fromCharCode(65+q[2])+"。 ")+fmt(q[3]);
+   }
+   feedback.classList.add("visible");
+  };
+ }
+ section.querySelectorAll(".copy-code").forEach(button=>{
+  button.onclick=async()=>{
+   const code=button.closest(".code-wrap").querySelector("pre");
+   if(!code)return;
+   try{
+    if(!navigator.clipboard?.writeText)throw new Error("Clipboard unavailable");
+    await navigator.clipboard.writeText(code.textContent);
+    button.textContent="已复制";
+   }catch(err){
+    const selection=window.getSelection();
+    if(selection){
+     const range=document.createRange();
+     range.selectNodeContents(code);
+     selection.removeAllRanges();
+     selection.addRange(range);
+    }
+    button.textContent="已选中，请按 Ctrl+C";
+   }
+  };
+ });
+ section.querySelectorAll("input[data-check]").forEach(check=>{
+  const key="rk3588:"+data.id+":"+check.dataset.check;
+  try{check.checked=localStorage.getItem(key)==="1";}catch(err){}
+  check.onchange=()=>{
+   try{localStorage.setItem(key,check.checked?"1":"0");}catch(err){}
+  };
+ });
+});
+document.addEventListener("keydown",e=>{
+ const tag=document.activeElement&&document.activeElement.tagName;
+ if(/^(INPUT|TEXTAREA|SELECT)$/.test(tag))return;
+ if(e.altKey||e.ctrlKey||e.metaKey)return;
+ if(e.key.toLowerCase()==="n"){
+  const on=document.body.classList.toggle("show-notes");
+  noteBtn.setAttribute("aria-pressed",on?"true":"false");
+ }else if(e.key.toLowerCase()==="p"){
+  e.preventDefault();window.print();
+ }else if(e.key.toLowerCase()==="f"){
+  if(!document.fullscreenElement)document.documentElement.requestFullscreen?.();
+  else document.exitFullscreen?.();
+ }
+});
+// No pagination or duplicated print deck: the same article is read, interacted with, and printed in full.
 })();
