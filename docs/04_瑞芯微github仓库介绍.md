@@ -1,12 +1,8 @@
 # 第04讲｜瑞芯微github仓库介绍
 
-> 学会查找 Rockchip 官方套件与模型示例。
+> RK3588 嵌入式 AI 自学重编版：按顺序阅读原理、做实验、记录证据，再完成自测。课程内容为原创教学组织，原始视频转写保存于文末供核对。
 
-**课程模块：** 基础认知　｜　**实践平台：** RK3588 / RKNN
-
-**课程视频：** [Bilibili](https://www.bilibili.com/video/BV11DjT6uEhc)　｜　**源文件：** [原始 TXT](../%E6%96%87%E6%9C%AC/04_%E7%91%9E%E8%8A%AF%E5%BE%AEgithub%E4%BB%93%E5%BA%93%E4%BB%8B%E7%BB%8D.txt)
-
-> 本讲义由原始视频口播转写整理，涉及命令与兼容性问题以实际版本文档为准；原始转写包含识别错误，作为附录存档。
+**学前要求：** Linux 终端与 Python 基础；本节需板端操作时，先确认型号、SDK/驱动版本和数据备份。
 
 ## 学习目标
 
@@ -14,30 +10,111 @@
 - 识别模型示例库的用途
 - 建立官方版本与示例的检索习惯
 
-## 核心知识
+## 为什么学本讲
 
-RKNN-Toolkit2 主要在 PC 端进行模型转换、评估与联板调试；RKNN-Toolkit-Lite2 提供开发板端 Python 推理接口；RKNPU2 面向板端 C/C++ 推理。rknn_model_zoo 聚合常见模型的参考部署方案。大型语言模型的转换与推理通常使用另一条 RKLLM 工具链。官方组织入口为 https://github.com/airockchip ，以目标 SDK release 的 README、示例和兼容矩阵为准。
+undefined
 
-## 实践步骤
+## 技术原理精讲
 
-1. 定位官方组织和相关仓库
-2. 查看所需 SDK 的 README、Release Notes、examples
-3. 找到一份支持 RK3588 的分类或检测示例
-4. 记录 wheel、运行时、模型版本与仓库 commit
+### 找到真正维护的官方资料
 
-## 完成标准
+历史教程常引用 rockchip-linux/rknn-toolkit2，但该仓库已说明不再维护并迁移到 airockchip/rknn-toolkit2。查阅时应从新仓库根目录、README、doc、rknn-toolkit2、rknn_toolkit_lite2、rknpu2 与 CHANGELOG 入手。下载 wheel、lib 与源码必须避免多个年份版本混搭。
+
+**判断是否理解：** 遇到教程链接过期，先定位维护仓库和 release tag，再决定是否跟随旧教程。
+
+### SDK、模型动物园和训练项目的区别
+
+RKNN-Toolkit2 提供模型转换与主机调试；RKNN Model Zoo 提供 MobileNet、YOLO 等模型与具体平台转换/编译/运行示例；Ultralytics 等训练框架负责权重训练与 ONNX 导出。即使都放在 GitHub，也不是同一个功能仓库。阅读 README 首先区分平台支持列表、输入格式、构建参数和预期结果。
+
+**判断是否理解：** 知道模型要去哪找、转换脚本去哪找、C++ 推理示例去哪找。
+
+### 用版本固定避免‘昨天能跑’
+
+示例工程随上游更新可能改变参数与输出张量顺序。学习报告里至少记录仓库 URL、commit/tag、模型文件校验值、运行时版本和本地修改。需要排查问题时，优先回到固定版本的最小示例，排除动态更新造成的环境漂移。
+
+**判断是否理解：** 复现实验优先记录 commit SHA，而不是只写‘下载最新版’。
+
+## 跟做实验与验收证据
+
+### 实验 1：建立参考仓库清单
+
+打开官方 Toolkit2、Model Zoo、RKLLM 和 ONNX 四个项目；分别写出其职责与使用阶段。
+
+**预期检查：** 四个入口链接和对应的任务没有混淆。
+
+### 实验 2：复刻一个官方案例阅读
+
+在 rknn_model_zoo/examples/yolov5/README.md 查找 Linux build、转换脚本、预训练模型和结果预期章节。
+
+**预期检查：** 找到具体输入和运行方式，不照搬不同目标芯片的路径。
+
+### 实验 3：记录仓库版本
+
+用 git clone 获取官方仓库，执行 git rev-parse HEAD、git status --short 和 git remote -v，保存到环境表。
+
+**预期检查：** 版本、远程来源与本地修改状态可被重现。
+
+### 实验参考片段
+
+```bash
+git clone https://github.com/airockchip/rknn-toolkit2.git
+git -C rknn-toolkit2 rev-parse HEAD
+git -C rknn-toolkit2 remote -v
+# 示例只读取版本信息；安装步骤请跟随与本机匹配的 release。
+```
+
+> 参考片段不承诺适用于所有板卡版本；运行前先理解命令是否会写入系统及其前置条件。
+
+## 故障诊断
+
+### 明明照官方命令仍提示参数缺失
+
+- 可能原因：读取的是另一版本 SDK 的 README 或示例。
+- 诊断动作：记录当前 commit 并核对同一版本下的 Quick Start、changelog 与命令帮助。
+
+### 复制了不支持 RK3588 的工程
+
+- 可能原因：混淆 RKNPU1 旧平台与 RKNPU2 芯片支持。
+- 诊断动作：先查看 Model Zoo 的 supported platform 和 cpp/rknpu2 目录。
+
+## 自学案例分析
+
+**情境：** 某博客说 Toolkit2 只能用于 Ubuntu 20.04，但官方新版本提供了更新的 wheel。该相信谁？
+
+**分析路径：** 先分清发布日期和 SDK tag，再核对官方 release 包、quick start 支持矩阵与实际 wheel 文件名。旧教程有助于理解思路，却不一定是当前环境安装的正确依据。
+
+**应交付证据：** 官方仓库 commit、wheel 文件名、系统/Python 版本匹配表。
+
+## 课堂自测（先答后看解析）
+
+**题目：** 板端 C++ 推理该优先查看什么？
+
+- A. RKNPU2 示例
+- B. Netron 安装包
+- C. Python 主题库
+
+<details><summary>展开答案与解释</summary>
+
+**答案：A。** C API 的头文件、库与示例在对应板端套件里。
+
+</details>
+
+## 完成本讲的标准
 
 - [ ] 能根据转换/板端 Python/板端 C 需求找到正确仓库
 - [ ] 能识别不同套件的 CPU 架构和运行位置
 
-## 注意事项
+## 课后任务
 
-- 不要跨 release 随意混用 wheel 和动态库
-- 第三方教程的路径与参数可能已过期
+- 制作工具套件、主机平台和语言接口三列表
 
-## 课后练习
+## 参考资料与深入阅读
 
-1. 制作工具套件、主机平台和语言接口三列表
+- [新版 RKNN-Toolkit2](https://github.com/airockchip/rknn-toolkit2)
+- [RKNN Model Zoo](https://github.com/airockchip/rknn_model_zoo)
+- [Rockchip RKLLM](https://github.com/airockchip/rknn-llm)
+
+> 资料阅读优先级：官方 SDK 版本与实例 > 数据格式的官方文档 > 理论教材。外部资料可能随版本变化，不应将本讲示例理解为已在你的开发板上实测通过。
 
 ## 原始字幕（仅供核对）
 
