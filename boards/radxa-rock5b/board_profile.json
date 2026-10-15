@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "profile": "rock5b-16g-course-reference",
+  "vendor": "Radxa",
+  "board": "ROCK 5B",
+  "not_variant": "ROCK 5B+",
+  "soc": "RK3588",
+  "preferred_memory_gib": 16,
+  "suggested_boot": "microSD",
+  "official_images_page": "https://docs.radxa.com/rock5/rock5b/download",
+  "recommended_linux_family": "ROCK 5B Debian Bookworm (6.1 kernel line; verify current official release)",
+  "power": "Radxa PD 30W recommended for original ROCK 5B",
+  "network": "2.5GbE; no on-board Wi-Fi on original 5B",
+  "camera_phase1": "USB UVC optional",
+  "first_npu_demo": "rknn-model-zoo-rk3588 / YOLOv8 on Radxa OS",
+  "verification_status": "code-written-not-tested-on-user-device",
+  "docs": [
+    "https://docs.radxa.com/en/rock5/rock5b/getting-started/introduction",
+    "https://docs.radxa.com/rock5/rock5b/getting-started/power-supply",
+    "https://docs.radxa.com/rock5/rock5b/download",
+    "https://docs.radxa.com/en/rock5/rock5b/app-development/ai/rknn-install",
+    "https://docs.radxa.com/en/rock5/rock5b/app-development/ai/rknn-toolkit-lite2-yolov8"
+  ]
+}
