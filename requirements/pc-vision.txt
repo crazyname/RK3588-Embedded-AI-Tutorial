@@ -1,0 +1,4 @@
+# Optional PC detection and training. GPU PyTorch build must be selected separately.
+-r pc-core.txt
+ultralytics>=8.3,<9
+opencv-python>=4.9,<5

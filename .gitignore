@@ -1,0 +1,27 @@
+# Local experiments, downloads and private artifacts
+.venv/
+.venv*/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+build/
+results/
+data/
+datasets/
+downloads/
+*.rknn
+*.rkllm
+*.onnx
+*.pt
+*.pth
+*.npz
+*.npy
+*.raw
+*.enc
+*.key
+*.so
+*.o
+.DS_Store
+Thumbs.db
