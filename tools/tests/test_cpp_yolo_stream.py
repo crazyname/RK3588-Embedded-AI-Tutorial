@@ -17,7 +17,7 @@ class StreamValidationTests(unittest.TestCase):
     def check(self,rows,**kwargs):
         with tempfile.TemporaryDirectory() as d:
             path=Path(d)/"video.jsonl"
-            path.write_text("\n".join(json.dumps(x,ensure_ascii=False) for x in rows)+"\n")
+            path.write_text("\n".join(json.dumps(x,ensure_ascii=False) for x in rows)+("\n" if rows else ""))
             return assess(path,640,480,**kwargs)
     def test_two_actual_records_and_p95(self):
         found=self.check([row(),row(2)],expected_frames=2,min_detections=2,
