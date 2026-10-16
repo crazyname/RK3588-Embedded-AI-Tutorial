@@ -33,6 +33,12 @@ jobs:
           python tools/bootstrap_host.py --group core
           python tools/verify_assets.py --list
           python -m unittest discover -s tools/tests -v
+      - name: Verify all 35 long-scroll HTML lessons and JavaScript syntax
+        run: |
+          python tools/validate_html_lessons.py
+          node --check courseware/assets/player.js
+          node --check courseware/assets/catalog.js
+          node --check courseware/assets/extras.js
       - name: Unit tests
         run: python -m unittest discover -s examples/tests -v
       - name: Enforce all 35 dedicated sources and runbooks
