@@ -30,3 +30,11 @@ IM_STATUS imresize(const rga_buffer_t,rga_buffer_t,double,double,int,int,int*){
 extern "C" const char* imStrError_t(IM_STATUS){
     return "MOCK RGA failure";
 }
+
+// Current librga C++ headers provide real overloads, not only the legacy macro.
+rga_buffer_t wrapbuffer_handle(rga_buffer_handle_t handle,int width,int height,int format){
+    return wrapbuffer_handle_t(handle,width,height,width,height,format);
+}
+rga_buffer_t wrapbuffer_handle(rga_buffer_handle_t handle,int width,int height,int format,int wstride,int hstride){
+    return wrapbuffer_handle_t(handle,width,height,wstride,hstride,format);
+}
