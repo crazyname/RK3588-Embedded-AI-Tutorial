@@ -67,6 +67,10 @@
 
 在 MobileNet 分类流水线之后，新增 [完整 ROCK 5B USB 摄像头 YOLOv8 检测教程](CAMERA_YOLOV8.md)、[RKNNLite 检测主程序](apps/camera_yolov8_lite.py) 和 [独立 DFL/NMS 后处理](apps/yolov8_rknn_postprocess.py)。要求 Model Zoo **优化版** 640×640 / 9 或 6 输出模型，支持画框、逐帧 JSONL 与 FPS/p95。**这是目标检测，与 MobileNet 图像分类不同；真实 RK3588 推理尚待硬件验收**。
 
+## C++ RKNPU2 / RGA 输入和性能对照（新增）
+
+[完整C++原生编译与RGA/RKNN验收手册](CPP_RGA_IO_BENCHMARK.md)现包含标准输入/绑定输入对照、RGA RGB888 缩放、像素误差检验及开发板驱动版本检查。**不将输入内存绑定或CPU的黑边拷贝称为端到端零拷贝。**
+
 ## 四、公开来源（请与自己的板卡版本核对）
 
 - [ROCK 5B/5B+ 官方中文手册](https://docs.radxa.com/rock5/rock5b)

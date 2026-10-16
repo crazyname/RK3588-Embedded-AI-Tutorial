@@ -179,3 +179,11 @@ GitHub CI 仅执行与官方 RK3588 SDK `rknn_api.h` 的 **C++ 语法/接口检�
 
 官方参考：https://github.com/airockchip/rknn-toolkit2
 模型示例：https://github.com/airockchip/rknn_model_zoo
+
+## C++ RKNPU2 输入绑定对照与 RGA 前处理
+
+- [同模型普通输入/绑定输入比较](hardware/rknn_compare_input_io.cpp)
+- [librga RGB888 缩放与黑边](hardware/rga_letterbox_rgb888.cpp)
+- [ROCK 5B 编译、运行和数据校验手册](../boards/radxa-rock5b/CPP_RGA_IO_BENCHMARK.md)
+
+当前 C++ 对照只支持单输入单输出分类模型，不支持 YOLOv8 的多个输出；SDK 绑定输入仍先经 CPU memcpy，不能称为完整零拷贝。
