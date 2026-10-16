@@ -175,6 +175,7 @@ jobs:
           git clone --quiet --depth 1 --filter=blob:none --sparse https://github.com/airockchip/librga.git build/librga
           git -C build/librga sparse-checkout set include
           g++ -std=c++17 -fsyntax-only -Ibuild/librga/include examples/hardware/rga_letterbox_rgb888.cpp
+          g++ -std=c++17 -O2 -Wall -Wextra -Werror -fsyntax-only -Ibuild/sdk-headers -Ibuild/librga/include examples/hardware/v4l2_rga_rknn_yolov8.cpp
 
       - name: Compile real V4L2 MMAP-to-DMA-BUF export probe and reject missing devices
         run: |

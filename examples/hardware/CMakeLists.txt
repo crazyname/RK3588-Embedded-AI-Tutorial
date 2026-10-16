@@ -53,3 +53,13 @@ set_target_properties(rknn_yolov8_raw PROPERTIES BUILD_RPATH "$ORIGIN")
 # Pure CPU, no SDK runtime or NPU required, useful for comparing against Python.
 add_executable(yolov8_decode_files yolov8_decode_files.cpp)
 target_link_libraries(yolov8_decode_files PRIVATE yolov8_decode)
+
+# Experimental ROCK 5B V4L2 YUYV capture -> real DMA-BUF fd import to RGA
+# -> CPU letterbox -> rknn_inputs_set -> optimized YOLOv8 C++ DFL/NMS.
+# Not end-to-end zero-copy: RKNPU2 input still uses CPU-side staging.
+if(RGA_INCLUDE_DIR AND RGA_LIB)
+  add_executable(v4l2_rga_rknn_yolov8 v4l2_rga_rknn_yolov8.cpp)
+  target_include_directories(v4l2_rga_rknn_yolov8 PRIVATE "${RKNN_INCLUDE_DIR}" "${RGA_INCLUDE_DIR}")
+  target_link_libraries(v4l2_rga_rknn_yolov8 PRIVATE yolov8_decode "${RKNN_LIB}" "${RGA_LIB}")
+  set_target_properties(v4l2_rga_rknn_yolov8 PROPERTIES BUILD_RPATH "$ORIGIN")
+endif()
