@@ -57,6 +57,12 @@
 
 **测试状态**：Python 代码可以在 CI 用伪运行时测试控制流程和预处理，但模型输出和速度仍需在 ROCK 5B 实机核对；不同 SDK release 的 RKNN 模型输入契约可能变化。
 
+## USB 摄像头 → NPU 的真正闭环（新增）
+
+在静态图片分类和单独摄像头读帧检查通过后，使用 [完整摄像头 MobileNet 实验](CAMERA_MOBILENET.md) 和 [实际 RKNNLite 源码](apps/camera_mobilenet_lite.py) 将两者组合：BGR→RGB、缩放/裁切、RKNNLite 推理、Top-K、单帧耗时与 p95 统计、输出 JSON/JSONL。默认不保存原始摄像头图片。
+
+**测试边界**：CI 用明确标注的 FakeCapture/FakeSDK 测功能和释放逻辑；真正 USB 摄像头/NPU 速度尚未上板实测，不应把这个分类应用误称为 YOLO 目标检测。
+
 ## 四、公开来源（请与自己的板卡版本核对）
 
 - [ROCK 5B/5B+ 官方中文手册](https://docs.radxa.com/rock5/rock5b)

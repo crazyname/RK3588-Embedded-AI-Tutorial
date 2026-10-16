@@ -78,6 +78,10 @@ Radxa 官方 [YOLOv8 板端教程](https://docs.radxa.com/en/rock5/rock5b/app-de
 
 `/dev/video0` 只是示例，必须按设备实际枚举的节点选择。某些 `/dev/videoX` 是编解码器或 ISP 的视频节点，并不代表 USB 摄像头；通过系统设备名称和真实读帧来确认。脚本只测帧采集，不执行 AI 推理。可选 `--save-image boards/radxa-rock5b/results/camera.jpg` 保存一张图片供检查，注意隐私。
 
+## 第六关：摄像头与 MobileNet 联合运行
+
+先确认第 5 关 USB 摄像头可正常读帧，且 [单图片 MobileNet 示例](apps/mobilenet_image_lite.py) 能用同一份 RKNN 模型推理。再按 [摄像头分类实验手册](CAMERA_MOBILENET.md) 运行 `apps/camera_mobilenet_lite.py`，保存真实帧率和 p95 耗时，不要将 CI 的模拟摄像头结果当作板端实测。
+
 ## 学习验收与记录
 
 - [ ] PCB 确认为 ROCK 5B，修订号已记录，电源稳定、散热可靠。
@@ -85,6 +89,7 @@ Radxa 官方 [YOLOv8 板端教程](https://docs.radxa.com/en/rock5/rock5b/app-de
 - [ ] NPU 驱动/Runtime 信息或明确的缺失错误已记录。
 - [ ] 官方 YOLOv8 样例产生了实际检测结果，保存真实日志和结果图（或明确记录未通过原因）。
 - [ ] USB 摄像头（若配备）能从正确的设备节点读取连续帧。
+- [ ] 摄像头→RKNNLite MobileNet 分类输出真实标签、保存摘要和每帧 JSONL（或记录明确失败原因）。
 - [ ] 任何日志、图片上传仓库之前已检查隐私和大文件问题。
 
 完成后可进入 [后续实际应用开发](NEXT_PROJECTS.md)。

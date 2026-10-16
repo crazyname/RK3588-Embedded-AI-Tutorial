@@ -4,7 +4,7 @@
 
 ## 环境与正确的模型
 
-1. 按 [首次上电及模型验收](../FIRST_BOOT.md) 确认系统、摄像头和 RKNPU 驱动。
+1. 按 [首次上电及模型验收](FIRST_BOOT.md) 确认系统、摄像头和 RKNPU 驱动。
 2. 根据 [MobileNet 官方案例](https://docs.radxa.com/en/rock5/rock5b/app-development/ai/mobilenet) 从官方配套 Model Zoo/Toolkit2 准备能在 RK3588 运行的 `.rknn` 模型；按发布版要求安装 ARM64 RKNNLite、Runtime 和 Python 依赖。
 3. 仔细核对输入属性：本程序只支持 **RGB、uint8、HWC/NHWC batch1、单输入单输出的分类模型**，模型的 mean/std 预处理约定需在转换时确认。默认目标输入为 224×224，但并非每个 `.rknn` 都符合这些假设。
 4. 安装或确认 Python 的 `numpy`、`Pillow`、`cv2` 和 `rknnlite` 均可导入；对于 OpenCV 优先使用板商兼容的系统包。
