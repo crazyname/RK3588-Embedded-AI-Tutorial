@@ -94,6 +94,36 @@ jobs:
           g++ -std=c++17 -fsyntax-only -Ibuild/sdk-headers examples/hardware/rknn_zero_copy.cpp
           g++ -std=c++17 -fsyntax-only -Ibuild/sdk-headers examples/hardware/rknn_compare_input_io.cpp
           g++ -std=c++17 -Wall -Wextra -Werror -fsyntax-only -Ibuild/sdk-headers examples/hardware/rknn_yolov8_raw.cpp
+      - name: Export real FP32 NPZ model outputs to C++ replay files
+        run: |
+          python - <<'PY'
+          import numpy as np
+          from pathlib import Path
+          folder=Path('build/yolov8-cpp')
+          folder.mkdir(parents=True,exist_ok=True)
+          arrays={}
+          for i in range(9):
+              grid=[8,4,2][i//3]
+              channels=[64,80,1][i%3]
+              a=np.full((1,channels,grid,grid),-20 if i%3==0 else 0,dtype=np.float32)
+              if i%3==0:
+                  a[:,[1,17,33,49],:,:]=20
+              if i==1:a[0,2,4,4]=.92
+              arrays[f'output_{i}']=a
+          np.savez(folder/'sample.npz',**arrays)
+          PY
+          python tools/export_yolov8_fp32.py --npz build/yolov8-cpp/sample.npz \
+            --out-dir build/yolov8-cpp/replay --grids 8 4 2
+          build/yolov8-cpp/yolov8_decode_files build/yolov8-cpp/replay 9 8 4 2 640 480 \
+            > build/yolov8-cpp/replayed.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          detections=json.loads(Path('build/yolov8-cpp/replayed.json').read_text())['detections']
+          assert len(detections)==1, detections
+          assert detections[0]['class_id']==2 and abs(detections[0]['score']-.92)<1e-5
+          print('NPZ->checked FP32 files->real C++ decoder chain passed, NO NPU involved')
+          PY
       - name: Test actual YOLOv8 C API main against explicit MOCK RKNN runtime
         run: |
           g++ -std=c++17 -O2 -Wall -Wextra -Werror -Ibuild/sdk-headers \

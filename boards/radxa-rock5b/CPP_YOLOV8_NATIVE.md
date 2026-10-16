@@ -51,6 +51,20 @@
 
 **不要把 JPEG 文件直接传给 RKNPU2，也不要把已经除以 255 的 float32 再当 uint8 输入。** 必须确保模型转换时的 mean/std 约定与 Rockchip 官方优化版一致。
 
+## 3.5 实机输出重放：由 RKNNLite NPZ 转为 C++ FP32 文件
+
+如果在真实开发板用已存在的 `examples/hardware/lite_infer.py` 得到了 `output_0..output_8` 的 `.npz` 文件，运行：
+
+    python3 tools/export_yolov8_fp32.py \
+      --npz build/board_yolov8_outputs.npz \
+      --out-dir build/replay_yolo
+    ./build/yolov8_decode_files \
+      build/replay_yolo 9 80 40 20 640 480 0.25
+
+6 输出模型请把 `9` 改为 `6`；必须保证 sourceW/sourceH 与保存的 input 是同一张图片的原始尺寸，并严格使用同一次 letterbox 的元信息。导出器要求连续的 NCHW FP32 输出，拒绝缺失、shape 不匹配、量化整数和非有限数值；会在 manifest 中记录 NPZ 和每个二进制输出的 SHA256。
+
+**此步骤只证明真实张量可以被同一个 C++ 后处理解释**，并不能由 NPZ 文件本身证明张量一定来自 NPU。实机证据需要额外保存 SDK、Driver、模型 SHA256 与执行日志。
+
 ## 4. ROCK 5B：编译并执行真实 RKNPU2 C++ 检测
 
 使用开发板上与镜像、驱动匹配的官方 rknn_api.h 和 ARM64 librknnrt.so：
