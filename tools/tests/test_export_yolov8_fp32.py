@@ -60,6 +60,25 @@ class ExportTests(unittest.TestCase):
             np.savez(file,**items)
             with self.assertRaisesRegex(ValueError,"exactly"):
                 export(file,root/"out",(8,4,2))
+    def test_no_partial_outputs_or_mixed_head_count(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            items=tensors(9)
+            items["output_8"]=items["output_8"].astype(np.int8)
+            input_file=root/"invalid.npz"
+            np.savez(input_file,**items)
+            output=root/"new-folder"
+            with self.assertRaisesRegex(ValueError,"float32"):
+                export(input_file,output,(8,4,2))
+            self.assertFalse(output.exists(),"Invalid tensor must not leave partial files")
+            full=root/"nine.npz"
+            np.savez(full,**tensors(9))
+            export(full,output,(8,4,2))
+            six=root/"six.npz"
+            np.savez(six,**tensors(6))
+            with self.assertRaisesRegex(ValueError,"stale tensors"):
+                export(six,output,(8,4,2))
+
     def test_nan_output_rejected(self):
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp)
