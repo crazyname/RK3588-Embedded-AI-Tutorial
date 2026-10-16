@@ -59,7 +59,7 @@
 
 ## USB 摄像头 → NPU 的真正闭环（新增）
 
-在静态图片分类和单独摄像头读帧检查通过后，使用 [完整摄像头 MobileNet 实验](CAMERA_MOBILENET.md) 和 [实际 RKNNLite 源码](apps/camera_mobilenet_lite.py) 将两者组合：BGR→RGB、缩放/裁切、RKNNLite 推理、Top-K、单帧耗时与 p95 统计、输出 JSON/JSONL。默认不保存原始摄像头图片。
+在静态图片分类和单独摄像头读帧检查通过后，使用 [完整摄像头 MobileNet 实验](CAMERA_MOBILENET.md) 和 [实际 RKNNLite 源码](apps/camera_mobilenet_lite.py) 将两者组合：BGR→RGB、缩放/裁切、RKNNLite 推理、Top-K、单帧耗时与 p95 统计、输出 JSON/JSONL，并使用 [报告校验工具](tools/validate_camera_report.py) 自动检查模型哈希和性能门槛。默认不保存原始摄像头图片。
 
 **测试边界**：CI 用明确标注的 FakeCapture/FakeSDK 测功能和释放逻辑；真正 USB 摄像头/NPU 速度尚未上板实测，不应把这个分类应用误称为 YOLO 目标检测。
 

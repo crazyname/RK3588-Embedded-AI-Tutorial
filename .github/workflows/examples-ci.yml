@@ -163,3 +163,4 @@ jobs:
           python boards/radxa-rock5b/tools/run_official_yolov8.py --help
           python boards/radxa-rock5b/apps/mobilenet_image_lite.py --help
           python boards/radxa-rock5b/apps/camera_mobilenet_lite.py --help
+          python boards/radxa-rock5b/tools/validate_camera_report.py --help

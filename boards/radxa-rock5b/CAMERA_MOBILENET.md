@@ -37,6 +37,18 @@
 - 模型输入 shape/dtype 不匹配：先使用官方示例对相同模型跑通。任意更改 mean/std、resize/crop 可能使预测完全不同。
 - 用户 Ctrl+C 中断运行：程序负责在 finally 释放摄像头与 Runtime，但未完成的报表可能不存在；不要将中断前的非完整数据视为正式性能结果。
 
+
+## 保存后的自动验收
+
+先按上文执行真实板端程序并生成 JSON/JSONL，然后在仓库根目录运行：
+
+    python3 boards/radxa-rock5b/tools/validate_camera_report.py \
+      --summary boards/radxa-rock5b/results/camera_mobilenet.json \
+      --jsonl boards/radxa-rock5b/results/camera_mobilenet_frames.jsonl \
+      --model /path/to/compatible_mobilenet.rknn
+
+它检查帧数、Top-K、p50/p95 统计结构与模型 SHA256 对应关系。可选 `--min-fps`、`--max-inference-p95-ms` 参数按**自己的应用验收门槛**进行自动判定。此工具对保存的文件做结构/阈值校验，**不能独立证明数据来自真实 NPU**；必须另外保留板端日志、SDK/驱动版本等证据。
+
 ## 验收状态
 
 GitHub CI 使用**明确标记的模拟摄像头和 SDK 对象**，验证图像通道处理、224×224 参数化缩放、Top-K、资源释放、性能报告的 JSON 格式和各种失败路径；它不模拟真实的 NPU 精度或速度。**真实 RK3588 USB 摄像头与 RKNNLite 联调仍待使用实体 ROCK 5B 验收。**
