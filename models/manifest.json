@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "models": [
+    {
+      "id": "tiny-conv-onnx",
+      "kind": "generated",
+      "local_path": "build/fixtures/tiny.onnx",
+      "sha256": null,
+      "source_url": "https://github.com/crazyname/RK3588-Embedded-AI-Tutorial/blob/main/examples/hardware/create_tiny_onnx.py"
+    },
+    {
+      "id": "mobilenetv2",
+      "kind": "reference",
+      "local_path": null,
+      "sha256": null,
+      "source_url": "https://github.com/airockchip/rknn_model_zoo/tree/main/examples/mobilenet"
+    },
+    {
+      "id": "yolov5",
+      "kind": "reference",
+      "local_path": null,
+      "sha256": null,
+      "source_url": "https://github.com/airockchip/rknn_model_zoo/tree/main/examples/yolov5"
+    },
+    {
+      "id": "yolov8",
+      "kind": "reference",
+      "local_path": null,
+      "sha256": null,
+      "source_url": "https://github.com/airockchip/rknn_model_zoo/tree/main/examples/yolov8"
+    },
+    {
+      "id": "rkllm",
+      "kind": "reference",
+      "local_path": null,
+      "sha256": null,
+      "source_url": "https://github.com/airockchip/rknn-llm"
+    },
+    {
+      "id": "yolo26-research",
+      "kind": "user-supplied",
+      "local_path": null,
+      "sha256": null,
+      "source_url": "https://docs.ultralytics.com/"
+    }
+  ]
+}
