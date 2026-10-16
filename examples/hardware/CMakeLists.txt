@@ -40,3 +40,16 @@ if(RGA_INCLUDE_DIR AND RGA_LIB)
   target_link_libraries(rga_letterbox_rgb888 PRIVATE "${RGA_LIB}")
   set_target_properties(rga_letterbox_rgb888 PROPERTIES BUILD_RPATH "$ORIGIN")
 endif()
+
+# Optimized Model Zoo YOLOv8: actual RKNPU2 6/9 outputs with our own FP32 DFL/NMS.
+# Input comes from prepared RGB 640x640 HWC RAW; not a V4L2 or DMA-BUF app.
+add_library(yolov8_decode STATIC yolov8_postprocess.cpp)
+target_include_directories(yolov8_decode PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
+add_executable(rknn_yolov8_raw rknn_yolov8_raw.cpp)
+target_include_directories(rknn_yolov8_raw PRIVATE "${RKNN_INCLUDE_DIR}")
+target_link_libraries(rknn_yolov8_raw PRIVATE yolov8_decode "${RKNN_LIB}")
+set_target_properties(rknn_yolov8_raw PROPERTIES BUILD_RPATH "$ORIGIN")
+
+# Pure CPU, no SDK runtime or NPU required, useful for comparing against Python.
+add_executable(yolov8_decode_files yolov8_decode_files.cpp)
+target_link_libraries(yolov8_decode_files PRIVATE yolov8_decode)
