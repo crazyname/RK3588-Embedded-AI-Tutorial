@@ -111,6 +111,14 @@ print([(int(i),float(scores[i])) for i in idx])
 
 > 未经板端测试的示例不代表可直接用于生产环境。
 
+
+### 扩展实验：ROCK 5B USB 摄像头实时分类
+
+- [摄像头 → RKNNLite MobileNet 真实源代码](../boards/radxa-rock5b/apps/camera_mobilenet_lite.py)
+- [摄像头与 NPU 联合运行、实测和排障手册](../boards/radxa-rock5b/CAMERA_MOBILENET.md)
+
+程序从 USB UVC 摄像头持续取帧，按模型协议执行 BGR→RGB 和缩放/裁切，使用真实 RKNNLite 推理；可以导出每帧 Top-K、采集/预处理/SDK 调用耗时及 p95 统计。**它是分类应用，不是 YOLO 检测；CI 使用模拟摄像头与 SDK 校验控制流程，硬件性能仍需 ROCK 5B 实测。**
+
 ## 配套可运行源码
 
 - [本讲独立操作手册（只含运行、参数与验收）](../examples/LESSON_27.md)

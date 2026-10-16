@@ -60,3 +60,7 @@ RKNN 路径默认准备 uint8 NHWC 的输入，避免把已经写入 RKNN config
 ## 5. 关于之前的 7 行占位符
 
 原 `lesson_27.py` 只是转发 `labs.main(27)`，再对硬编码分数进行排序，**不是部署代码**。新版已经替换该入口；其他课程是否具备完整板端工程仍应独立审计，不能以 35 个 Python 文件的数量判断完成度。
+
+## 6. 摄像头连续推理（进阶，需 ROCK 5B）
+
+在静态图片实验验收之后，按 [USB UVC 摄像头 → RKNNLite 实验指南](../boards/radxa-rock5b/CAMERA_MOBILENET.md) 使用 [camera_mobilenet_lite.py](../boards/radxa-rock5b/apps/camera_mobilenet_lite.py) 进行连续帧推理，记录 JSON、JSONL、FPS 与 p50/p95 统计。此处无需复制教材原理，且不将模拟 SDK 单元测试误称实机性能。

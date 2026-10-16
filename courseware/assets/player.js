@@ -95,11 +95,12 @@ const hardwareByLesson={
 34:[]
 };
 const sdkFiles=hardwareByLesson[data.id]||[];
+const boardCameraCode=data.id===27?'<li><a href="../../boards/radxa-rock5b/apps/camera_mobilenet_lite.py">ROCK 5B：USB摄像头→RKNNLite MobileNet实时分类</a></li><li><a href="../../boards/radxa-rock5b/CAMERA_MOBILENET.md">实机接线、命令、测量与排障手册</a></li>':'';
 const practicalNote=data.id===27?"LESSON_27.md":("notes/lesson_"+String(data.id).padStart(2,"0")+".md");
 const codeLinks='<ul><li><a href="../../examples/'+codeFile+
 '">打开本讲实操源码：'+codeFile+'</a></li>'+
 sdkFiles.map(f=>'<li><a href="../../examples/hardware/'+f+
-'">查看配套 SDK 示例：'+f+'</a></li>').join("")+
+'">查看配套 SDK 示例：'+f+'</a></li>').join("")+boardCameraCode+
 '<li><a href="../../examples/'+practicalNote+'">本讲操作MD（不重复理论）</a></li><li><a href="../../examples/README.md">代码运行环境、依赖和验证说明</a></li><li><a href="../../examples/CODE_STATUS.md">35节代码真实完成度审计</a></li></ul>';
 add("SOURCE CODE","本讲可执行源码与运行环境",
 '<div class="panel good"><h3>先运行，再对照讲义</h3>'+codeLinks+
