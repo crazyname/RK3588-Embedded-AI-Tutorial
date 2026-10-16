@@ -1,5 +1,6 @@
 // ROCK 5B: native RKLLM C API callback and performance telemetry.
 // This source requires an actual model/Runtime; CI test double is not hardware inference.
+#include <cstddef>
 #include "rkllm.h"
 #include <chrono>
 #include <cstdint>

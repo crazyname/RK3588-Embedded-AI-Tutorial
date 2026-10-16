@@ -39,6 +39,13 @@ jobs:
           node --check courseware/assets/player.js
           node --check courseware/assets/catalog.js
           node --check courseware/assets/extras.js
+      - name: Compile RKLLM native C++ using official header and test callback flow
+        run: |
+          mkdir -p build/rkllm-fake
+          curl --fail --location --retry 3 --silent --show-error https://raw.githubusercontent.com/airockchip/rknn-llm/main/rkllm-runtime/Linux/librkllm_api/include/rkllm.h -o build/rkllm-fake/rkllm.h
+          g++ -std=c++17 -Wall -Wextra -Werror -fsyntax-only -Ibuild/rkllm-fake examples/hardware/rkllm/rkllm_stream.cpp
+          g++ -std=c++17 -Wall -Wextra -Werror -Ibuild/rkllm-fake examples/hardware/rkllm/rkllm_stream.cpp examples/hardware/rkllm/tests/mock_rkllm_runtime.cpp -o build/rkllm-fake/rkllm_stream_mock
+          python -m unittest discover -s examples/hardware/rkllm/tests -p 'test_*.py' -v
       - name: Unit tests
         run: python -m unittest discover -s examples/tests -v
       - name: Enforce all 35 dedicated sources and runbooks
