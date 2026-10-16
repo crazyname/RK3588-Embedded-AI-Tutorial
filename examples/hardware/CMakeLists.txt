@@ -20,3 +20,23 @@ add_executable(rknn_zero_copy rknn_zero_copy.cpp)
 target_include_directories(rknn_zero_copy PRIVATE "${RKNN_INCLUDE_DIR}")
 target_link_libraries(rknn_zero_copy PRIVATE "${RKNN_LIB}")
 set_target_properties(rknn_zero_copy PROPERTIES BUILD_RPATH "$ORIGIN")
+
+# One-model comparison: normal inputs_set versus input memory binding.
+add_executable(rknn_compare_input_io rknn_compare_input_io.cpp)
+target_include_directories(rknn_compare_input_io PRIVATE "${RKNN_INCLUDE_DIR}")
+target_link_libraries(rknn_compare_input_io PRIVATE "${RKNN_LIB}")
+set_target_properties(rknn_compare_input_io PROPERTIES BUILD_RPATH "$ORIGIN")
+
+# Optional Rockchip RGA preprocessing (virtual-address import, RGB888 letterbox).
+# This is an independent tool; it does not use DMA-BUF to deliver frames to the NPU.
+set(RGA_INCLUDE_DIR "" CACHE PATH "Directory containing im2d.hpp and librga headers")
+set(RGA_LIB "" CACHE FILEPATH "Absolute path to board-matching librga.so")
+if(RGA_INCLUDE_DIR AND RGA_LIB)
+  if(NOT EXISTS "${RGA_INCLUDE_DIR}/im2d.hpp" OR NOT EXISTS "${RGA_LIB}")
+    message(FATAL_ERROR "RGA_INCLUDE_DIR must contain im2d.hpp and RGA_LIB must be a real library")
+  endif()
+  add_executable(rga_letterbox_rgb888 rga_letterbox_rgb888.cpp)
+  target_include_directories(rga_letterbox_rgb888 PRIVATE "${RGA_INCLUDE_DIR}")
+  target_link_libraries(rga_letterbox_rgb888 PRIVATE "${RGA_LIB}")
+  set_target_properties(rga_letterbox_rgb888 PROPERTIES BUILD_RPATH "$ORIGIN")
+endif()
