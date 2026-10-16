@@ -1,4 +1,5 @@
 // CI mock ONLY. Not RKLLM inference and must not ship to ROCK 5B production.
+#include <cstddef>
 #include "rkllm.h"
 #include <cstdlib>
 static RKLLMCallback cb{};
