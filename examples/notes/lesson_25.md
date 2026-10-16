@@ -21,3 +21,10 @@ python3 examples/lesson_25.py --include /sdk/include --library /sdk/librknnrt.so
 ## 错误处理
 
 首先检查依赖安装、系统架构、模型/输入格式与命令返回码。缺失模型或不符合 tensor 大小时程序会失败，而非产生虚假样本。
+
+## 进阶：普通 RKNPU2 输入与绑定输入的 C++ 对照
+
+- [同模型双路径 C++ 源码](../hardware/rknn_compare_input_io.cpp)
+- [官方 SDK 编译、结果误差、RGA 与非零拷贝边界](../../boards/radxa-rock5b/CPP_RGA_IO_BENCHMARK.md)
+
+需要与 SDK 匹配的 RK3588 ARM64 环境、单输入单输出 UINT8 NHWC 分类模型和正确的 RGB raw；CI 中的纯 CPU mock 用于流程测试，不是上板结果。

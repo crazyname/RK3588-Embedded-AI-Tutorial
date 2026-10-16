@@ -32,3 +32,12 @@ python3 examples/lesson_26.py --model model.rknn --input-raw padded_input.raw \
 ```
 
 SDK 可能要求额外的 cache sync、native stride 对齐或专用图像预处理；当前仓库**尚未拿真实 RK3588 与匹配模型跑过这一实现**。编译/运行失败时需要保存返回码、tensor query、driver/runtime 版本。不能以源码存在就宣称零拷贝性能提高。源码运行时间仅覆盖 `rknn_run`，不包含调用前的数据拷贝。
+
+## 进阶：绑定输入与 RGA 缩放验收
+
+- [C++ 常规输入 vs SDK 内存绑定](../hardware/rknn_compare_input_io.cpp)
+- [librga RGB888 缩放及黑边](../hardware/rga_letterbox_rgb888.cpp)
+- [OpenCV 同图像素差异校验](../../tools/compare_rga_letterbox.py)
+- [ROCK 5B 原生编译与验收指南](../../boards/radxa-rock5b/CPP_RGA_IO_BENCHMARK.md)
+
+**严格区分**：SDK 输入绑定依然使用 CPU memcpy，librga 虚拟地址导入和黑边合成也仍有 CPU 内存操作。现有代码不是 V4L2 摄像头 DMA-BUF → RGA → NPU 的端到端零拷贝；只在板端 SDK/驱动匹配后才能评估性能。

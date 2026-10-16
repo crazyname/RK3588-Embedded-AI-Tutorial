@@ -112,6 +112,11 @@ CPU 写入共享数据后，NPU 需要看到最新内容；NPU 写输出后，CP
 
 > 未经板端测试的示例不代表可直接用于生产环境。
 
+
+### 进阶实验：C++ RGA 前处理和 SDK 输入内存绑定
+
+新增 [RKNPU2 两条输入路径比较](../examples/hardware/rknn_compare_input_io.cpp)、[librga RGB888 预处理](../examples/hardware/rga_letterbox_rgb888.cpp)、[OpenCV 同图误差校验](../tools/compare_rga_letterbox.py) 与 [完整实验说明](../boards/radxa-rock5b/CPP_RGA_IO_BENCHMARK.md)。目前有虚拟地址导入和 CPU 数据复制，非端到端 DMA-BUF 零拷贝。
+
 ## 配套可运行源码
 
 - [本讲独立操作手册（只含运行、参数与验收）](../examples/notes/lesson_26.md)

@@ -95,13 +95,14 @@ const hardwareByLesson={
 34:[]
 };
 const sdkFiles=hardwareByLesson[data.id]||[];
+const boardCppLinks=(data.id===25||data.id===26)?'<li><a href="../../examples/hardware/rknn_compare_input_io.cpp">C++ RKNPU2 同模型输入绑定对照</a></li><li><a href="../../examples/hardware/rga_letterbox_rgb888.cpp">C++ RGA RGB888 缩放</a></li><li><a href="../../boards/radxa-rock5b/CPP_RGA_IO_BENCHMARK.md">真实板端版本、编译和验收手册</a></li>':'';
 const boardYoloLinks=(data.id===29||data.id===33)?'<li><a href="../../boards/radxa-rock5b/apps/camera_yolov8_lite.py">ROCK 5B：摄像头→RKNNLite YOLOv8检测源码</a></li><li><a href="../../boards/radxa-rock5b/CAMERA_YOLOV8.md">YOLOv8优化版模型协议与硬件实验手册</a></li>':'';
 const boardCameraCode=data.id===27?'<li><a href="../../boards/radxa-rock5b/apps/camera_mobilenet_lite.py">ROCK 5B：USB摄像头→RKNNLite MobileNet实时分类</a></li><li><a href="../../boards/radxa-rock5b/CAMERA_MOBILENET.md">实机接线、命令、测量与排障手册</a></li>':'';
 const practicalNote=data.id===27?"LESSON_27.md":("notes/lesson_"+String(data.id).padStart(2,"0")+".md");
 const codeLinks='<ul><li><a href="../../examples/'+codeFile+
 '">打开本讲实操源码：'+codeFile+'</a></li>'+
 sdkFiles.map(f=>'<li><a href="../../examples/hardware/'+f+
-'">查看配套 SDK 示例：'+f+'</a></li>').join("")+boardCameraCode+boardYoloLinks+
+'">查看配套 SDK 示例：'+f+'</a></li>').join("")+boardCameraCode+boardYoloLinks+boardCppLinks+
 '<li><a href="../../examples/'+practicalNote+'">本讲操作MD（不重复理论）</a></li><li><a href="../../examples/README.md">代码运行环境、依赖和验证说明</a></li><li><a href="../../examples/CODE_STATUS.md">35节代码真实完成度审计</a></li></ul>';
 add("SOURCE CODE","本讲可执行源码与运行环境",
 '<div class="panel good"><h3>先运行，再对照讲义</h3>'+codeLinks+
