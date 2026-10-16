@@ -76,6 +76,32 @@ jobs:
           curl --fail --location --retry 3 --silent --show-error             https://raw.githubusercontent.com/rockchip-linux/rknpu2/master/runtime/RK3588/Linux/librknn_api/include/rknn_api.h             -o build/sdk-headers/rknn_api.h
           g++ -std=c++17 -fsyntax-only -Ibuild/sdk-headers examples/hardware/rknn_classify.cpp
           g++ -std=c++17 -fsyntax-only -Ibuild/sdk-headers examples/hardware/rknn_zero_copy.cpp
+          g++ -std=c++17 -fsyntax-only -Ibuild/sdk-headers examples/hardware/rknn_compare_input_io.cpp
+      - name: Execute real C++ comparison control flow with EXPLICIT MOCK SDK
+        run: |
+          g++ -std=c++17 -Ibuild/sdk-headers examples/hardware/rknn_compare_input_io.cpp examples/hardware/tests/mock_rknn_api.cpp -o build/test_compare_input_io
+          python - <<'PY'
+          from pathlib import Path
+          import subprocess
+          root=Path('build/sdk-test')
+          root.mkdir(parents=True,exist_ok=True)
+          (root/'fake-model.rknn').write_bytes(b'FAKE MODEL ONLY FOR CI MOCK')
+          (root/'rgb.raw').write_bytes(bytes(range(48)))
+          command=['build/test_compare_input_io',str(root/'fake-model.rknn'),str(root/'rgb.raw'),'4','1']
+          result=subprocess.run(command,text=True,capture_output=True,check=True)
+          assert 'allclose_atol_0.01_rtol_0.01=true' in result.stdout,result.stdout
+          assert 'input staging memcpy' not in result.stdout or 'CPU memcpy' in result.stdout
+          assert 'standard calls mean_ms=' in result.stdout and 'bound_input calls mean_ms=' in result.stdout
+          (root/'wrong.raw').write_bytes(bytes(range(10)))
+          bad=subprocess.run(command[:2]+[str(root/'wrong.raw'),'1','0'],text=True,capture_output=True)
+          assert bad.returncode!=0,bad.stdout
+          print('C++ control flow verified using mock SDK, NOT a real NPU run')
+          PY
+      - name: Syntax-check RGA preprocessing against official librga headers
+        run: |
+          git clone --quiet --depth 1 --filter=blob:none --sparse https://github.com/airockchip/librga.git build/librga
+          git -C build/librga sparse-checkout set include
+          g++ -std=c++17 -fsyntax-only -Ibuild/librga/include examples/hardware/rga_letterbox_rgb888.cpp
 
       - name: Check hardware script argument parsers
         run: |
