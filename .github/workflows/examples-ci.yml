@@ -176,6 +176,31 @@ jobs:
           git -C build/librga sparse-checkout set include
           g++ -std=c++17 -fsyntax-only -Ibuild/librga/include examples/hardware/rga_letterbox_rgb888.cpp
           g++ -std=c++17 -O2 -Wall -Wextra -Werror -fsyntax-only -Ibuild/sdk-headers -Ibuild/librga/include examples/hardware/v4l2_rga_rknn_yolov8.cpp
+      - name: Link real V4L2 RGA YOLOv8 application with EXPLICIT MOCK device runtimes
+        run: |
+          g++ -std=c++17 -O2 -Wall -Wextra -Werror \
+            -Ibuild/sdk-headers -Ibuild/librga/include \
+            examples/hardware/v4l2_rga_rknn_yolov8.cpp \
+            examples/hardware/yolov8_postprocess.cpp \
+            examples/hardware/tests/mock_rknn_yolov8.cpp \
+            examples/hardware/tests/mock_librga.cpp \
+            -o build/v4l2_rga_rknn_yolov8_mock
+          build/v4l2_rga_rknn_yolov8_mock --help
+          python - <<'PY'
+          import subprocess
+          from pathlib import Path
+          model=Path('build/yolov8-cpp/mock-camera-model.rknn')
+          model.parent.mkdir(parents=True,exist_ok=True)
+          model.write_bytes(b'FAKE-CI-MODEL')
+          exe='build/v4l2_rga_rknn_yolov8_mock'
+          cmd=[exe,str(model),'/dev/NO_CAMERA_CI_DEVICE','640','480','2']
+          result=subprocess.run(cmd,text=True,capture_output=True,timeout=15)
+          assert result.returncode!=0,(result.stdout,result.stderr)
+          assert 'Cannot open camera' in result.stderr,result.stderr
+          bad=subprocess.run([exe,str(model),'/dev/NO_CAMERA_CI_DEVICE','641','480','0'],text=True,capture_output=True)
+          assert bad.returncode!=0 and 'out of bounds' in bad.stderr,bad.stderr
+          print('Compiled actual C++ app and validated missing-device/parameter failures with MOCK SDK; no V4L2/RGA/NPU hardware used')
+          PY
 
       - name: Compile real V4L2 MMAP-to-DMA-BUF export probe and reject missing devices
         run: |
