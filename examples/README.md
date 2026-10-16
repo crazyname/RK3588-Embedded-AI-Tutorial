@@ -197,3 +197,10 @@ GitHub CI 仅执行与官方 RK3588 SDK `rknn_api.h` 的 **C++ 语法/接口检�
 - [ROCK 5B 原生编译、V4L2 DMA-BUF 检查及验收手册](../boards/radxa-rock5b/CPP_YOLOV8_NATIVE.md)
 
 当前原生 C++ 主程序使用预处理好的 RGB raw，不是 V4L2 摄像头图像直送 NPU；CI mock 不代表真实 NPU 结果。
+
+## 实时视频：V4L2 DMA-BUF / librga / RKNPU2 C++ YOLOv8
+
+- [完整单进程 C++ 应用](hardware/v4l2_rga_rknn_yolov8.cpp)
+- [ROCK 5B 摄像头硬件条件、原生编译与结果验收](../boards/radxa-rock5b/V4L2_RGA_RKNN_YOLOV8.md)
+
+当前仅支持 V4L2 单平面 YUYV 紧密 stride，DMA-BUF fd 共享到 RGA；RGA→NPU 使用 CPU letterbox 和 rknn_inputs_set。CI mock 并非真正 NPU 运行。

@@ -14,7 +14,8 @@
 
 额外已提供 [USB 摄像头→MobileNet 分类应用](CAMERA_MOBILENET.md)：可从摄像头逐帧调用 RKNNLite，**但它是分类，不是 YOLOv8 目标检测**；需要真实板端验证。P0～P2 的程序属于可以调用真实设备或官方代码的独立文件，**但仍需用户提供实物运行记录后才能声称已验证通过**。后续计划不是已经交付的成果。
 
-| P7（源码+CI测试，待上板） | 原生C++ YOLOv8多输出推理及V4L2导出检查 | [C++模型和输入协议指南](CPP_YOLOV8_NATIVE.md) | NPU模型与真实图片检出、DMA-BUF可导出、与Python对齐 |
+| P7（源码+CI，待上板） | 静态图片 C++ RKNN YOLOv8 | [原生C++模型和输入协议](CPP_YOLOV8_NATIVE.md) | NPU同图检出与Python对齐 |
+| P8（源码+CI，待上板） | 实时V4L2 DMA-BUF→RGA→NPU | [YUYV视频C++应用](V4L2_RGA_RKNN_YOLOV8.md) | EXPBUF、RGA fd导入、真实检测FPS、内存和温度；RGA→NPU还在拷贝 |
 
 ## 如何获取足够的板端证据
 

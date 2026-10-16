@@ -79,6 +79,10 @@
 
 [完整 C++ YOLOv8 多输出工程及实机执行指南](CPP_YOLOV8_NATIVE.md)，包括 DFL/NMS、RKNPU2 C API、多输出 SDK 模型校验、图片变换、与 Python 数值对照和 V4L2 MMAP→DMA-BUF fd 导出检测。**仍未完成摄像头 DMA-BUF 直通 RGA/NPU。**
 
+## V4L2 DMA-BUF → RGA → RKNPU2 视频实验（新增）
+
+[从 UVC YUYV 摄像头到真实 C++ YOLOv8 推理的板端操作手册](V4L2_RGA_RKNN_YOLOV8.md)及 [C++ 主程序](../../examples/hardware/v4l2_rga_rknn_yolov8.cpp)已经提供。限定单平面、紧密 stride 的 YUYV，默认生成 JSONL，不保存图像。这里**只实现摄像头→RGA 的 DMA-BUF fd 共享，RGA→NPU 仍有 CPU 拷贝**；设备、精度、FPS 尚待真正 ROCK 5B 验收。
+
 ## 四、公开来源（请与自己的板卡版本核对）
 
 - [ROCK 5B/5B+ 官方中文手册](https://docs.radxa.com/rock5/rock5b)

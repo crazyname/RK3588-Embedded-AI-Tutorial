@@ -111,3 +111,7 @@
 
 建议实机记录 ROCK 5B 板型、镜像版本、rknpu 驱动、librknnrt.so SHA256、优化版 Model Zoo commit、真实模型 SHA256、图片、stdout、每张图的检测框，以及与同一模型同一输入下 Python 的 IoU/分类一致性。不要将模拟 SDK 的输出或合成 DFL 张量记作设备性能。
 
+
+## 第七章：实时 V4L2 YUYV 视频流（不是完整零拷贝）
+
+已提供 [单进程 C++ 视频采集、RGA fd 导入与 RKNPU2 YOLOv8 推理](V4L2_RGA_RKNN_YOLOV8.md)，对应 [源码](../../examples/hardware/v4l2_rga_rknn_yolov8.cpp)。视频路径严格限定单平面 YUYV、紧密排列帧；CPU 黑边复制和 rknn_inputs_set 仍存在，不得将其表述为摄像头到 NPU 端到端零拷贝。CI 官方头文件语法/模拟动态链接不代表已实机运行。
