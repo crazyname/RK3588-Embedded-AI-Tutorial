@@ -21,3 +21,11 @@ python3 examples/lesson_33.py --baseline old.pt --optimized new.pt --images a.jp
 ## 故障排查
 
 检查 SDK release、操作系统架构、模型输出协议以及日志。训练集泄漏、后处理与转换算子差异需要单独检验，不应猜测模型已经全面兼容。
+
+## ROCK 5B USB 摄像头 YOLOv8 实时检测工程
+
+- [真实 RKNNLite 摄像头检测主程序](../../boards/radxa-rock5b/apps/camera_yolov8_lite.py)
+- [独立 NumPy DFL/letterbox/NMS 源码](../../boards/radxa-rock5b/apps/yolov8_rknn_postprocess.py)
+- [模型协议、运行步骤和真实板端验收](../../boards/radxa-rock5b/CAMERA_YOLOV8.md)
+
+这是单独的**目标检测系统**，不能与本讲的 PC Ultralytics 性能比较混为一谈。严格使用官方优化版 Model Zoo 9/6 输出模型；普通 YOLOv8 ONNX 单输出结构不适用。CI 使用模型形状正确的 NumPy 张量和明确模拟的 SDK 测试数学与异常路径，设备性能需要另行实测。

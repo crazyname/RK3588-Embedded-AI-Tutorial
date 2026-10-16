@@ -63,6 +63,10 @@
 
 **测试边界**：CI 用明确标注的 FakeCapture/FakeSDK 测功能和释放逻辑；真正 USB 摄像头/NPU 速度尚未上板实测，不应把这个分类应用误称为 YOLO 目标检测。
 
+## YOLOv8 摄像头实时目标检测工程（新增）
+
+在 MobileNet 分类流水线之后，新增 [完整 ROCK 5B USB 摄像头 YOLOv8 检测教程](CAMERA_YOLOV8.md)、[RKNNLite 检测主程序](apps/camera_yolov8_lite.py) 和 [独立 DFL/NMS 后处理](apps/yolov8_rknn_postprocess.py)。要求 Model Zoo **优化版** 640×640 / 9 或 6 输出模型，支持画框、逐帧 JSONL 与 FPS/p95。**这是目标检测，与 MobileNet 图像分类不同；真实 RK3588 推理尚待硬件验收**。
+
 ## 四、公开来源（请与自己的板卡版本核对）
 
 - [ROCK 5B/5B+ 官方中文手册](https://docs.radxa.com/rock5/rock5b)

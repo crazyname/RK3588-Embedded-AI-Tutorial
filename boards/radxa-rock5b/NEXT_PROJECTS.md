@@ -8,7 +8,7 @@
 | P1（已提供代码） | USB 摄像头与 V4L2 验收 | `tools/usb_camera_check.py` | 真实帧尺寸/时间统计，非 NPU FPS |
 | P2（已提供代码） | Radxa 官方 YOLOv8 对照基线 | `tools/run_official_yolov8.py` | 官方样本真正检出、保存图片 |
 | P3（源码已写，待实机测试） | 本仓库独立 MobileNet 图像分类 | `apps/mobilenet_image_lite.py` 等 | 同一张图与官方 C API 示例分类一致 |
-| P4（下一阶段） | USB 摄像头→NPU 实时 YOLOv8 | 配套模型检测头专用解码、letterbox/NMS、异常恢复 | 实时帧率、p50/p95、mAP 和掉帧情况 |
+| P4（源码+离线测试已提供，待实机验收） | USB 摄像头→NPU 实时 YOLOv8 | [主程序和协议后处理](CAMERA_YOLOV8.md) | 板端真实框、p50/p95/FPS 和任务准确率（mAP 需专门标注数据集） |
 | P5（下一阶段） | C++ RKNPU2 + RGA + 零拷贝 | 交叉编译、tensor stride、DMA/缓存同步 | 同图正确性与延迟/内存消融 |
 | P6（研究项目） | RKLLM 小语言模型 | 工具链、量化适配、提示词与 KV cache 测试 | 板端 TTFT、tokens/s、RAM 和错误日志 |
 

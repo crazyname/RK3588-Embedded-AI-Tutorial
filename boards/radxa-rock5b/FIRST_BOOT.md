@@ -82,6 +82,10 @@ Radxa 官方 [YOLOv8 板端教程](https://docs.radxa.com/en/rock5/rock5b/app-de
 
 先确认第 5 关 USB 摄像头可正常读帧，且 [单图片 MobileNet 示例](apps/mobilenet_image_lite.py) 能用同一份 RKNN 模型推理。再按 [摄像头分类实验手册](CAMERA_MOBILENET.md) 运行 `apps/camera_mobilenet_lite.py`，保存真实帧率和 p95 耗时，不要将 CI 的模拟摄像头结果当作板端实测。
 
+## 第七关：优化版 YOLOv8 实时检测
+
+先用 [Radxa/Model Zoo 官方 YOLOv8](https://docs.radxa.com/en/rock5/rock5b/app-development/ai/rknn-toolkit-lite2-yolov8) 验证同一 RKNN 模型，再依照 [本仓库的 YOLOv8 摄像头检测手册](CAMERA_YOLOV8.md) 使用 `apps/camera_yolov8_lite.py` 进行真实检测。模型必须符合三个 DFL 检测头协议；不是随便拿一个 YOLOv8 ONNX 转成 RKNN 就能运行。
+
 ## 学习验收与记录
 
 - [ ] PCB 确认为 ROCK 5B，修订号已记录，电源稳定、散热可靠。
@@ -90,6 +94,7 @@ Radxa 官方 [YOLOv8 板端教程](https://docs.radxa.com/en/rock5/rock5b/app-de
 - [ ] 官方 YOLOv8 样例产生了实际检测结果，保存真实日志和结果图（或明确记录未通过原因）。
 - [ ] USB 摄像头（若配备）能从正确的设备节点读取连续帧。
 - [ ] 摄像头→RKNNLite MobileNet 分类输出真实标签、保存摘要和每帧 JSONL（或记录明确失败原因）。
+- [ ] Model Zoo 优化版 YOLOv8 实际返回检测框并正确还原到原图坐标，保存实机日志/FPS/p95（或记录硬件阻塞项）。
 - [ ] 任何日志、图片上传仓库之前已检查隐私和大文件问题。
 
 完成后可进入 [后续实际应用开发](NEXT_PROJECTS.md)。
