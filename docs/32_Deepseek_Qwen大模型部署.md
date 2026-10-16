@@ -28,6 +28,10 @@ RK3588 上的语言模型推理通常走 RKLLM-Toolkit（主机模型转换与�
 
 **你应该能解释：** 测试报告包括模型来源、量化配置、TTFT、tokens/s、RAM、温度与固定提示词输出。
 
+## 进一步实操：原生 RKLLM C API
+
+配套开发了 [板端 RKLLM C++ 工程](../examples/hardware/rkllm/rkllm_stream.cpp) 与 [ROCK 5B 实测手册](../boards/radxa-rock5b/RKLLM_NATIVE.md)。它直接注册 RKLLM 回调、统计首段输出、生成耗时，并在对应 SDK 的 `RKLLMResult.perf` 有效时记录 tokens/s；没有实际硬件时 CI 仅以 Fake Runtime 检查 API 调用。首段文本不是严格的首 token 时序，不应该据此伪造 TTFT。
+
 ## 跟做实验与交付物
 
 ### 实验 1：选一个受支持的小模型
