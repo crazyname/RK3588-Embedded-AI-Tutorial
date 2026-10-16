@@ -45,10 +45,10 @@
 | 27 mobilenet模型部署 | [Python](lesson_27.py) | [操作 MD](LESSON_27.md) | [课程 MD](../docs/27_mobilenet%E6%A8%A1%E5%9E%8B%E9%83%A8%E7%BD%B2.md) |
 | 28 mobilenet模型代码封装 | [Python](lesson_28.py) | [操作 MD](notes/lesson_28.md) | [课程 MD](../docs/28_mobilenet%E6%A8%A1%E5%9E%8B%E4%BB%A3%E7%A0%81%E5%B0%81%E8%A3%85.md) |
 | 29 yolov5模型部署实战 | [Python](lesson_29.py) | [操作 MD](notes/lesson_29.md) | [课程 MD](../docs/29_yolov5%E6%A8%A1%E5%9E%8B%E9%83%A8%E7%BD%B2%E5%AE%9E%E6%88%98.md) |
-| 30 yolov26模型部署(从0到1版) · windows环境搭建与模型预测分析 | [Python](lesson_30.py) | [操作 MD](notes/lesson_30.md) | [课程 MD](../docs/30_yolov26%E6%A8%A1%E5%9E%8B%E9%83%A8%E7%BD%B2(%E4%BB%8E0%E5%88%B01%E7%89%88)_windows%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E4%B8%8E%E6%A8%A1%E5%9E%8B%E9%A2%84%E6%B5%8B%E5%88%86%E6%9E%90.md) |
-| 31 yolov26模型部署(从0到1版) · 数据集构建与模型训练 | [Python](lesson_31.py) | [操作 MD](notes/lesson_31.md) | [课程 MD](../docs/30_yolov26%E6%A8%A1%E5%9E%8B%E9%83%A8%E7%BD%B2(%E4%BB%8E0%E5%88%B01%E7%89%88)_%E6%95%B0%E6%8D%AE%E9%9B%86%E6%9E%84%E5%BB%BA%E4%B8%8E%E6%A8%A1%E5%9E%8B%E8%AE%AD%E7%BB%83.md) |
-| 32 yolov26模型部署(从0到1版) · 导出onnx与rknn模型并板端推理 | [Python](lesson_32.py) | [操作 MD](notes/lesson_32.md) | [课程 MD](../docs/30_yolov26%E6%A8%A1%E5%9E%8B%E9%83%A8%E7%BD%B2(%E4%BB%8E0%E5%88%B01%E7%89%88)_%E5%AF%BC%E5%87%BAonnx%E4%B8%8Erknn%E6%A8%A1%E5%9E%8B%E5%B9%B6%E6%9D%BF%E7%AB%AF%E6%8E%A8%E7%90%86.md) |
-| 33 yolov8模型部署(优化加速版) | [Python](lesson_33.py) | [操作 MD](notes/lesson_33.md) | [课程 MD](../docs/31_yolov8%E6%A8%A1%E5%9E%8B%E9%83%A8%E7%BD%B2(%E4%BC%98%E5%8C%96%E5%8A%A0%E9%80%9F%E7%89%88).md) |
+| 30 yolov26模型部署(从0到1版) · windows环境搭建与模型预测分析 | [Python](lesson_30.py) | [操作 MD](notes/lesson_30.md) | [课程 MD](../docs/30_yolov26%E6%A8%A1%E5%9E%8B%E9%83%A8%E7%BD%B2%28%E4%BB%8E0%E5%88%B01%E7%89%88%29_windows%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E4%B8%8E%E6%A8%A1%E5%9E%8B%E9%A2%84%E6%B5%8B%E5%88%86%E6%9E%90.md) |
+| 31 yolov26模型部署(从0到1版) · 数据集构建与模型训练 | [Python](lesson_31.py) | [操作 MD](notes/lesson_31.md) | [课程 MD](../docs/30_yolov26%E6%A8%A1%E5%9E%8B%E9%83%A8%E7%BD%B2%28%E4%BB%8E0%E5%88%B01%E7%89%88%29_%E6%95%B0%E6%8D%AE%E9%9B%86%E6%9E%84%E5%BB%BA%E4%B8%8E%E6%A8%A1%E5%9E%8B%E8%AE%AD%E7%BB%83.md) |
+| 32 yolov26模型部署(从0到1版) · 导出onnx与rknn模型并板端推理 | [Python](lesson_32.py) | [操作 MD](notes/lesson_32.md) | [课程 MD](../docs/30_yolov26%E6%A8%A1%E5%9E%8B%E9%83%A8%E7%BD%B2%28%E4%BB%8E0%E5%88%B01%E7%89%88%29_%E5%AF%BC%E5%87%BAonnx%E4%B8%8Erknn%E6%A8%A1%E5%9E%8B%E5%B9%B6%E6%9D%BF%E7%AB%AF%E6%8E%A8%E7%90%86.md) |
+| 33 yolov8模型部署(优化加速版) | [Python](lesson_33.py) | [操作 MD](notes/lesson_33.md) | [课程 MD](../docs/31_yolov8%E6%A8%A1%E5%9E%8B%E9%83%A8%E7%BD%B2%28%E4%BC%98%E5%8C%96%E5%8A%A0%E9%80%9F%E7%89%88%29.md) |
 | 34 Deepseek · Qwen大模型部署 | [Python](lesson_34.py) | [操作 MD](notes/lesson_34.md) | [课程 MD](../docs/32_Deepseek_Qwen%E5%A4%A7%E6%A8%A1%E5%9E%8B%E9%83%A8%E7%BD%B2.md) |
 
 ## 运行普通电脑实验

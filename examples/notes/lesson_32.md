@@ -1,6 +1,6 @@
 # 实例 32：YOLO ONNX 与 RKNN 转换
 
-[对应课程理论教材](../../docs/30_yolov26%E6%A8%A1%E5%9E%8B%E9%83%A8%E7%BD%B2(%E4%BB%8E0%E5%88%B01%E7%89%88)_%E5%AF%BC%E5%87%BAonnx%E4%B8%8Erknn%E6%A8%A1%E5%9E%8B%E5%B9%B6%E6%9D%BF%E7%AB%AF%E6%8E%A8%E7%90%86.md) 包含原理、案例和扩展题。本 MD **只保留执行手册**，避免重复讲解。
+[对应课程理论教材](../../docs/30_yolov26%E6%A8%A1%E5%9E%8B%E9%83%A8%E7%BD%B2%28%E4%BB%8E0%E5%88%B01%E7%89%88%29_%E5%AF%BC%E5%87%BAonnx%E4%B8%8Erknn%E6%A8%A1%E5%9E%8B%E5%B9%B6%E6%9D%BF%E7%AB%AF%E6%8E%A8%E7%90%86.md) 包含原理、案例和扩展题。本 MD **只保留执行手册**，避免重复讲解。
 
 ## 运行环境
 
