@@ -25,6 +25,7 @@
 
 从仓库根目录：
 
+    mkdir -p build
     g++ -std=c++17 -O2 -Wall -Wextra -Werror \
       examples/hardware/yolov8_postprocess.cpp \
       examples/hardware/yolov8_decode_files.cpp \

@@ -20,8 +20,8 @@ def sha256(path):
 def export(npz_path,output_dir,grids=(80,40,20)):
     if len(grids)!=3 or not all(g>0 for g in grids) or not(grids[0]>grids[1]>grids[2]):
         raise ValueError("Three strictly descending positive head grids are required")
-    output_dir.mkdir(parents=True,exist_ok=True)
     records=[]
+    validated=[]
     with np.load(npz_path,allow_pickle=False) as contents:
         indices=sorted(int(k[7:]) for k in contents.files if
                        k.startswith("output_") and k[7:].isdigit())
@@ -40,12 +40,19 @@ def export(npz_path,output_dir,grids=(80,40,20)):
                 raise ValueError(f"{name}: expected {expected} float32 NCHW, got {data.shape} {data.dtype}")
             if not np.isfinite(data).all():
                 raise ValueError(f"{name} includes NaN or Infinity")
-            # ensure C-contiguous NCHW payload, no array strides or endian ambiguity
+            # Validate every tensor before writing files to prevent partial exports.
             raw=np.ascontiguousarray(data.astype("<f4",copy=False))
-            target=output_dir/f"out_{n}.f32"
-            target.write_bytes(raw.tobytes(order="C"))
-            records.append({"name":name,"shape":list(expected),"dtype":"little-endian float32",
-                            "file":target.name,"sha256":sha256(target)})
+            validated.append((n,name,expected,raw))
+    output_dir.mkdir(parents=True,exist_ok=True)
+    expected_files={f"out_{n}.f32" for n,_,_,_ in validated}
+    stale=[p.name for p in output_dir.glob("out_*.f32") if p.name not in expected_files]
+    if stale:
+        raise ValueError("Output directory holds stale tensors: "+str(stale))
+    for n,name,expected,raw in validated:
+        target=output_dir/f"out_{n}.f32"
+        target.write_bytes(raw.tobytes(order="C"))
+        records.append({"name":name,"shape":list(expected),"dtype":"little-endian float32",
+                        "file":target.name,"sha256":sha256(target)})
     report={"source_npz":str(npz_path),"source_sha256":sha256(npz_path),
             "output_tensors":len(records),"grids":list(grids),
             "files":records,
