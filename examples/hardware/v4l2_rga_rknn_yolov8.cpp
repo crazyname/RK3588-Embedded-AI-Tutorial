@@ -196,6 +196,7 @@ struct Runtime {
     unsigned count=0;
     Runtime(std::vector<uint8_t>& model){
         sdk(rknn_init(&ctx,model.data(),uint32_t(model.size()),0,nullptr),"rknn_init");
+        try{
         rknn_input_output_num n{};
         sdk(rknn_query(ctx,RKNN_QUERY_IN_OUT_NUM,&n,sizeof(n)),"query counts");
         if(n.n_input!=1||(n.n_output!=9 && n.n_output!=6))
@@ -216,6 +217,11 @@ struct Runtime {
                attr.dims[2]!=uint32_t(grid)||attr.dims[3]!=uint32_t(grid))
                 throw std::runtime_error("Unsupported output shape/layout at "+std::to_string(k));
         }
+        }catch(...){
+            // A failed constructor never calls Runtime::~Runtime; clean context explicitly.
+            if(ctx){rknn_destroy(ctx);ctx=0;}
+            throw;
+        }
     }
     ~Runtime(){if(ctx)rknn_destroy(ctx);}
     Runtime(const Runtime&)=delete;Runtime& operator=(const Runtime&)=delete;
@@ -229,6 +235,7 @@ struct Runtime {
         std::vector<rknn_output> outputs(count);
         for(unsigned k=0;k<count;++k){outputs[k].index=k;outputs[k].want_float=1;}
         sdk(rknn_outputs_get(ctx,count,outputs.data(),nullptr),"rknn_outputs_get");
+        bool released=false;
         try{
             std::vector<rk_yolo::Tensor> tensors;
             tensors.reserve(count);
@@ -244,10 +251,13 @@ struct Runtime {
             rk_yolo::Options options{};
             options.conf_threshold=conf;
             auto result=rk_yolo::decode(tensors,map,options);
-            sdk(rknn_outputs_release(ctx,count,outputs.data()),"rknn_outputs_release");
+            // Release only once: a release failure must not trigger a second release.
+            const int release_status=rknn_outputs_release(ctx,count,outputs.data());
+            released=true;
+            sdk(release_status,"rknn_outputs_release");
             return result;
         }catch(...){
-            rknn_outputs_release(ctx,count,outputs.data());
+            if(!released)rknn_outputs_release(ctx,count,outputs.data());
             throw;
         }
     }
