@@ -4,6 +4,13 @@ on:
     paths:
       - "examples/**"
       - "boards/**"
+      - "tools/**"
+      - "models/**"
+      - "requirements/**"
+      - "SETUP.md"
+      - "README.md"
+      - "courseware/**"
+      - "docs/**"
       - ".github/workflows/examples-ci.yml"
   workflow_dispatch:
 jobs:
@@ -20,6 +27,12 @@ jobs:
           python -m compileall -q boards/radxa-rock5b
       - name: Install dependencies for a REAL ONNX inference test
         run: python -m pip install --quiet numpy onnx onnxruntime pillow
+      - name: Check course links and setup utilities
+        run: |
+          python tools/validate_repo.py
+          python tools/bootstrap_host.py --group core
+          python tools/verify_assets.py --list
+          python -m unittest discover -s tools/tests -v
       - name: Unit tests
         run: python -m unittest discover -s examples/tests -v
       - name: Enforce all 35 dedicated sources and runbooks
