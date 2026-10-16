@@ -60,6 +60,8 @@ def check_args(args):
     if not args.model.is_file() or args.model.stat().st_size==0:
         raise FileNotFoundError("Missing or empty RKNN model: "+str(args.model))
     if not args.labels.is_file():raise FileNotFoundError("COCO labels file missing")
+    if args.output_video and args.output_video.suffix.lower()!=".avi":
+        raise ValueError("--output-video must be an .avi file (MJPG)")
     if args.output_image and args.output_image.suffix.lower() not in (".jpg",".jpeg",".png"):
         raise ValueError("--output-image must end with .jpg, .jpeg or .png")
 
