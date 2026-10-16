@@ -8,6 +8,8 @@
 - [模型资源清单与 SHA256 校验](models/README.md)
 - [RKNN SDK、内核和板端 Runtime 版本记录](requirements/COMPATIBILITY.md)
 - [课程 HTML/MD 链接完整性校验](tools/validate_repo.py)
+- [在线发布课件（需手动启用 GitHub Pages）](courseware/DEPLOY.md)
+- [源码与课程许可审核](LICENSE_POLICY.md)
 
 PC 可先生成仓库自带的真实 ONNX Tiny CNN 并运行 ONNX Runtime。RKNPU 和 RKLLM 仍需要匹配的开发板、SDK 与模型。
 

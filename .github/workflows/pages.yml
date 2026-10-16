@@ -18,7 +18,7 @@ jobs:
         run: |
           mkdir -p _site
           cp -R courseware docs examples boards requirements models tools _site/
-          cp README.md SETUP.md _site/
+          cp README.md SETUP.md CONTRIBUTING.md LICENSE_POLICY.md _site/
           printf '%s\n' '<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta http-equiv="refresh" content="0; url=courseware/index.html"></head><body><a href="courseware/index.html">打开课程</a></body></html>' > _site/index.html
       - uses: actions/upload-pages-artifact@v3
         with:
