@@ -171,7 +171,7 @@ GitHub CI 仅执行与官方 RK3588 SDK `rknn_api.h` 的 **C++ 语法/接口检�
 
 ## 代码与测试状态
 
-- 35 个 Python 文件只是对应的课程实验入口，算法实现在公用 labs.py。并非 35 套独立模型部署工程。
+- 35 个课程 Python 源码已独立实现各自实验目标，不再通过 labs.py 按课号统一分发；部分仍依赖厂商 SDK、其他二进制或真实模型，不能视为 35 套均通过板端验收的项目。
 - Python 自测：python3 -m unittest discover -s examples/tests -v
 - GitHub Actions：.github/workflows/examples-ci.yml 负责编译语法和测试 Python 入口。
 - hardware/ 是实际 SDK 代码，但没有所需模型/板卡就无法确认运行结果。本仓库未提供声称实测通过的 C++ 二进制、模型权重或产测日志。
@@ -187,3 +187,13 @@ GitHub CI 仅执行与官方 RK3588 SDK `rknn_api.h` 的 **C++ 语法/接口检�
 - [ROCK 5B 编译、运行和数据校验手册](../boards/radxa-rock5b/CPP_RGA_IO_BENCHMARK.md)
 
 当前 C++ 对照只支持单输入单输出分类模型，不支持 YOLOv8 的多个输出；SDK 绑定输入仍先经 CPU memcpy，不能称为完整零拷贝。
+
+## 原生 C++ 优化版 YOLOv8 多输出检测
+
+- [C++ FP32 DFL 解码、按类 NMS](hardware/yolov8_postprocess.cpp)
+- [实际 RKNPU2 C API 多输出模型推理](hardware/rknn_yolov8_raw.cpp)
+- [C++ 纯 CPU 张量离线解码](hardware/yolov8_decode_files.cpp)
+- [同源 640 RGB 数据准备工具](../tools/prepare_yolov8_rgb.py)
+- [ROCK 5B 原生编译、V4L2 DMA-BUF 检查及验收手册](../boards/radxa-rock5b/CPP_YOLOV8_NATIVE.md)
+
+当前原生 C++ 主程序使用预处理好的 RGB raw，不是 V4L2 摄像头图像直送 NPU；CI mock 不代表真实 NPU 结果。

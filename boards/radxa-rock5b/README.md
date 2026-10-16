@@ -75,6 +75,10 @@
 
 已经添加 [ROCK 5B RKLLM C API 上板教程](RKLLM_NATIVE.md) 和 [原生 C++ 回调推理源码](../../examples/hardware/rkllm/rkllm_stream.cpp)。和先前的 Python 外部 Demo 启动器不同，这个程序直接调用 RKLLM Runtime，输出真实回调文本，并在 SDK 提供性能字段时记录 token 数、生成时间与 tokens/s。**首次文本回调不一定等于 TTFT；CI Fake Runtime 不代表实机性能。**
 
+## 原生 C++ YOLOv8 检测与 V4L2 DMA-BUF 预检
+
+[完整 C++ YOLOv8 多输出工程及实机执行指南](CPP_YOLOV8_NATIVE.md)，包括 DFL/NMS、RKNPU2 C API、多输出 SDK 模型校验、图片变换、与 Python 数值对照和 V4L2 MMAP→DMA-BUF fd 导出检测。**仍未完成摄像头 DMA-BUF 直通 RGA/NPU。**
+
 ## 四、公开来源（请与自己的板卡版本核对）
 
 - [ROCK 5B/5B+ 官方中文手册](https://docs.radxa.com/rock5/rock5b)

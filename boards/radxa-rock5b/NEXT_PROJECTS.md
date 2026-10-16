@@ -14,6 +14,8 @@
 
 额外已提供 [USB 摄像头→MobileNet 分类应用](CAMERA_MOBILENET.md)：可从摄像头逐帧调用 RKNNLite，**但它是分类，不是 YOLOv8 目标检测**；需要真实板端验证。P0～P2 的程序属于可以调用真实设备或官方代码的独立文件，**但仍需用户提供实物运行记录后才能声称已验证通过**。后续计划不是已经交付的成果。
 
+| P7（源码+CI测试，待上板） | 原生C++ YOLOv8多输出推理及V4L2导出检查 | [C++模型和输入协议指南](CPP_YOLOV8_NATIVE.md) | NPU模型与真实图片检出、DMA-BUF可导出、与Python对齐 |
+
 ## 如何获取足够的板端证据
 
 在真实板卡运行 `board_probe.py` 保存 `results/rock5b-board.json`，拍摄 PCB 修订号时不要泄露不必要的唯一硬件标识。确认官方 YOLOv8 检测后，保存实际程序 stdout/stderr、输入图片来源、模型 SHA256、结果图和日期。只有拿到这些证据，再决定是否进入 USB 摄像头实时推理、内存优化或模型量化。
