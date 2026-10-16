@@ -146,6 +146,20 @@ jobs:
           git -C build/librga sparse-checkout set include
           g++ -std=c++17 -fsyntax-only -Ibuild/librga/include examples/hardware/rga_letterbox_rgb888.cpp
 
+      - name: Compile real V4L2 MMAP-to-DMA-BUF export probe and reject missing devices
+        run: |
+          g++ -std=c++17 -O2 -Wall -Wextra -Werror \
+            boards/radxa-rock5b/tools/v4l2_dmabuf_export_probe.cpp \
+            -o build/v4l2_dma_probe
+          build/v4l2_dma_probe --help
+          python - <<'PY'
+          import subprocess
+          r=subprocess.run(['build/v4l2_dma_probe','/dev/NO_CAMERA_CI_DEVICE'],
+                           text=True,capture_output=True,timeout=15)
+          assert r.returncode!=0,r.stdout
+          assert 'Cannot open camera' in r.stderr,r.stderr
+          print('V4L2 probe compiled and handled missing device safely; NO HARDWARE TEST')
+          PY
       - name: Check hardware script argument parsers
         run: |
           python examples/hardware/convert_onnx.py --help
