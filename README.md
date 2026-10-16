@@ -23,7 +23,7 @@
 - [最小真实 ONNX 模型生成器](examples/hardware/create_tiny_onnx.py)
 - [GitHub Actions 自动测试](.github/workflows/examples-ci.yml)
 
-**快速体验：** 在仓库根目录运行 `python3 examples/lesson_00.py`、`python3 examples/lesson_29.py`；再运行 `python3 -m unittest discover -s examples/tests -v`。详见代码说明中对纯 Python、ONNX Runtime 和 RK3588 板端三个执行环境的区分。
+**快速体验：** 在仓库根目录运行 `python3 examples/lesson_00.py --help`、`python3 examples/lesson_29.py --help`；再运行 `python3 -m unittest discover -s examples/tests -v`。详见代码说明中对纯 Python、ONNX Runtime 和 RK3588 板端三个执行环境的区分。
 
 ## 35 节重编自学教材
 
@@ -46,9 +46,9 @@
 
 ## 如何学习
 
-建议按章节顺序阅读 `docs/` 下的 Markdown 讲义。**每一个原始 TXT 对应一个独立 `.md` 教学文件，共 35 份**，第 30 讲依原字幕拆为 3 个主题。
+建议按章节顺序阅读 `docs/` 下的 Markdown 讲义。**课程共 35 份 `.md` 教学文件**，第 30 讲按三个主题分别整理。
 
-每份讲义包括学习目标、核心知识、实验步骤、验收标准、常见问题和课后练习，并在末尾通过折叠区域保留该节视频的完整原始字幕（含时间戳）。源文件仍保留在 [`文本/`](%E6%96%87%E6%9C%AC/) 中。
+每份讲义包括学习目标、核心知识、实验步骤、验收标准、常见问题和课后练习，并在末尾通过折叠区域保留该节视频的完整原始字幕（含时间戳）。原始 `.txt` 目录已按仓库维护要求删除，字幕附录保留在 Markdown 中。
 
 > **使用提示：** 源材料是视频自动转写，软件名称、命令和数字存在可能的识别误差。讲义补充了技术背景和风险提醒，但本仓库当前没有提供全部演示源码、预训练模型、网盘数据或镜像；实际操作须以所用 SDK 版本和板卡厂商文档为准。
 
@@ -119,6 +119,6 @@
 
 ## 课程内容与来源
 
-- `文本/`：35 份原始口播 TXT，未经更改，保留作为课程档案。
-- `docs/`：与上述 TXT 一一对应的 35 份 Markdown 教学讲义。
+- `docs/`：35 份可自学的 Markdown 教学讲义（包含原始字幕附录）。
+- `courseware/`：35 份单页连续滚动的 HTML 课件。
 - 讲义示例、术语与实践检查为教学性整理；API 命令、SDK 安装包及兼容性在真实项目中应再次核对。
