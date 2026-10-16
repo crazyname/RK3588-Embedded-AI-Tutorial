@@ -46,6 +46,15 @@ jobs:
           g++ -std=c++17 -Wall -Wextra -Werror -fsyntax-only -Ibuild/rkllm-fake examples/hardware/rkllm/rkllm_stream.cpp
           g++ -std=c++17 -Wall -Wextra -Werror -Ibuild/rkllm-fake examples/hardware/rkllm/rkllm_stream.cpp examples/hardware/rkllm/tests/mock_rkllm_runtime.cpp -o build/rkllm-fake/rkllm_stream_mock
           python -m unittest discover -s examples/hardware/rkllm/tests -p 'test_*.py' -v
+      - name: Cross-check C++ YOLOv8 detections against Python with REAL FP32 tensor files
+        run: |
+          mkdir -p build/yolov8-cpp
+          g++ -std=c++17 -O2 -Wall -Wextra -Werror \
+            examples/hardware/yolov8_postprocess.cpp \
+            examples/hardware/yolov8_decode_files.cpp \
+            -o build/yolov8-cpp/yolov8_decode_files
+          RK_YOLO_CPP_DECODER=build/yolov8-cpp/yolov8_decode_files \
+            python -m unittest discover -s examples/hardware/tests -p 'test_yolov8_cpp_parity.py' -v
       - name: Unit tests
         run: python -m unittest discover -s examples/tests -v
       - name: Enforce all 35 dedicated sources and runbooks
