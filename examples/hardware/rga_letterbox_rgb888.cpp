@@ -2,6 +2,7 @@
 // Uses librga (im2d). Import virtual addresses ONCE, accelerate resize with RGA,
 // then CPU-copy resized RGB to black canvas. NOT camera DMA-BUF zero copy.
 // Usage: ./rga_letterbox_rgb888 frame.rgb 640 480 letterbox.rgb [runs=10]
+#include <cstddef>  // current librga headers use NULL in default arguments
 #include "im2d.hpp"
 #include <algorithm>
 #include <chrono>
