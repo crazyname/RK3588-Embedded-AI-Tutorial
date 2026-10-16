@@ -94,6 +94,19 @@ mkdir -p boards/radxa-rock5b/results
 
 这里的 `inference_and_decode_ms` 包括输入设置、真实 `rknn_run`、取输出和 CPU 解码，不等于 NPU 硬件算子耗时；总体 FPS 是单线程循环吞吐量，和 CUDA/GPU/多线程视频管线不直接可比。
 
+## 5.5 使用逐帧 JSONL 自动验收（无需额外大模型）
+
+新工具 [validate_cpp_yolo_stream.py](tools/validate_cpp_yolo_stream.py) 可以在 PC 或板端复核程序生成的逐帧 JSONL：帧号必须从 1 连续、分阶段时延必须是有限非负值，检测框必须位于**原始相机分辨率**之内，类别必须在 COCO 0～79 范围，并输出均值、p50、p95。
+
+```bash
+python3 boards/radxa-rock5b/tools/validate_cpp_yolo_stream.py \
+  --jsonl boards/radxa-rock5b/results/cpp_yolov8_frames.jsonl \
+  --width 640 --height 480 --expected-frames 60 \
+  --summary boards/radxa-rock5b/results/cpp_yolov8_check.json
+```
+
+有明确业务性能目标时可以增加 `--max-inference-p95-ms 50` 或 `--min-detections 1`；这两个值是可选**验收阈值示例**，不是 RK3588 的性能承诺。结构检查**无法证明文件来源于真实硬件**，请同时保留包含设备/模型版本及 SDK 原始信息的日志。
+
 ## 6. 首轮验收建议
 
 先跑官方 Model Zoo 同一模型、同一张图片，再跑仓库现有的 [Python RKNNLite 摄像头检测](CAMERA_YOLOV8.md)。对照 RGB/BGR、640 黑边、输出顺序与类别映射。记录 Model Zoo commit、`.rknn` SHA256、板级版本、驱动/Runtime、librga.so 版本、原始 stdout/stderr、p50/p95、温度和实际帧率。
