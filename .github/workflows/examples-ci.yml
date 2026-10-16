@@ -93,6 +93,33 @@ jobs:
           g++ -std=c++17 -fsyntax-only -Ibuild/sdk-headers examples/hardware/rknn_classify.cpp
           g++ -std=c++17 -fsyntax-only -Ibuild/sdk-headers examples/hardware/rknn_zero_copy.cpp
           g++ -std=c++17 -fsyntax-only -Ibuild/sdk-headers examples/hardware/rknn_compare_input_io.cpp
+          g++ -std=c++17 -Wall -Wextra -Werror -fsyntax-only -Ibuild/sdk-headers examples/hardware/rknn_yolov8_raw.cpp
+      - name: Test actual YOLOv8 C API main against explicit MOCK RKNN runtime
+        run: |
+          g++ -std=c++17 -O2 -Wall -Wextra -Werror -Ibuild/sdk-headers \
+            examples/hardware/rknn_yolov8_raw.cpp \
+            examples/hardware/yolov8_postprocess.cpp \
+            examples/hardware/tests/mock_rknn_yolov8.cpp \
+            -o build/yolov8-cpp/rknn_yolov8_mock
+          python - <<'PY'
+          import json,subprocess
+          from pathlib import Path
+          folder=Path('build/yolov8-cpp');folder.mkdir(parents=True,exist_ok=True)
+          (folder/'ONLY_A_MOCK.rknn').write_bytes(b'FAKE RKNPU2 MODEL ONLY')
+          (folder/'black.rgb').write_bytes(bytes(640*640*3))
+          cmd=[str(folder/'rknn_yolov8_mock'),str(folder/'ONLY_A_MOCK.rknn'),str(folder/'black.rgb'),'640','480','.25','2']
+          run=subprocess.run(cmd,text=True,capture_output=True,check=True,timeout=60)
+          obj=json.loads(run.stdout)
+          assert obj['backend']=='rknpu2-c-api' and obj['runs']==2,obj
+          assert len(obj['detections'])==1,obj
+          assert obj['detections'][0]['class_id']==2,obj
+          assert abs(obj['detections'][0]['score']-.93)<1e-5,obj
+          assert all(abs(x-y)<1e-3 for x,y in zip(obj['detections'][0]['xyxy'],[316,236,332,252])),obj
+          (folder/'bad.rgb').write_bytes(b'short')
+          bad=subprocess.run(cmd[:2]+[str(folder/'bad.rgb'),'640','480'],capture_output=True,text=True)
+          assert bad.returncode!=0 and '640x640x3' in bad.stderr,bad.stderr
+          print('RKNPU2 C++ API control flow passed with MOCK runtime, NOT real NPU')
+          PY
       - name: Execute real C++ comparison control flow with EXPLICIT MOCK SDK
         run: |
           g++ -std=c++17 -Ibuild/sdk-headers examples/hardware/rknn_compare_input_io.cpp examples/hardware/tests/mock_rknn_api.cpp -o build/test_compare_input_io
