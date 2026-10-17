@@ -61,6 +61,23 @@ def audit(root=ROOT, manifest_path=None):
                                   ("hardware_heading", "## 验证边界")):
                 if project.get(field) != needle:
                     failures.append(f"{pid}: bad {field}")
+        lesson_pages = project.get("lesson_pages")
+        lesson_ids = project.get("lesson_ids")
+        if not isinstance(lesson_pages, list) or not lesson_pages or not isinstance(lesson_ids, list) or len(lesson_ids) != len(lesson_pages):
+            failures.append(f"{pid}: missing or inconsistent lesson mapping")
+        else:
+            for page in lesson_pages:
+                if not isinstance(page, dict):
+                    failures.append(f"{pid}: malformed lesson mapping")
+                    continue
+                for key, prefix, suffix in (("md", "docs/", ".md"), ("html", "courseware/lessons/", ".html")):
+                    target = page.get(key)
+                    if not isinstance(target, str) or not target.startswith(prefix) or not target.endswith(suffix) or ".." in Path(target).parts:
+                        failures.append(f"{pid}: invalid {key} lesson")
+                    elif not (root / target).is_file():
+                        failures.append(f"{pid}: missing {key} lesson {target}")
+                    elif doc.is_file() and f"../{target}" not in body:
+                        failures.append(f"{pid}: lesson not linked: {target}")
         for kind, paths in (("source", sources), ("test", tests)):
             for entry in paths:
                 if not isinstance(entry, str) or entry.startswith("/") or ".." in Path(entry).parts:
