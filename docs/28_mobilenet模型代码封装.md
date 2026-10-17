@@ -115,6 +115,50 @@ private:
 
 > 未经板端测试的示例不代表可直接用于生产环境。
 
+## 源码精读：关键 API、张量与验收
+
+第 28 讲重点不是引入复杂架构，而是把图片预处理、推理和后处理三个职责拆开，便于后续替换 MobileNet/YOLO。
+
+**数据路径：** `ImagePreprocess` → `InferenceBackend` → `TopKPostprocess` → `输出 JSON/标签`。
+
+### 1. 预处理模块：纯函数、可单独核对
+
+**输入：** 图片与统一的 model input contract。**输出：** shape/dtype/layout 明确的数组或 RAW。
+
+把 resize、BGR→RGB、归一化固定在一个位置；这样 Python/C++ 迁移时不必重复猜测模型输入。
+
+```python
+tensor = preprocess(image, width=224, height=224)
+assert tensor.shape == (224, 224, 3)
+assert tensor.dtype == np.uint8
+```
+
+### 2. 推理模块：只负责 SDK 与模型生命周期
+
+**输入：** 输入张量和 .rknn 模型。**输出：** 输出张量，不负责绘制标签。
+
+推理层要保证输入 shape/type 与 RKNN 查询一致，C++ 中关注 init/query/inputs_set/run/outputs_get；不要把每种模型的后处理塞进 SDK 类。
+
+```python
+scores = backend.infer(tensor)
+# 只返回张量，不在此函数硬编码标签名
+```
+
+### 3. 后处理模块：只负责排序及映射
+
+**输入：** scores ndarray 与 labels。**输出：** Top-5 id/score/label。
+
+分类后处理不是 YOLO 的 NMS。分数可排序，但未经 softmax 的模型分数不等于概率。
+
+```python
+ids = np.argsort(scores.reshape(-1))[::-1][:5]
+result = [(int(i), labels[i]) for i in ids]
+```
+
+**数据解释与练习：** 最小边界：预处理函数不 import rknnlite，SDK 层不读取摄像头，Top-K 函数不操作 rknn_context。此处是教学上的职责分离，不要求设计复杂插件系统。
+
+**验收边界：** 修改图片 resize 方式时，只需对比预处理数组和最终分类结果；保持一个统一的入口与同模型的输入契约。
+
 ## 配套可运行源码
 
 - [本讲独立操作手册（只含运行、参数与验收）](../examples/notes/lesson_28.md)
