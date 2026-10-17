@@ -207,6 +207,53 @@
       "acceptance_heading": "## 验收标准",
       "test_heading": "## 自动化测试",
       "hardware_heading": "## 验证边界"
+    },
+    {
+      "id": "official-yolo-and-export",
+      "title": "官方 YOLOv8 基线与 ONNX 导出",
+      "sources": [
+        "boards/radxa-rock5b/tools/run_official_yolov8.py",
+        "examples/hardware/export_yolo_onnx.py",
+        "examples/hardware/prepare_image.py"
+      ],
+      "experiment": "engineering/official-yolo-and-export.md",
+      "tests": [
+        "boards/radxa-rock5b/tests/test_board_tools.py",
+        "tools/tests/test_export_yolov8_fp32.py"
+      ],
+      "acceptance_heading": "## 验收标准",
+      "test_heading": "## 自动化测试",
+      "hardware_heading": "## 验证边界"
+    },
+    {
+      "id": "cpp-rknn-classify",
+      "title": "RKNPU2 C++ 分类和输入绑定对照",
+      "sources": [
+        "examples/hardware/rknn_classify.cpp",
+        "examples/hardware/rknn_compare_input_io.cpp",
+        "examples/hardware/compare_outputs.py"
+      ],
+      "experiment": "engineering/cpp-rknn-classify.md",
+      "tests": [
+        "tools/tests/test_resource_tools.py"
+      ],
+      "acceptance_heading": "## 验收标准",
+      "test_heading": "## 自动化测试",
+      "hardware_heading": "## 验证边界"
+    },
+    {
+      "id": "cpp-zero-copy",
+      "title": "RKNPU2 C++ 张量绑定与零拷贝边界",
+      "sources": [
+        "examples/hardware/rknn_zero_copy.cpp"
+      ],
+      "experiment": "engineering/cpp-zero-copy.md",
+      "tests": [
+        "boards/radxa-rock5b/tests/test_board_tools.py"
+      ],
+      "acceptance_heading": "## 验收标准",
+      "test_heading": "## 自动化测试",
+      "hardware_heading": "## 验证边界"
     }
   ]
 }
