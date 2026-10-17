@@ -28,6 +28,61 @@ CPU、NPU 与 DDR 可能通过 DVFS（动态电压频率调整）策略在不同
 
 **理解检测：** 不要同时改三个频率；否则即使 FPS 上升，也无法解释是哪一项产生效果。
 
+## 工程机理与知识深化
+
+### 系统机制与数据协议
+
+DVFS 让 CPU、NPU 与 DDR 在负载、温度和功率限制下改变频率。推理瓶颈可能在 NPU 算子，也可能在摄像头采集、CPU letterbox、内存传输或后处理；单纯提高 NPU 时钟只能影响受 NPU 算力限制的部分。采样频率与温度需要记录节点名称、单位和时刻，不能脱离采样窗口分析。
+
+### 具体算例与故障现场
+
+同一模型的 NPU 耗时为 4ms、CPU 前后处理共 16ms，串行总时延约 20ms，即 50FPS；即使 NPU 降为 2ms，总时延仍约 18ms、约 55.6FPS。若温度升高触发降频，短时首帧数据也不代表稳定运行性能。
+
+### 设计选择与验收判据
+
+只读监测是第一阶段。对比时固定图像、模型、线程数、NPU 核配置与运行区间，至少保存延迟分布和相应的频率/温度原始记录；不直接修改未知 sysfs 节点。
+
+## 源码精读：关键 API、张量与验收
+
+频率是性能解释的实验条件，不是“调高就一定更快”。lesson_07.py 只读取 CPU/NPU/DDR 可见 sysfs 频率和温度，输出带时间戳的 CSV；不写入 governors 或驱动节点。
+
+**数据路径：** `Linux sysfs 可用节点` → `CPU/NPU/DDR 频率与温度` → `多次只读采样` → `frequency.csv` → `与真实推理耗时对照`。
+
+### 1. nodes()：发现 sysfs 而非猜测路径
+
+**输入：** /sys/devices/system/cpu、/sys/class/devfreq、/sys/class/thermal。**输出：** 可读取的 cur_freq、scaling_cur_freq、temp 节点列表。
+
+不同板商 BSP 可能有不同设备路径，也可能因为权限不允许读取。路径名字不能保证全都对应 NPU；看到数值应先判断单位和设备。
+
+```bash
+python3 examples/lesson_07.py --samples 3 --interval 0.5 --output build/lesson07/frequency.csv
+```
+
+### 2. CSV：建立时间序列而非单点截图
+
+**输入：** 每次 sysfs 读取的原始字符串与 Unix 时间。**输出：** unix_time、sysfs_path、raw_value。
+
+CPU/DDR/NPU 频率通常以 kHz 或驱动定义单位表示；温度节点一般是毫摄氏度，展示前要先确认来源。
+
+```bash
+python3 -c "import csv; print(next(csv.DictReader(open('build/lesson07/frequency.csv'))))"
+```
+
+### 3. 频率与 FPS 的因果边界
+
+**输入：** 同一真实模型/输入下的频率、热状态与推理时延。**输出：** 可解释的采样条件，而非一定提升的性能承诺。
+
+即使 NPU 频率升高，CPU 前处理、DDR 带宽与采集瓶颈仍可能主导端到端 FPS；热节流也会改变长时间运行结果。
+
+```python
+# 对照同一段实验的 CSV 和真实推理延迟日志
+# 不修改 sysfs 或调用驱动升级命令
+```
+
+**数据例题：** sysfs raw_value 为 800000 时，只有节点明确以 kHz 报告 CPU 频率才可换成 800 MHz；不要把所有 /sys/class/devfreq 数值都标成 CPU MHz。
+
+**验收边界：** 提供真实 CSV，标出每个节点名称和单位；有开发板时可与同条件推理延迟对照，但本讲不要求修改频率或刷写系统。
+
 ## 操作实验（需记录证据）
 
 ### 实验 1：建立无侵入基线
@@ -108,61 +163,6 @@ find /sys/devices/system/cpu -name scaling_cur_freq -print 2>/dev/null
 - [Linux CPUFreq 文档](https://docs.kernel.org/admin-guide/pm/cpufreq.html)
 
 > 以具体 release 的官方文档为准；本教程中的设备结果尚未在你的硬件环境实测。
-
-## 工程机理与知识深化
-
-### 系统机制与数据协议
-
-DVFS 让 CPU、NPU 与 DDR 在负载、温度和功率限制下改变频率。推理瓶颈可能在 NPU 算子，也可能在摄像头采集、CPU letterbox、内存传输或后处理；单纯提高 NPU 时钟只能影响受 NPU 算力限制的部分。采样频率与温度需要记录节点名称、单位和时刻，不能脱离采样窗口分析。
-
-### 具体算例与故障现场
-
-同一模型的 NPU 耗时为 4ms、CPU 前后处理共 16ms，串行总时延约 20ms，即 50FPS；即使 NPU 降为 2ms，总时延仍约 18ms、约 55.6FPS。若温度升高触发降频，短时首帧数据也不代表稳定运行性能。
-
-### 设计选择与验收判据
-
-只读监测是第一阶段。对比时固定图像、模型、线程数、NPU 核配置与运行区间，至少保存延迟分布和相应的频率/温度原始记录；不直接修改未知 sysfs 节点。
-
-## 源码精读：关键 API、张量与验收
-
-频率是性能解释的实验条件，不是“调高就一定更快”。lesson_07.py 只读取 CPU/NPU/DDR 可见 sysfs 频率和温度，输出带时间戳的 CSV；不写入 governors 或驱动节点。
-
-**数据路径：** `Linux sysfs 可用节点` → `CPU/NPU/DDR 频率与温度` → `多次只读采样` → `frequency.csv` → `与真实推理耗时对照`。
-
-### 1. nodes()：发现 sysfs 而非猜测路径
-
-**输入：** /sys/devices/system/cpu、/sys/class/devfreq、/sys/class/thermal。**输出：** 可读取的 cur_freq、scaling_cur_freq、temp 节点列表。
-
-不同板商 BSP 可能有不同设备路径，也可能因为权限不允许读取。路径名字不能保证全都对应 NPU；看到数值应先判断单位和设备。
-
-```bash
-python3 examples/lesson_07.py --samples 3 --interval 0.5 --output build/lesson07/frequency.csv
-```
-
-### 2. CSV：建立时间序列而非单点截图
-
-**输入：** 每次 sysfs 读取的原始字符串与 Unix 时间。**输出：** unix_time、sysfs_path、raw_value。
-
-CPU/DDR/NPU 频率通常以 kHz 或驱动定义单位表示；温度节点一般是毫摄氏度，展示前要先确认来源。
-
-```bash
-python3 -c "import csv; print(next(csv.DictReader(open('build/lesson07/frequency.csv'))))"
-```
-
-### 3. 频率与 FPS 的因果边界
-
-**输入：** 同一真实模型/输入下的频率、热状态与推理时延。**输出：** 可解释的采样条件，而非一定提升的性能承诺。
-
-即使 NPU 频率升高，CPU 前处理、DDR 带宽与采集瓶颈仍可能主导端到端 FPS；热节流也会改变长时间运行结果。
-
-```python
-# 对照同一段实验的 CSV 和真实推理延迟日志
-# 不修改 sysfs 或调用驱动升级命令
-```
-
-**数据例题：** sysfs raw_value 为 800000 时，只有节点明确以 kHz 报告 CPU 频率才可换成 800 MHz；不要把所有 /sys/class/devfreq 数值都标成 CPU MHz。
-
-**验收边界：** 提供真实 CSV，标出每个节点名称和单位；有开发板时可与同条件推理延迟对照，但本讲不要求修改频率或刷写系统。
 
 ## 配套可运行源码
 

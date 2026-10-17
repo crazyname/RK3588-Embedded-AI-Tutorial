@@ -34,6 +34,62 @@ CPU 擅长分支、控制和异构任务调度；GPU 通常提供灵活的大规
 
 **判断是否理解：** 从算力和数据移动两条线索解释不同网络为什么加速收益不同。
 
+## 工程机理与知识深化
+
+### 模型与系统的约束
+
+标准二维卷积的输出高为 floor((H+2P−K)/S)+1，输出宽同理。按一次乘加 MAC 计，MACs=Ho×Wo×Co×(Ci/groups)×K²；深度卷积 groups=Ci，逐点卷积 K=1。两者替代普通卷积后，常可降低理论 MAC 数，但访存、布局重排、算子调度和 NPU 支持都会影响实际速度。
+
+### 计算例题或现场案例
+
+输入 224×224×32、输出通道 64、3×3、stride=1、padding=1 时，普通卷积 MAC≈925 百万；Depthwise(32 通道) + Pointwise(64 通道) 合计约 117 百万，理论运算量比约 7.89。它不是“在 RK3588 上实测加速 7.89 倍”。
+
+### 技术判断与实验设计
+
+比较 CPU/GPU/NPU 前先固定算子和张量尺寸，再区分 1 MAC 与 2 FLOPs 的统计口径。真实速度需在相同负载、相同输入/精度和热状态下分别测量预处理、NPU 调用和总延迟。
+
+## 源码精读：关键 API、张量与验收
+
+第 02 讲用卷积的真实 MAC 公式解释 NPU 为什么适合密集张量计算，而不是把模型 FLOPs、TOPS 与端到端 FPS 混为一谈。lesson_02.py 可以对标准卷积和深度可分离卷积计算真实形状与乘加次数。
+
+**数据路径：** `输入 H×W×Ci` → `卷积核 K×K` → `输出 Ho×Wo×Co` → `标准卷积 MAC` → `深度卷积+逐点卷积 MAC`。
+
+### 1. conv()：计算输出形状
+
+**输入：** height、width、kernel、stride、padding 与 groups。**输出：** Ho=floor((H+2P−K)/S)+1，Wo 同理。
+
+维度公式先决定张量结果能否匹配下一层；group 数必须能整除输入、输出通道数。
+
+```bash
+python3 examples/lesson_02.py --height 224 --width 224 --in-channels 32 --out-channels 64 --kernel 3 --stride 1 --padding 1
+```
+
+### 2. 标准卷积乘加数（MAC）
+
+**输入：** Ho、Wo、Co、Ci、K 与 groups=1。**输出：** MAC=Ho×Wo×Co×Ci×K²。
+
+一个 MAC 通常包含一次乘法与一次累加；文献统计 FLOPs 有时按 2 FLOPs/MAC 计算，应说明口径。该公式忽略实际内存读写与量化开销。
+
+```python
+standard_mac = Ho * Wo * Co * Ci * K * K
+```
+
+### 3. Depthwise + Pointwise 计算差异
+
+**输入：** depthwise(groups=Ci) + 1×1 pointwise。**输出：** 两个阶段 MAC 的总和及标准卷积与可分离卷积比值。
+
+深度卷积先分别处理各输入通道，1×1 逐点卷积负责混合通道。理论 MAC 减少不必然代表实际 NPU 延迟按比例下降。
+
+```python
+depth_mac = Ho * Wo * Ci * K * K
+point_mac = Ho * Wo * Ci * Co
+print(standard_mac / (depth_mac + point_mac))
+```
+
+**数据例题：** 同尺寸 224×224、Ci=32、Co=64、K=3、stride=1、padding=1 时，理想 MAC 比值为 (32×64×9)/(32×9+32×64)=约 7.89 倍；这是运算量比，不是 RK3588 加速比。
+
+**验收边界：** 在 PC 运行公式程序得到形状和 MAC，对比 CPU/GPU/NPU 的擅长任务，并说明 TOPS 为何不能直接计算 FPS。
+
 ## 跟做实验与验收证据
 
 ### 实验 1：手算卷积规模
@@ -114,62 +170,6 @@ print(f'{mac:,} MAC, approximately {2*mac/1e9:.3f} GOP')
 - [RKNN Model Zoo 公开 benchmark](https://github.com/airockchip/rknn_model_zoo)
 
 > 资料阅读优先级：官方 SDK 版本与实例 > 数据格式的官方文档 > 理论教材。外部资料可能随版本变化，不应将本讲示例理解为已在你的开发板上实测通过。
-
-## 工程机理与知识深化
-
-### 模型与系统的约束
-
-标准二维卷积的输出高为 floor((H+2P−K)/S)+1，输出宽同理。按一次乘加 MAC 计，MACs=Ho×Wo×Co×(Ci/groups)×K²；深度卷积 groups=Ci，逐点卷积 K=1。两者替代普通卷积后，常可降低理论 MAC 数，但访存、布局重排、算子调度和 NPU 支持都会影响实际速度。
-
-### 计算例题或现场案例
-
-输入 224×224×32、输出通道 64、3×3、stride=1、padding=1 时，普通卷积 MAC≈925 百万；Depthwise(32 通道) + Pointwise(64 通道) 合计约 117 百万，理论运算量比约 7.89。它不是“在 RK3588 上实测加速 7.89 倍”。
-
-### 技术判断与实验设计
-
-比较 CPU/GPU/NPU 前先固定算子和张量尺寸，再区分 1 MAC 与 2 FLOPs 的统计口径。真实速度需在相同负载、相同输入/精度和热状态下分别测量预处理、NPU 调用和总延迟。
-
-## 源码精读：关键 API、张量与验收
-
-第 02 讲用卷积的真实 MAC 公式解释 NPU 为什么适合密集张量计算，而不是把模型 FLOPs、TOPS 与端到端 FPS 混为一谈。lesson_02.py 可以对标准卷积和深度可分离卷积计算真实形状与乘加次数。
-
-**数据路径：** `输入 H×W×Ci` → `卷积核 K×K` → `输出 Ho×Wo×Co` → `标准卷积 MAC` → `深度卷积+逐点卷积 MAC`。
-
-### 1. conv()：计算输出形状
-
-**输入：** height、width、kernel、stride、padding 与 groups。**输出：** Ho=floor((H+2P−K)/S)+1，Wo 同理。
-
-维度公式先决定张量结果能否匹配下一层；group 数必须能整除输入、输出通道数。
-
-```bash
-python3 examples/lesson_02.py --height 224 --width 224 --in-channels 32 --out-channels 64 --kernel 3 --stride 1 --padding 1
-```
-
-### 2. 标准卷积乘加数（MAC）
-
-**输入：** Ho、Wo、Co、Ci、K 与 groups=1。**输出：** MAC=Ho×Wo×Co×Ci×K²。
-
-一个 MAC 通常包含一次乘法与一次累加；文献统计 FLOPs 有时按 2 FLOPs/MAC 计算，应说明口径。该公式忽略实际内存读写与量化开销。
-
-```python
-standard_mac = Ho * Wo * Co * Ci * K * K
-```
-
-### 3. Depthwise + Pointwise 计算差异
-
-**输入：** depthwise(groups=Ci) + 1×1 pointwise。**输出：** 两个阶段 MAC 的总和及标准卷积与可分离卷积比值。
-
-深度卷积先分别处理各输入通道，1×1 逐点卷积负责混合通道。理论 MAC 减少不必然代表实际 NPU 延迟按比例下降。
-
-```python
-depth_mac = Ho * Wo * Ci * K * K
-point_mac = Ho * Wo * Ci * Co
-print(standard_mac / (depth_mac + point_mac))
-```
-
-**数据例题：** 同尺寸 224×224、Ci=32、Co=64、K=3、stride=1、padding=1 时，理想 MAC 比值为 (32×64×9)/(32×9+32×64)=约 7.89 倍；这是运算量比，不是 RK3588 加速比。
-
-**验收边界：** 在 PC 运行公式程序得到形状和 MAC，对比 CPU/GPU/NPU 的擅长任务，并说明 TOPS 为何不能直接计算 FPS。
 
 ## 配套可运行源码
 

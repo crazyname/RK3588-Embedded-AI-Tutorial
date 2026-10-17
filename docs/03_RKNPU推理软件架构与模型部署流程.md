@@ -34,6 +34,61 @@ RKNN-Toolkit2 常在开发主机上读取 ONNX 等模型，执行图优化、编
 
 **判断是否理解：** 可以用可重复的输入对源模型、ONNX 和 RKNN 三阶段做结果比对。
 
+## 工程机理与知识深化
+
+### 模型与系统的约束
+
+完整 RKNN 推理链是：训练模型→ONNX 校验→x86_64 主机 Toolkit2 构建→目标板 Runtime/Driver→模型预处理→rknn_run/inference→后处理→任务精度验收。每一层都有独立故障现象：ONNX parser 失败是前段模型问题，初始化失败常与模型/运行库/驱动组合有关，输出类别不符则先核对颜色/布局/归一化与标签。
+
+### 计算例题或现场案例
+
+假设 ONNX 检查和 RKNN 导出成功，但板端 init_runtime 返回非零。这只能证明前两项通过，不能勾选推理或精度；应登记 target、Toolkit2 release、librknnrt.so、NPU driver、模型 SHA256 和错误码。画成有向图能直观呈现哪个依赖尚未验证。
+
+### 技术判断与实验设计
+
+程序中的状态 JSON 是人工声明的实验事实，不是自动硬件测试；完成一项必须以输出文件、日志或数值为依据。建立明确的失败层级可以避免反复重装系统。
+
+## 源码精读：关键 API、张量与验收
+
+部署不是一个“执行转换”按钮，而是模型、转换器、运行库、输入协议与指标的有向依赖链。lesson_03.py 能根据真实完成状态生成 Graphviz DOT 并列出尚未完成的阶段。
+
+**数据路径：** `ONNX 图检查` → `RKNN Toolkit2 转换` → `Driver/Runtime` → `预处理协议` → `实际推理` → `精度验收`。
+
+### 1. STAGES：明确各部署阶段责任
+
+**输入：** 六个阶段 onnx/convert/runtime/input/inference/accuracy。**输出：** 每一阶段的输入产物与可观察验收点。
+
+主机转换和目标板执行发生在不同环境，不能在转换阶段失败时先假定是 NPU 驱动问题。完整流程中“程序能跑”也不能替代任务精度合格。
+
+```bash
+python3 examples/lesson_03.py --dot build/lesson03/pipeline.dot
+```
+
+### 2. --status：用布尔事实标记进展
+
+**输入：** 可选 JSON 映射，如 {'onnx':true,'convert':false}。**输出：** completed 和 remaining 两组阶段。
+
+脚本不联网也不运行 SDK；它只把已经实测的状态画成图。未提供的阶段默认未完成，不能因文件存在就自动勾选为成功。
+
+```bash
+printf '{"onnx":true,"convert":false}' > /tmp/rknn_status.json
+python3 examples/lesson_03.py --status /tmp/rknn_status.json --dot build/lesson03/pipeline.dot
+```
+
+### 3. DOT 文件：将流程可视化并定位失败位置
+
+**输入：** 有向依赖与完成状态。**输出：** 可由 Graphviz 转成 PNG 的流程图。
+
+绿框代表手动给出的已完成状态，不是 GitHub CI 对硬件自动验证的结论；图中每条箭头是模型与数据协议的依赖关系。
+
+```python
+dot -Tpng build/lesson03/pipeline.dot -o build/lesson03/pipeline.png
+```
+
+**数据例题：** 若 ONNX 与转换已完成，但 Runtime/驱动未确认，则部署图依然包含未完成阶段，不能把这个 RKNN 文件视为在 ROCK 5B 上已能推理。
+
+**验收边界：** 交一张有六阶段的依赖图，并给出每一项需要的实际证据、PC/板端工作归属与下一步实验。
+
 ## 跟做实验与验收证据
 
 ### 实验 1：制作软件层次图
@@ -114,61 +169,6 @@ python3 -c "import platform; print(platform.platform(), platform.machine())"
 - [RKNPU2 板端接口](https://github.com/rockchip-linux/rknpu2)
 
 > 资料阅读优先级：官方 SDK 版本与实例 > 数据格式的官方文档 > 理论教材。外部资料可能随版本变化，不应将本讲示例理解为已在你的开发板上实测通过。
-
-## 工程机理与知识深化
-
-### 模型与系统的约束
-
-完整 RKNN 推理链是：训练模型→ONNX 校验→x86_64 主机 Toolkit2 构建→目标板 Runtime/Driver→模型预处理→rknn_run/inference→后处理→任务精度验收。每一层都有独立故障现象：ONNX parser 失败是前段模型问题，初始化失败常与模型/运行库/驱动组合有关，输出类别不符则先核对颜色/布局/归一化与标签。
-
-### 计算例题或现场案例
-
-假设 ONNX 检查和 RKNN 导出成功，但板端 init_runtime 返回非零。这只能证明前两项通过，不能勾选推理或精度；应登记 target、Toolkit2 release、librknnrt.so、NPU driver、模型 SHA256 和错误码。画成有向图能直观呈现哪个依赖尚未验证。
-
-### 技术判断与实验设计
-
-程序中的状态 JSON 是人工声明的实验事实，不是自动硬件测试；完成一项必须以输出文件、日志或数值为依据。建立明确的失败层级可以避免反复重装系统。
-
-## 源码精读：关键 API、张量与验收
-
-部署不是一个“执行转换”按钮，而是模型、转换器、运行库、输入协议与指标的有向依赖链。lesson_03.py 能根据真实完成状态生成 Graphviz DOT 并列出尚未完成的阶段。
-
-**数据路径：** `ONNX 图检查` → `RKNN Toolkit2 转换` → `Driver/Runtime` → `预处理协议` → `实际推理` → `精度验收`。
-
-### 1. STAGES：明确各部署阶段责任
-
-**输入：** 六个阶段 onnx/convert/runtime/input/inference/accuracy。**输出：** 每一阶段的输入产物与可观察验收点。
-
-主机转换和目标板执行发生在不同环境，不能在转换阶段失败时先假定是 NPU 驱动问题。完整流程中“程序能跑”也不能替代任务精度合格。
-
-```bash
-python3 examples/lesson_03.py --dot build/lesson03/pipeline.dot
-```
-
-### 2. --status：用布尔事实标记进展
-
-**输入：** 可选 JSON 映射，如 {'onnx':true,'convert':false}。**输出：** completed 和 remaining 两组阶段。
-
-脚本不联网也不运行 SDK；它只把已经实测的状态画成图。未提供的阶段默认未完成，不能因文件存在就自动勾选为成功。
-
-```bash
-printf '{"onnx":true,"convert":false}' > /tmp/rknn_status.json
-python3 examples/lesson_03.py --status /tmp/rknn_status.json --dot build/lesson03/pipeline.dot
-```
-
-### 3. DOT 文件：将流程可视化并定位失败位置
-
-**输入：** 有向依赖与完成状态。**输出：** 可由 Graphviz 转成 PNG 的流程图。
-
-绿框代表手动给出的已完成状态，不是 GitHub CI 对硬件自动验证的结论；图中每条箭头是模型与数据协议的依赖关系。
-
-```python
-dot -Tpng build/lesson03/pipeline.dot -o build/lesson03/pipeline.png
-```
-
-**数据例题：** 若 ONNX 与转换已完成，但 Runtime/驱动未确认，则部署图依然包含未完成阶段，不能把这个 RKNN 文件视为在 ROCK 5B 上已能推理。
-
-**验收边界：** 交一张有六阶段的依赖图，并给出每一项需要的实际证据、PC/板端工作归属与下一步实验。
 
 ## 配套可运行源码
 

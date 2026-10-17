@@ -28,6 +28,61 @@ RKNN-Toolkit2 是开发主机侧转换工具，通常安装在 SDK 支持的 Lin
 
 **理解检测：** 把导入、构建、板端运行分别列出通过/失败状态，不把单一步骤当完整验收。
 
+## 工程机理与知识深化
+
+### 模型与系统的约束
+
+Toolkit2 Python wheel 的可用性同时取决于操作系统、CPU 架构、Python ABI、NumPy/protobuf 依赖以及官方 SDK release。宿主通常为 x86_64 Linux，开发板的 aarch64 环境使用 RKNNLite2 或 librknnrt.so；同名的 rknn 包不能跨平台直接复制。`pip show` 表示包已记录安装，不保证二进制扩展成功导入。
+
+### 计算例题或现场案例
+
+例如 wheel 文件名含 cp310 与 manylinux_x86_64，必须用与之兼容的 Python 3.10、x86_64 环境；板端 aarch64 Python 即使也为 3.10，架构仍不匹配。出现 undefined symbol 应检查 Python ABI、动态依赖库和 SDK release，而非盲目重装驱动。
+
+### 技术判断与实验设计
+
+先保存 `sys.executable` 与 SOABI，再安装兼容 wheel，最后在同一环境运行 `from rknn.api import RKNN` 和最小 ONNX 构建。若导入通过但 build 报不支持算子，问题已不属于 wheel 的基础安装层。
+
+## 源码精读：关键 API、张量与验收
+
+第 05 讲先做主机端 ABI 与 RKNN Toolkit2 版本检查：RKNN-Toolkit2 是 x86_64 Linux 的模型转换工具，不能把其 wheel 安装到 ROCK 5B 的 ARM64 RKNNLite 环境。
+
+**数据路径：** `x86_64 Linux / Python ABI` → `官方匹配 wheel` → `from rknn.api import RKNN` → `读取 Toolkit2 环境报告` → `转换 Tiny ONNX`。
+
+### 1. 核对 Python ABI 而不是只看 Python 大版本
+
+**输入：** 当前 python3 解释器、OS 与机器架构。**输出：** SOABI、machine、executable、是否虚拟环境。
+
+相同 Python 3 版本也可能安装了错误架构或 ABI 的 wheel；固定 Python 版本应以官方 Toolkit2 release 可用的 wheel 为准。
+
+```bash
+python3 -c "import platform,sys,sysconfig; print(platform.machine(),sys.version,sysconfig.get_config_var('SOABI'))"
+```
+
+### 2. lesson_05.py：检查 SDK 是否真的可导入
+
+**输入：** 已经安装的 Toolkit2 包。**输出：** rknn_module_found 和 RKNN_class_imported 布尔值。
+
+检测到 Python 模块不等于它能导入全部所需动态依赖；显式 --require-toolkit 会拒绝不可用环境。
+
+```bash
+python3 examples/lesson_05.py --require-toolkit --output build/toolkit_env.json
+```
+
+### 3. 第一次转换前锁定环境信息
+
+**输入：** SDK release、Python ABI 与模型导出参数。**输出：** 可重现的软件版本记录。
+
+模型转换报错应先确定是 wheel 环境、ONNX 图不支持，还是板端 Runtime 不匹配，而不把所有问题归类为驱动损坏。
+
+```bash
+python3 -c "from rknn.api import RKNN; print('RKNN API imported')"
+python3 examples/hardware/convert_onnx.py --help
+```
+
+**数据例题：** 安装成功的最小证据是当前目标虚拟环境中能导入 RKNN 类，并能打印真实 Python 版本、SOABI 与平台；它还不代表模型转换或 NPU 推理通过。
+
+**验收边界：** 保存实际工具链版本/架构与导入检查，不凭一张 pip 安装成功的截图认为所有 SDK 已兼容。
+
 ## 操作实验（需记录证据）
 
 ### 实验 1：检查主机架构
@@ -111,61 +166,6 @@ x86_64 Linux 开发机应选择哪种 wheel？
 - [Python venv 文档](https://docs.python.org/3/library/venv.html)
 
 > 以具体 release 的官方文档为准；本教程中的设备结果尚未在你的硬件环境实测。
-
-## 工程机理与知识深化
-
-### 模型与系统的约束
-
-Toolkit2 Python wheel 的可用性同时取决于操作系统、CPU 架构、Python ABI、NumPy/protobuf 依赖以及官方 SDK release。宿主通常为 x86_64 Linux，开发板的 aarch64 环境使用 RKNNLite2 或 librknnrt.so；同名的 rknn 包不能跨平台直接复制。`pip show` 表示包已记录安装，不保证二进制扩展成功导入。
-
-### 计算例题或现场案例
-
-例如 wheel 文件名含 cp310 与 manylinux_x86_64，必须用与之兼容的 Python 3.10、x86_64 环境；板端 aarch64 Python 即使也为 3.10，架构仍不匹配。出现 undefined symbol 应检查 Python ABI、动态依赖库和 SDK release，而非盲目重装驱动。
-
-### 技术判断与实验设计
-
-先保存 `sys.executable` 与 SOABI，再安装兼容 wheel，最后在同一环境运行 `from rknn.api import RKNN` 和最小 ONNX 构建。若导入通过但 build 报不支持算子，问题已不属于 wheel 的基础安装层。
-
-## 源码精读：关键 API、张量与验收
-
-第 05 讲先做主机端 ABI 与 RKNN Toolkit2 版本检查：RKNN-Toolkit2 是 x86_64 Linux 的模型转换工具，不能把其 wheel 安装到 ROCK 5B 的 ARM64 RKNNLite 环境。
-
-**数据路径：** `x86_64 Linux / Python ABI` → `官方匹配 wheel` → `from rknn.api import RKNN` → `读取 Toolkit2 环境报告` → `转换 Tiny ONNX`。
-
-### 1. 核对 Python ABI 而不是只看 Python 大版本
-
-**输入：** 当前 python3 解释器、OS 与机器架构。**输出：** SOABI、machine、executable、是否虚拟环境。
-
-相同 Python 3 版本也可能安装了错误架构或 ABI 的 wheel；固定 Python 版本应以官方 Toolkit2 release 可用的 wheel 为准。
-
-```bash
-python3 -c "import platform,sys,sysconfig; print(platform.machine(),sys.version,sysconfig.get_config_var('SOABI'))"
-```
-
-### 2. lesson_05.py：检查 SDK 是否真的可导入
-
-**输入：** 已经安装的 Toolkit2 包。**输出：** rknn_module_found 和 RKNN_class_imported 布尔值。
-
-检测到 Python 模块不等于它能导入全部所需动态依赖；显式 --require-toolkit 会拒绝不可用环境。
-
-```bash
-python3 examples/lesson_05.py --require-toolkit --output build/toolkit_env.json
-```
-
-### 3. 第一次转换前锁定环境信息
-
-**输入：** SDK release、Python ABI 与模型导出参数。**输出：** 可重现的软件版本记录。
-
-模型转换报错应先确定是 wheel 环境、ONNX 图不支持，还是板端 Runtime 不匹配，而不把所有问题归类为驱动损坏。
-
-```bash
-python3 -c "from rknn.api import RKNN; print('RKNN API imported')"
-python3 examples/hardware/convert_onnx.py --help
-```
-
-**数据例题：** 安装成功的最小证据是当前目标虚拟环境中能导入 RKNN 类，并能打印真实 Python 版本、SOABI 与平台；它还不代表模型转换或 NPU 推理通过。
-
-**验收边界：** 保存实际工具链版本/架构与导入检查，不凭一张 pip 安装成功的截图认为所有 SDK 已兼容。
 
 ## 配套可运行源码
 

@@ -28,6 +28,63 @@
 
 **理解检测：** 优先使用示例 README 中配套的模型和图片，再逐步替换输入。
 
+## 工程机理与知识深化
+
+### 系统机制与数据协议
+
+官方 Model Zoo 示例可将模型、Runtime、输入图像和后处理连成最短可检查路径。实际运行过程包含 ELF 启动、模型载入、NPU 初始化、图像解码/预处理、推理和输出。`subprocess.run` 的 exit_code=0 只表示外部程序返回成功；仍应审阅 stdout 中的类别或检测框。
+
+### 具体算例与故障现场
+
+同一张猫的图像，Demo 输出 class_id=281，但标签文件按 1001 类索引而非 1000 类索引时，显示文本可能错位。排查顺序：先确认 demo、模型与标签属于同一发布版本，再核对 RGB/BGR 和尺寸；不能一开始就改 NPU 驱动。
+
+### 设计选择与验收判据
+
+用厂家提供的已知模型和测试图片建立第一份实测证据。单次整体 seconds 包含进程启动和模型载入；要取得 NPU 模型耗时应看 SDK profiler 或程序内部计时。
+
+## 源码精读：关键 API、张量与验收
+
+第 08 讲使用仓库 lesson_08.py 调起实际存在的官方 Model Zoo Demo，保存命令、退出码与 stdout/stderr；必须阅读检测或分类结果，而不是只关注退出码。
+
+**数据路径：** `官方匹配 DEMO 可执行文件` → `板端 .rknn 模型` → `测试图片` → `subprocess.run` → `日志与结果`。
+
+### 1. 外部 Demo 输入约定
+
+**输入：** --program 实际 ELF/脚本、--model .rknn、--image JPG。**输出：** 要运行的完整命令。
+
+脚本不会自动下载、编译或替换官方 Demo；三种文件需与 SDK/驱动版本和模型协议一致。
+
+```bash
+python3 examples/lesson_08.py --program /path/to/rknn_mobilenet_demo \
+  --model /path/to/model.rknn --image /path/to/test.jpg
+```
+
+### 2. subprocess.run：直接执行真实目标程序
+
+**输入：** 三个路径组成的命令列表。**输出：** returncode、stdout、stderr 和墙钟耗时。
+
+这里是操作系统进程调用而不是纯 Python 模拟推理；时间包含进程启动和加载，不等于 NPU 算子耗时。
+
+```python
+result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+print(result.returncode, result.stdout, result.stderr)
+```
+
+### 3. 如何判断第一次 NPU Demo 真正成功
+
+**输入：** 进程日志和终端分类/检测输出。**输出：** 实测类别/框、运行库版本、输入图路径。
+
+退出码为零只表示程序自报成功，还要看到能解释的模型输出与运行环境。输出类别索引不匹配时先看图像预处理和标签。
+
+```python
+# 记录真实 stdout 中模型推理的类别/框
+# 没有实际设备与模型时保持“待上板”
+```
+
+**数据例题：** 运行 JSON 中 seconds 是整个外部 Demo 进程的墙钟时间，不能直接换算 NPU FPS；要测 NPU 推理应使用模型或 SDK 自身的分段计时。
+
+**验收边界：** 在 ROCK 5B 获取匹配模型 Demo 的真实输出，并保存设备、Runtime 与驱动版本。PC 上执行 --help 不属于本实验成功。
+
 ## 操作实验（需记录证据）
 
 ### 实验 1：固定版本
@@ -109,63 +166,6 @@ PC 模拟器成功说明什么？
 - [RKNN SDK 入口](https://github.com/airockchip/rknn-toolkit2)
 
 > 以具体 release 的官方文档为准；本教程中的设备结果尚未在你的硬件环境实测。
-
-## 工程机理与知识深化
-
-### 系统机制与数据协议
-
-官方 Model Zoo 示例可将模型、Runtime、输入图像和后处理连成最短可检查路径。实际运行过程包含 ELF 启动、模型载入、NPU 初始化、图像解码/预处理、推理和输出。`subprocess.run` 的 exit_code=0 只表示外部程序返回成功；仍应审阅 stdout 中的类别或检测框。
-
-### 具体算例与故障现场
-
-同一张猫的图像，Demo 输出 class_id=281，但标签文件按 1001 类索引而非 1000 类索引时，显示文本可能错位。排查顺序：先确认 demo、模型与标签属于同一发布版本，再核对 RGB/BGR 和尺寸；不能一开始就改 NPU 驱动。
-
-### 设计选择与验收判据
-
-用厂家提供的已知模型和测试图片建立第一份实测证据。单次整体 seconds 包含进程启动和模型载入；要取得 NPU 模型耗时应看 SDK profiler 或程序内部计时。
-
-## 源码精读：关键 API、张量与验收
-
-第 08 讲使用仓库 lesson_08.py 调起实际存在的官方 Model Zoo Demo，保存命令、退出码与 stdout/stderr；必须阅读检测或分类结果，而不是只关注退出码。
-
-**数据路径：** `官方匹配 DEMO 可执行文件` → `板端 .rknn 模型` → `测试图片` → `subprocess.run` → `日志与结果`。
-
-### 1. 外部 Demo 输入约定
-
-**输入：** --program 实际 ELF/脚本、--model .rknn、--image JPG。**输出：** 要运行的完整命令。
-
-脚本不会自动下载、编译或替换官方 Demo；三种文件需与 SDK/驱动版本和模型协议一致。
-
-```bash
-python3 examples/lesson_08.py --program /path/to/rknn_mobilenet_demo \
-  --model /path/to/model.rknn --image /path/to/test.jpg
-```
-
-### 2. subprocess.run：直接执行真实目标程序
-
-**输入：** 三个路径组成的命令列表。**输出：** returncode、stdout、stderr 和墙钟耗时。
-
-这里是操作系统进程调用而不是纯 Python 模拟推理；时间包含进程启动和加载，不等于 NPU 算子耗时。
-
-```python
-result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
-print(result.returncode, result.stdout, result.stderr)
-```
-
-### 3. 如何判断第一次 NPU Demo 真正成功
-
-**输入：** 进程日志和终端分类/检测输出。**输出：** 实测类别/框、运行库版本、输入图路径。
-
-退出码为零只表示程序自报成功，还要看到能解释的模型输出与运行环境。输出类别索引不匹配时先看图像预处理和标签。
-
-```python
-# 记录真实 stdout 中模型推理的类别/框
-# 没有实际设备与模型时保持“待上板”
-```
-
-**数据例题：** 运行 JSON 中 seconds 是整个外部 Demo 进程的墙钟时间，不能直接换算 NPU FPS；要测 NPU 推理应使用模型或 SDK 自身的分段计时。
-
-**验收边界：** 在 ROCK 5B 获取匹配模型 Demo 的真实输出，并保存设备、Runtime 与驱动版本。PC 上执行 --help 不属于本实验成功。
 
 ## 配套可运行源码
 

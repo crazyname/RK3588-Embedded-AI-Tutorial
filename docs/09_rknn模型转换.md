@@ -28,6 +28,65 @@
 
 **理解检测：** 转换成功后必须做功能回归、性能评估、精度统计三个环节。
 
+## 工程机理与知识深化
+
+### 系统机制与数据协议
+
+RKNN Toolkit2 的主机转换是一个分阶段编译过程：`config(target_platform, mean/std)` 指定平台与输入配置，`load_onnx` 解析源图，`build` 做算子编译并可能量化，`export_rknn` 写出执行文件。ONNX checker 只检查图合法，不代表所有算子支持目标 NPU；量化还必须提供代表性校准数据，不能凭空开启 INT8。
+
+### 具体算例与故障现场
+
+最小 Tiny CNN 的输入 `(1,3,4,4)` float32 NCHW，输出为 `(1,2)`；先在 ONNX Runtime 保存参考 NPZ，再尝试非量化 RKNN 转换。出现 `load_onnx` 不支持算子时检查 opset/图结构，而不是改动已经未使用的摄像头驱动。
+
+### 设计选择与验收判据
+
+实验分别核对 ONNX 图通过、RKNN 导出成功和板端输出一致三道门槛。`mean_values=[[0,0,0]], std_values=[[1,1,1]]` 只是适用于特定小模型的中性转换设置，不应直接照搬到 ImageNet/Yolo 权重。
+
+## 源码精读：关键 API、张量与验收
+
+第 09 讲以仓库生成的 Tiny CNN 为固定输入，演示 ONNX checker、RKNN config/load_onnx/build/export 四个阶段；先不量化，以减少变量。
+
+**数据路径：** `Tiny CNN ONNX` → `onnx.checker` → `RKNN config/load_onnx` → `build(non-INT8)` → `export .rknn`。
+
+### 1. 生成最小真实 ONNX 与固定 NCHW 输入
+
+**输入：** create_tiny_onnx.py 输出路径。**输出：** tiny.onnx + input.npy，shape=(1,3,4,4)。
+
+固定模型只是验证工具链，并不是 ImageNet 分类器。ONNX Runtime 按图计算的预期值是 [0.5,0.25]，需用真实运行验证。
+
+```bash
+python3 examples/hardware/create_tiny_onnx.py \
+  --onnx build/tiny.onnx --input-npy build/input.npy
+```
+
+### 2. 转换器 API 四步的含义
+
+**输入：** onnx model、target_platform='rk3588'、mean/std。**输出：** 成功时编译并导出 .rknn。
+
+config 约束目标平台和预处理，load_onnx 解析图，build 编译/可选量化，export 序列化模型；某一步返回非零不可跳过。
+
+```python
+r.config(target_platform='rk3588', mean_values=[[0,0,0]], std_values=[[1,1,1]])
+r.load_onnx(model='build/tiny.onnx')
+r.build(do_quantization=False)
+r.export_rknn('build/tiny.rknn')
+```
+
+### 3. 区分编译与设备运行
+
+**输入：** 真实 .rknn 文件与 Toolkit2 版本。**输出：** 编译日志和导出模型路径。
+
+ONNX checker 成功不意味着 RKNN build 成功；RKNN 导出成功也不意味着 ROCK 5B 的 NPU 已执行。
+
+```bash
+python3 examples/lesson_09.py --onnx build/tiny.onnx \
+  --output build/tiny.rknn --mean 0,0,0 --std 1,1,1
+```
+
+**数据例题：** 如果 RKNN build 失败：先保存错误算子、opset、输入 layout、Toolkit2 release，而不是刷板端驱动。mean/std 设置必须与模型输入的 float 值约定一致。
+
+**验收边界：** 分别记录 ONNX 校验、真实 RKNN build 返回码和导出结果；未安装 Toolkit2 的 PC 只能完成前半段。
+
 ## 操作实验（需记录证据）
 
 ### 实验 1：检查 ONNX
@@ -115,65 +174,6 @@ finally:
 - [ONNX Runtime 官方文档](https://onnxruntime.ai/docs/)
 
 > 以具体 release 的官方文档为准；本教程中的设备结果尚未在你的硬件环境实测。
-
-## 工程机理与知识深化
-
-### 系统机制与数据协议
-
-RKNN Toolkit2 的主机转换是一个分阶段编译过程：`config(target_platform, mean/std)` 指定平台与输入配置，`load_onnx` 解析源图，`build` 做算子编译并可能量化，`export_rknn` 写出执行文件。ONNX checker 只检查图合法，不代表所有算子支持目标 NPU；量化还必须提供代表性校准数据，不能凭空开启 INT8。
-
-### 具体算例与故障现场
-
-最小 Tiny CNN 的输入 `(1,3,4,4)` float32 NCHW，输出为 `(1,2)`；先在 ONNX Runtime 保存参考 NPZ，再尝试非量化 RKNN 转换。出现 `load_onnx` 不支持算子时检查 opset/图结构，而不是改动已经未使用的摄像头驱动。
-
-### 设计选择与验收判据
-
-实验分别核对 ONNX 图通过、RKNN 导出成功和板端输出一致三道门槛。`mean_values=[[0,0,0]], std_values=[[1,1,1]]` 只是适用于特定小模型的中性转换设置，不应直接照搬到 ImageNet/Yolo 权重。
-
-## 源码精读：关键 API、张量与验收
-
-第 09 讲以仓库生成的 Tiny CNN 为固定输入，演示 ONNX checker、RKNN config/load_onnx/build/export 四个阶段；先不量化，以减少变量。
-
-**数据路径：** `Tiny CNN ONNX` → `onnx.checker` → `RKNN config/load_onnx` → `build(non-INT8)` → `export .rknn`。
-
-### 1. 生成最小真实 ONNX 与固定 NCHW 输入
-
-**输入：** create_tiny_onnx.py 输出路径。**输出：** tiny.onnx + input.npy，shape=(1,3,4,4)。
-
-固定模型只是验证工具链，并不是 ImageNet 分类器。ONNX Runtime 按图计算的预期值是 [0.5,0.25]，需用真实运行验证。
-
-```bash
-python3 examples/hardware/create_tiny_onnx.py \
-  --onnx build/tiny.onnx --input-npy build/input.npy
-```
-
-### 2. 转换器 API 四步的含义
-
-**输入：** onnx model、target_platform='rk3588'、mean/std。**输出：** 成功时编译并导出 .rknn。
-
-config 约束目标平台和预处理，load_onnx 解析图，build 编译/可选量化，export 序列化模型；某一步返回非零不可跳过。
-
-```python
-r.config(target_platform='rk3588', mean_values=[[0,0,0]], std_values=[[1,1,1]])
-r.load_onnx(model='build/tiny.onnx')
-r.build(do_quantization=False)
-r.export_rknn('build/tiny.rknn')
-```
-
-### 3. 区分编译与设备运行
-
-**输入：** 真实 .rknn 文件与 Toolkit2 版本。**输出：** 编译日志和导出模型路径。
-
-ONNX checker 成功不意味着 RKNN build 成功；RKNN 导出成功也不意味着 ROCK 5B 的 NPU 已执行。
-
-```bash
-python3 examples/lesson_09.py --onnx build/tiny.onnx \
-  --output build/tiny.rknn --mean 0,0,0 --std 1,1,1
-```
-
-**数据例题：** 如果 RKNN build 失败：先保存错误算子、opset、输入 layout、Toolkit2 release，而不是刷板端驱动。mean/std 设置必须与模型输入的 float 值约定一致。
-
-**验收边界：** 分别记录 ONNX 校验、真实 RKNN build 返回码和导出结果；未安装 Toolkit2 的 PC 只能完成前半段。
 
 ## 配套可运行源码
 

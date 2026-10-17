@@ -34,6 +34,61 @@ RKNN-Toolkit2 提供模型转换与主机调试；RKNN Model Zoo 提供 MobileNe
 
 **判断是否理解：** 复现实验优先记录 commit SHA，而不是只写‘下载最新版’。
 
+## 工程机理与知识深化
+
+### 模型与系统的约束
+
+四个上游仓库职责不同：rknn-toolkit2 负责主机模型转换，rknn_model_zoo 提供部署范例，rknpu2 包含 C API/Runtime 接口及示例，rknn-llm 对应语言模型转换与运行。实际工程中的版本是一个组合：BSP/内核、驱动、运行时、编译 SDK、模型格式，不能只记录某一个仓库的最新版。
+
+### 计算例题或现场案例
+
+一个 YOLOv8 `.rknn` 的输出头形状可能随 Model Zoo 转换脚本或导出分支而变化。即使文件同名，后处理若仍按旧版张量解释就可能错框。记录上游 commit SHA、模型 SHA256、部署用编译参数和标签类别数能缩小排查范围。
+
+### 技术判断与实验设计
+
+读取远端 HEAD 只是查询该时刻代码引用，并不会安装环境。真正复现应固定 tag/commit，对照对应 release 的 Quick Start 与兼容矩阵。离线时应保存已下载的文件/哈希，不伪称检索到最新版本。
+
+## 源码精读：关键 API、张量与验收
+
+第 04 讲学会定位 Rockchip 相关官方仓库、固定真实 commit/release，而不是把网上任意 SDK 文件混装。lesson_04.py 使用 git ls-remote 读取四个仓库的远端引用。
+
+**数据路径：** `选择官方仓库` → `git ls-remote` → `commit SHA / ref` → `源码与 SDK 版本记录` → `按 release 阅读 README`。
+
+### 1. REPOS：按项目职责选择仓库
+
+**输入：** toolkit2、model_zoo、rknpu2、rkllm 之一。**输出：** 对应官方 Git 地址。
+
+Toolkit2 是模型转换，Model Zoo 是官方部署样例，RKNPU2 是底层 C API/Runtime，RKLLM 是语言模型工具链；换模型类型不能沿用不匹配的 SDK。
+
+```bash
+python3 examples/lesson_04.py --repo toolkit2 --ref HEAD --output build/upstream.json
+```
+
+### 2. git ls-remote：读取真实远端版本
+
+**输入：** 可联网的 git、远端 URL 与 ref 名称。**输出：** SHA/ref 列表写入 JSON。
+
+它不下载整套 SDK，也不保证某个 commit 与当前 BSP 一定兼容。记录 SHA 后，还需阅读对应版本的 release、wheel 以及 Runtime 兼容表。
+
+```bash
+git ls-remote https://github.com/airockchip/rknn-toolkit2.git HEAD
+```
+
+### 3. 正确的版本定位顺序
+
+**输入：** 板卡型号、BSP/内核、工具链、运行库、模型格式。**输出：** 可重复查询的版本与文件来源清单。
+
+应固定主机 Toolkit2、板端 Lite2/librknnrt.so、Model Zoo 源码提交的组合；只说“最新版”无法复现。
+
+```bash
+python3 examples/lesson_00.py --output build/lesson00/environment.json
+python3 examples/lesson_04.py --repo model_zoo --ref HEAD
+```
+
+**数据例题：** 两个不同 commit 的同名 yolov8.rknn 可能有不同输出 shape；模型和后处理必须来自匹配版本。git ls-remote 成功只证明远端可访问。
+
+**验收边界：** 明确列出四个仓库的用途、实际 HEAD commit、目标板 BSP/Runtime 来源，并保存查到的结果；无网络时记录此项待完成。
+
 ## 跟做实验与验收证据
 
 ### 实验 1：建立参考仓库清单
@@ -115,61 +170,6 @@ git -C rknn-toolkit2 remote -v
 - [Rockchip RKLLM](https://github.com/airockchip/rknn-llm)
 
 > 资料阅读优先级：官方 SDK 版本与实例 > 数据格式的官方文档 > 理论教材。外部资料可能随版本变化，不应将本讲示例理解为已在你的开发板上实测通过。
-
-## 工程机理与知识深化
-
-### 模型与系统的约束
-
-四个上游仓库职责不同：rknn-toolkit2 负责主机模型转换，rknn_model_zoo 提供部署范例，rknpu2 包含 C API/Runtime 接口及示例，rknn-llm 对应语言模型转换与运行。实际工程中的版本是一个组合：BSP/内核、驱动、运行时、编译 SDK、模型格式，不能只记录某一个仓库的最新版。
-
-### 计算例题或现场案例
-
-一个 YOLOv8 `.rknn` 的输出头形状可能随 Model Zoo 转换脚本或导出分支而变化。即使文件同名，后处理若仍按旧版张量解释就可能错框。记录上游 commit SHA、模型 SHA256、部署用编译参数和标签类别数能缩小排查范围。
-
-### 技术判断与实验设计
-
-读取远端 HEAD 只是查询该时刻代码引用，并不会安装环境。真正复现应固定 tag/commit，对照对应 release 的 Quick Start 与兼容矩阵。离线时应保存已下载的文件/哈希，不伪称检索到最新版本。
-
-## 源码精读：关键 API、张量与验收
-
-第 04 讲学会定位 Rockchip 相关官方仓库、固定真实 commit/release，而不是把网上任意 SDK 文件混装。lesson_04.py 使用 git ls-remote 读取四个仓库的远端引用。
-
-**数据路径：** `选择官方仓库` → `git ls-remote` → `commit SHA / ref` → `源码与 SDK 版本记录` → `按 release 阅读 README`。
-
-### 1. REPOS：按项目职责选择仓库
-
-**输入：** toolkit2、model_zoo、rknpu2、rkllm 之一。**输出：** 对应官方 Git 地址。
-
-Toolkit2 是模型转换，Model Zoo 是官方部署样例，RKNPU2 是底层 C API/Runtime，RKLLM 是语言模型工具链；换模型类型不能沿用不匹配的 SDK。
-
-```bash
-python3 examples/lesson_04.py --repo toolkit2 --ref HEAD --output build/upstream.json
-```
-
-### 2. git ls-remote：读取真实远端版本
-
-**输入：** 可联网的 git、远端 URL 与 ref 名称。**输出：** SHA/ref 列表写入 JSON。
-
-它不下载整套 SDK，也不保证某个 commit 与当前 BSP 一定兼容。记录 SHA 后，还需阅读对应版本的 release、wheel 以及 Runtime 兼容表。
-
-```bash
-git ls-remote https://github.com/airockchip/rknn-toolkit2.git HEAD
-```
-
-### 3. 正确的版本定位顺序
-
-**输入：** 板卡型号、BSP/内核、工具链、运行库、模型格式。**输出：** 可重复查询的版本与文件来源清单。
-
-应固定主机 Toolkit2、板端 Lite2/librknnrt.so、Model Zoo 源码提交的组合；只说“最新版”无法复现。
-
-```bash
-python3 examples/lesson_00.py --output build/lesson00/environment.json
-python3 examples/lesson_04.py --repo model_zoo --ref HEAD
-```
-
-**数据例题：** 两个不同 commit 的同名 yolov8.rknn 可能有不同输出 shape；模型和后处理必须来自匹配版本。git ls-remote 成功只证明远端可访问。
-
-**验收边界：** 明确列出四个仓库的用途、实际 HEAD commit、目标板 BSP/Runtime 来源，并保存查到的结果；无网络时记录此项待完成。
 
 ## 配套可运行源码
 
