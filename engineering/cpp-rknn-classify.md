@@ -1,5 +1,10 @@
 # RKNPU2 C++ 分类和输入绑定对照：独立工程实验与验收
 
+## 对应课程讲义与 HTML 课件
+
+- [Markdown：docs/25_RKNPU2—通用C API.md](../docs/25_RKNPU2—通用C API.md) · [HTML 连续滚动课件](../courseware/lessons/25_RKNPU2—通用C API.html)
+- [Markdown：docs/28_mobilenet模型代码封装.md](../docs/28_mobilenet模型代码封装.md) · [HTML 连续滚动课件](../courseware/lessons/28_mobilenet模型代码封装.html)
+
 ## 源码清单
 - [`examples/hardware/rknn_classify.cpp`](../examples/hardware/rknn_classify.cpp)
 - [`examples/hardware/rknn_compare_input_io.cpp`](../examples/hardware/rknn_compare_input_io.cpp)
