@@ -157,14 +157,18 @@ python3 examples/lesson_22.py --onnx /path/to/model.onnx --output build/lesson22
 
 **验收边界：** 保存真实改写后 ONNX、checker 结果与同输入的数值回归；不得把删除 Identity 自动称为 RK3588 上的加速优化。
 
-## 配套可运行源码
+## 配套可运行源码（第 22 讲）
 
-- [本讲独立操作手册（只含运行、参数与验收）](../examples/notes/lesson_22.md)
+- [本讲独立 Python 实例](../examples/lesson_22.py) · [操作手册与参数说明](../examples/notes/lesson_22.md)
+- [通用依赖与课程代码说明](../examples/README.md)
 
-- [本节可运行 Python 基础实验](../examples/lesson_22.py)（算法实现于 [labs.py](../examples/labs.py)）
-- [环境准备、运行命令及限制](../examples/README.md)
+在仓库根目录运行：
 
-从根目录执行 `python3 examples/lesson_22.py --help`。RKNPU2 C/C++、Lite2 与零拷贝相关环节需要实际 RK3588 SDK/模型/驱动；当前仅提供完整单输入分类 C API 程序，零拷贝专用 API 还应对照官方同版本示例，不把一般 C API 误称为零拷贝实现。
+```bash
+python3 examples/lesson_22.py --onnx /path/to/source.onnx --output build/lesson22/optimized.onnx --input-npy /path/to/input.npy
+```
+
+**如何验收：** 删除 ONNX Identity 后执行 checker 和可选数值回归，不把节点减少自动等同于 NPU 加速。 占位文件路径需要替换为真实模型、图像或 NPY，不把命令行帮助信息当成完整实验。
 
 ## 视频原始字幕附录
 
