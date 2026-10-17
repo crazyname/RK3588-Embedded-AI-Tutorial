@@ -3,7 +3,7 @@
 ## 对应课程讲义与 HTML 课件
 
 - [Markdown：docs/29_yolov5模型部署实战.md](../docs/29_yolov5模型部署实战.md) · [HTML 连续滚动课件](../courseware/lessons/29_yolov5模型部署实战.html)
-- [Markdown：docs/30_yolov26模型部署(从0到1版)_数据集构建与模型训练.md](../docs/30_yolov26模型部署(从0到1版)_数据集构建与模型训练.md) · [HTML 连续滚动课件](../courseware/lessons/30_yolov26模型部署(从0到1版)_数据集构建与模型训练.html)
+- [Markdown：docs/30_yolov26模型部署%28从0到1版%29_数据集构建与模型训练.md](../docs/30_yolov26模型部署%28从0到1版%29_数据集构建与模型训练.md) · [HTML 连续滚动课件](../courseware/lessons/30_yolov26模型部署%28从0到1版%29_数据集构建与模型训练.html)
 
 ## 源码清单
 - [`boards/radxa-rock5b/tools/run_official_yolov8.py`](../boards/radxa-rock5b/tools/run_official_yolov8.py)
