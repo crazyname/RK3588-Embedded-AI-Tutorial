@@ -33,6 +33,17 @@ cmake --build build/native-rknn -j2
 
 用 `cmake --build` 输出确认生成的分类程序路径，按 [板端 C++ 教程](../boards/radxa-rock5b/CPP_RGA_IO_BENCHMARK.md) 提供的参数运行。理解 `rknn_init`→输入张量属性查询→`rknn_inputs_set`→`rknn_run`→`rknn_outputs_get/release`→`rknn_destroy`。比较相同输入的 Python/C++ 结果，输出 dtype/shape、预处理协议或类别不一致则先排查，不做虚构性能对比。
 
+## 图片变成真正的 C++ 输入张量
+
+在已构建好 rknn_classifier 的 ROCK 5B 上，模型必须明确接受 RGB uint8 NHWC 224×224（归一化在 RKNN 转换时配置）；本示例采用 stretch resize：
+
+~~~bash
+python3 examples/hardware/prepare_image.py --image /path/to/test.jpg --output build/classify_input.npy --raw build/classify_input.raw --width 224 --height 224 --color RGB --layout NHWC --dtype uint8
+./build/native-rknn/rknn_classifier /path/to/mobilenet_compatible.rknn build/classify_input.raw
+~~~
+
+C++ 输入不是 JPG，而是紧密排列的张量 bytes。首先看查询输出的输入 size/dtype/layout，再看 output index/score；用同图运行 Python Lite2 分类对照 Top-K。标签应来自该模型的类别列表，程序不会自行猜测标签。RAW 字节数不匹配时先核对模型输入协议。
+
 ## 自动化测试
 
 - [原生 C++ 分类/内存绑定假 SDK 行为测试](../examples/hardware/tests/test_native_classification.py)：编译真实 C++ 主程序，在显式 FAKE SDK 上运行成功和错误输入路径；不代表实机 NPU
