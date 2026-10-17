@@ -152,14 +152,18 @@ ONNX 模型声明动态维度不等于 RKNN 编译允许任意 shape；实际 RK
 
 **验收边界：** 提交真实动态 ONNX、至少两份合法形状的输入和 shapes.csv；不将 ONNX 成功等同于 RKNN 动态 shape 上板能力。
 
-## 配套可运行源码
+## 配套可运行源码（第 21 讲）
 
-- [本讲独立操作手册（只含运行、参数与验收）](../examples/notes/lesson_21.md)
+- [本讲独立 Python 实例](../examples/lesson_21.py) · [操作手册与参数说明](../examples/notes/lesson_21.md)
+- [通用依赖与课程代码说明](../examples/README.md)
 
-- [本节可运行 Python 基础实验](../examples/lesson_21.py)（算法实现于 [labs.py](../examples/labs.py)）
-- [环境准备、运行命令及限制](../examples/README.md)
+在仓库根目录运行：
 
-从根目录执行 `python3 examples/lesson_21.py --help`。RKNPU2 C/C++、Lite2 与零拷贝相关环节需要实际 RK3588 SDK/模型/驱动；当前仅提供完整单输入分类 C API 程序，零拷贝专用 API 还应对照官方同版本示例，不把一般 C API 误称为零拷贝实现。
+```bash
+python3 examples/lesson_21.py --onnx /path/to/dynamic.onnx --inputs /path/to/x320.npy /path/to/x640.npy --csv build/lesson21/shapes.csv
+```
+
+**如何验收：** 同一真实动态 ONNX 对两个尺寸执行推理并记录输入/输出 shape；RKNN 动态支持需另核 SDK。 占位文件路径需要替换为真实模型、图像或 NPY，不把命令行帮助信息当成完整实验。
 
 ## 视频原始字幕附录
 
