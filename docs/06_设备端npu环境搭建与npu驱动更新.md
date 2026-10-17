@@ -152,14 +152,18 @@ python3 boards/radxa-rock5b/tools/board_probe.py --output build/lesson06/board_p
 
 **验收边界：** 在实际设备保存只读版本信息与真实可见节点；若无实体板卡，只能完成查询逻辑学习，不能勾选 NPU 环境验收。
 
-## 配套可运行源码
+## 配套可运行源码（第 06 讲）
 
-- [本讲独立操作手册（只含运行、参数与验收）](../examples/notes/lesson_06.md)
+- [本讲独立 Python 实例](../examples/lesson_06.py) · [操作手册与参数说明](../examples/notes/lesson_06.md)
+- [通用依赖与课程代码说明](../examples/README.md)
 
-- [本节实际 Python 程序](../examples/lesson_06.py)（基于 [labs.py](../examples/labs.py) 实现）
-- [全部源码、依赖与执行方法](../examples/README.md)
+在仓库根目录运行：
 
-从仓库根目录执行 `python3 examples/lesson_06.py --help`，然后按代码说明传入真实文件或直接运行该课程的数学/诊断实验。基础实验不等于已经在 RK3588 NPU 上真实运行过模型。
+```bash
+python3 examples/lesson_06.py --output build/lesson06/npu.json
+```
+
+**如何验收：** 只读 /dev NPU 节点、内核等信息；指定 --runtime /actual/librknnrt.so 才会记录真实运行库文件。 路径包含 `/path/to/` 时必须换成实际文件，不能把 CLI `--help` 或 PC 模拟当成设备实测。
 
 ## 原始字幕（仅供核对）
 
