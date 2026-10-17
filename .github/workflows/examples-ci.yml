@@ -11,6 +11,8 @@ on:
       - "README.md"
       - "courseware/**"
       - "docs/**"
+      - "engineering/**"
+      - "COURSE_COMPLETION_CHECKLIST.md"
       - ".github/workflows/examples-ci.yml"
   workflow_dispatch:
 jobs:
