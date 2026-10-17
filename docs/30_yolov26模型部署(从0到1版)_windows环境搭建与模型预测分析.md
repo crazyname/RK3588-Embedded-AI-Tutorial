@@ -159,13 +159,11 @@ python3 examples/lesson_30.py --weights /path/to/best.pt \
 
 ## 配套可运行源码
 
-- [本讲独立操作手册（只含运行、参数与验收）](../examples/notes/lesson_30.md)
+- [本讲真实 Python 课程实例](../examples/lesson_30.py) · [对应操作手册](../examples/notes/lesson_30.md)
 
-- [本节可执行 Python 实验](../examples/lesson_30.py)（基础算法实现在 [labs.py](../examples/labs.py)）
-- [配套实际模型工具：export_yolo_onnx.py](../examples/hardware/export_yolo_onnx.py)
-- [完整运行说明和 SDK/模型前置条件](../examples/README.md)
+专题一用于真实 YOLO 权重在 PC 框架中的预测基线；输出 JSON 和 Ultralytics 版本不证明 RKNN 编译兼容。
 
-先从仓库根目录运行 `python3 examples/lesson_30.py --help`。训练、ONNX 与 SDK 实例需要真实模型文件、数据和匹配环境。YOLO26 的 ONNX 导出不保证 RKNN 兼容；YOLOv5/v8 检测头和后处理应以同一版本官方 Model Zoo 为准。RKLLM 仍需使用官方匹配模型与板端运行 SDK，当前示例只实现真实内存估算，没有伪造的大模型部署结果。
+**验收边界：** 不以 `--help`、空模型、模拟图像或未验证输出代替实验结果。需要在相应 PC 环境/ROCK 5B 设备上用真实输入运行并保存实际日志。
 
 ## 原始字幕（仅供核对）
 
