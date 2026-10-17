@@ -115,6 +115,55 @@ Toolkit-Lite2 主要做什么？
 
 > 版本敏感功能请依赖当前 SDK 的官方文档；实际运行结果需要用户在目标板上验证。
 
+## 源码精读：关键 API、张量与验收
+
+第 24 讲的板端入口是 mobilenet_image_lite.py；SDK 示例 lite_infer.py 只负责从 NPY 张量推理。两者不应被当成 ONNX→RKNN 转换器。
+
+**数据路径：** `JPEG (磁盘)` → `Pillow RGB uint8 (224,224,3)` → `RKNNLite.inference` → `分类输出 ndarray` → `Top-5 与标签`。
+
+### 1. make_input()：把图像变成模型规定的输入
+
+**输入：** JPG/PNG 路径与 224×224 尺寸。**输出：** 连续内存 RGB uint8，shape=(224,224,3)。
+
+OpenCV 通常读到 BGR，Pillow.convert('RGB') 输出 RGB；颜色顺序错会使分类结果错误。不能在 Python 中再除以 255，除非该 RKNN 真的要求浮点输入。
+
+```python
+input_tensor = make_input(image, (224, 224), 'stretch')
+print(input_tensor.shape, input_tensor.dtype)
+```
+
+### 2. RKNNLite：加载→初始化→推理→释放
+
+**输入：** 匹配 RK3588 的 .rknn 文件与 HWC 数组。**输出：** list[ndarray]，单输出分类模型的输出数应为 1。
+
+load_rknn != init_runtime；先检查各调用返回码，runtime 成功以后才能调用 inference。release 要与创建一一对应。
+
+```python
+sdk = RKNNLite()
+try:
+    assert sdk.load_rknn(str(model)) == 0
+    assert sdk.init_runtime() == 0
+    outputs = sdk.inference(inputs=[input_tensor])
+finally:
+    sdk.release()
+```
+
+### 3. topk_scores()：解释输出而不是只打印成功
+
+**输入：** 一维类别分数 ndarray 与 k=5。**输出：** 按分数排序的 (class_index, model_score) 列表。
+
+原始输出可能是 logits，不一定是概率；标签索引必须对应模型本身的 1000/1001 类定义，不应随意加减 1。
+
+```python
+top = np.argsort(scores.reshape(-1))[::-1][:5]
+for index in top:
+    print(int(index), float(scores.reshape(-1)[index]))
+```
+
+**数据解释与练习：** 形状示例是输入 RGB 224×224×3；输出若为 (1,1000)，表示 1000 个类别分数，不代表第 0 类就是背景。输出维度要按实际 .rknn 查询，不能直接复制示例数值。
+
+**验收边界：** 在 ROCK 5B 保存实际图片、模型/运行库版本及 Top-5；PC 环境的 --help 或假 SDK 返回不能作为 NPU 实测。
+
 ## 配套可运行源码
 
 - [本讲独立操作手册（只含运行、参数与验收）](../examples/notes/lesson_24.md)
