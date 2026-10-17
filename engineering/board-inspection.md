@@ -2,6 +2,11 @@
 
 > 工程编号：`board-inspection`。本页面向实际操作，与课程 `docs/` 中的概念讲解区分；所有设备测试须由使用者在真实 ROCK 5B 上执行。
 
+## 对应课程讲义与 HTML 课件
+
+- [Markdown：docs/01_快速了解rk3588.md](../docs/01_快速了解rk3588.md) · [HTML 连续滚动课件](../courseware/lessons/01_快速了解rk3588.html)
+- [Markdown：docs/06_设备端npu环境搭建与npu驱动更新.md](../docs/06_设备端npu环境搭建与npu驱动更新.md) · [HTML 连续滚动课件](../courseware/lessons/06_设备端npu环境搭建与npu驱动更新.html)
+
 ## 源码清单
 
 - [`boards/radxa-rock5b/tools/board_probe.py`](../boards/radxa-rock5b/tools/board_probe.py)
