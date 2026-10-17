@@ -110,6 +110,48 @@ dmesg | grep -Ei 'rknpu|npu' | tail -n 30
 
 > 以具体 release 的官方文档为准；本教程中的设备结果尚未在你的硬件环境实测。
 
+## 源码精读：关键 API、张量与验收
+
+第 06 讲只读检查板端 NPU 节点、内核、RKNN Runtime 架构及驱动信息。驱动更新属于有风险的 BSP 工作，本课程 P0 不要求盲目刷固件。
+
+**数据路径：** `ROCK 5B 镜像/内核` → `/dev/*rknpu*` → `匹配 ARM64 librknnrt.so` → `Lite2/C API` → `实际 NPU 推理`。
+
+### 1. lesson_06.py：检查可见设备与 Runtime
+
+**输入：** 目标 Linux 系统；可选 --runtime 指定真实共享库。**输出：** kernel、machine、device_nodes、Runtime 路径与 ELF 文件描述。
+
+不能把 x86_64 host librknnrt.so 当成 ARM64 target library。节点未显示时也可能是命名或权限差异，应结合设备树和 BSP 文档。
+
+```bash
+python3 examples/lesson_06.py --runtime /actual/arm64/librknnrt.so --output build/lesson06/npu.json
+```
+
+### 2. 区分用户态 Runtime 与内核驱动
+
+**输入：** librknnrt.so 版本、/dev 节点、内核和 NPU 驱动。**输出：** 硬件/驱动/运行库三个层面的记录。
+
+仅能 import rknnlite 或找到动态库，不代表该 Runtime 能与当前 kernel/BSP 驱动正常协作。使用实际模型完成一次初始化和 inference 才能闭环。
+
+```bash
+uname -a
+ls -l /dev/*rknpu* 2>/dev/null || true
+file /actual/arm64/librknnrt.so
+```
+
+### 3. 系统升级必须有板商版本与恢复路线
+
+**输入：** 板卡实际 BSP/镜像、可用 SDK release 与供电/恢复准备。**输出：** 兼容性核对后的变更计划（不是自动升级）。
+
+不要为了跑教程直接替换 .ko、dtb 或频率配置。出现初始化错误，先比对驱动/API/模型 release，能读取版本不等于驱动应当更新。
+
+```bash
+python3 boards/radxa-rock5b/tools/board_probe.py --output build/lesson06/board_probe.json
+```
+
+**数据例题：** 同一板卡若 kernel/BSP 与用户态 librknnrt.so 来自不兼容发行版，load_rknn 或 init_runtime 可能失败；先检查版本匹配，不修改驱动来“碰运气”。
+
+**验收边界：** 在实际设备保存只读版本信息与真实可见节点；若无实体板卡，只能完成查询逻辑学习，不能勾选 NPU 环境验收。
+
 ## 配套可运行源码
 
 - [本讲独立操作手册（只含运行、参数与验收）](../examples/notes/lesson_06.md)
