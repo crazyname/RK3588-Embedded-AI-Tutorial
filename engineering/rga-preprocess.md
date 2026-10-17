@@ -7,6 +7,11 @@
 - [Markdown：docs/26_RKNPU2—零拷贝C API.md](../docs/26_RKNPU2—零拷贝C API.md) · [HTML 连续滚动课件](../courseware/lessons/26_RKNPU2—零拷贝C API.html)
 - [Markdown：docs/30_yolov26模型部署(从0到1版)_数据集构建与模型训练.md](../docs/30_yolov26模型部署(从0到1版)_数据集构建与模型训练.md) · [HTML 连续滚动课件](../courseware/lessons/30_yolov26模型部署(从0到1版)_数据集构建与模型训练.html)
 
+## 对应课程讲义与 HTML 课件
+
+- [Markdown：docs/26_RKNPU2—零拷贝C API.md](../docs/26_RKNPU2—零拷贝C API.md) · [HTML 连续滚动课件](../courseware/lessons/26_RKNPU2—零拷贝C API.html)
+- [Markdown：docs/30_yolov26模型部署(从0到1版)_数据集构建与模型训练.md](../docs/30_yolov26模型部署(从0到1版)_数据集构建与模型训练.md) · [HTML 连续滚动课件](../courseware/lessons/30_yolov26模型部署(从0到1版)_数据集构建与模型训练.html)
+
 ## 源码清单
 
 - [`examples/hardware/rga_letterbox_rgb888.cpp`](../examples/hardware/rga_letterbox_rgb888.cpp)
