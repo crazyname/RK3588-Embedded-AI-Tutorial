@@ -161,15 +161,19 @@ python3 examples/lesson_09.py --onnx build/tiny.onnx \
 
 **验收边界：** 分别记录 ONNX 校验、真实 RKNN build 返回码和导出结果；未安装 Toolkit2 的 PC 只能完成前半段。
 
-## 配套可运行源码
+## 配套可运行源码（第 09 讲）
 
-- [本讲独立操作手册（只含运行、参数与验收）](../examples/notes/lesson_09.md)
+- [本讲独立 Python 实例](../examples/lesson_09.py) · [操作手册与参数说明](../examples/notes/lesson_09.md)
+- [通用依赖与课程代码说明](../examples/README.md)
+- [关联工程实验手册](../engineering/onnx-toolchain.md)
 
-- [本节可运行 Python 实验](../examples/lesson_09.py)（实现于 [labs.py](../examples/labs.py)）
-- [真实 SDK / 模型程序：convert_onnx.py](../examples/hardware/convert_onnx.py)
-- [代码环境、依赖、输入输出及使用说明](../examples/README.md)
+在仓库根目录运行：
 
-先从仓库根目录运行 `python3 examples/lesson_09.py --help`。需要 SDK 的程序只有在提供真实模型、匹配的 Toolkit2/ONNX Runtime 与正确输入后才能验证；不能把便携算法演示当作 NPU 性能实测。
+```bash
+python3 examples/lesson_09.py --onnx /path/to/model.onnx --output build/lesson09/model.rknn --mean 0,0,0 --std 1,1,1
+```
+
+**如何验收：** 先经 ONNX checker，再调用真实 Toolkit2 编译并输出 RKNN；需匹配 x86_64 主机工具链。 路径包含 `/path/to/` 时必须换成实际文件，不能把 CLI `--help` 或 PC 模拟当成设备实测。
 
 ## 原始字幕（仅供核对）
 
