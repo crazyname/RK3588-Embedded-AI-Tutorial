@@ -2,6 +2,10 @@
 
 > 工程编号：`yolov8-camera`。本页面向实际操作，与课程 `docs/` 中的概念讲解区分；所有设备测试须由使用者在真实 ROCK 5B 上执行。
 
+## 对应课程讲义与 HTML 课件
+
+- [Markdown：docs/30_yolov26模型部署(从0到1版)_数据集构建与模型训练.md](../docs/30_yolov26模型部署(从0到1版)_数据集构建与模型训练.md) · [HTML 连续滚动课件](../courseware/lessons/30_yolov26模型部署(从0到1版)_数据集构建与模型训练.html)
+
 ## 源码清单
 
 - [`boards/radxa-rock5b/apps/camera_yolov8_lite.py`](../boards/radxa-rock5b/apps/camera_yolov8_lite.py)
