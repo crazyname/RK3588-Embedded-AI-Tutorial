@@ -30,6 +30,7 @@ jobs:
       - name: Check course links and setup utilities
         run: |
           python tools/validate_repo.py
+          python tools/audit_engineering.py --strict
           python tools/bootstrap_host.py --group core
           python tools/verify_assets.py --list
           python -m unittest discover -s tools/tests -v
