@@ -204,6 +204,7 @@ jobs:
           assert bad.returncode!=0 and 'out of bounds' in bad.stderr,bad.stderr
           print('Compiled actual C++ app and validated missing-device/parameter failures with MOCK SDK; no V4L2/RGA/NPU hardware used')
           PY
+          python -m unittest discover -s examples/hardware/tests -p 'test_native_video_pipeline.py' -v
 
       - name: Compile real V4L2 MMAP-to-DMA-BUF export probe and reject missing devices
         run: |
