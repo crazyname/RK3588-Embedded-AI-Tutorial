@@ -88,14 +88,14 @@ struct Session{
   Session&operator=(const Session&)=delete;
   ~Session(){if(handle)rkllm_destroy(handle);}
 };
-void write_report(const Args&a,const Metrics&m,double init_ms,double run_ms,int status){
+void write_report(const Args&a,const Metrics&m,double init_ms,double run_ms,int status,std::streamoff model_bytes){
   if(a.report.empty())return;
   std::ofstream f(a.report,std::ios::binary);
   if(!f)throw std::runtime_error("Could not open report");
   f<<std::fixed<<std::setprecision(3);
   f<<"{\n  \"backend\": \"RKLLM C API\",\n"
    <<"  \"model_file\": \""<<json_escape(a.model)<<"\",\n"
-   <<"  \"initialized_ms\": "<<init_ms<<",\n  \"run_wall_ms\": "<<run_ms
+   <<"  \"max_new_tokens\": "<<a.max_new<<",\n"\n   <<"  \"context_tokens\": "<<a.context<<",\n"\n   <<"  \"model_size_bytes\": "<<model_bytes<<",\n"\n   <<"  \"initialized_ms\": "<<init_ms<<",\n  \"run_wall_ms\": "<<run_ms
    <<",\n  \"first_text_chunk_ms\": ";
   if(m.got_text)f<<ms(m.first-m.started);else f<<"null";
   f<<",\n  \"text_chunks\": "<<m.chunks<<",\n  \"output_utf8_bytes\": "<<m.bytes
@@ -124,6 +124,7 @@ int main(int argc,char**argv){
     const Args a=parse(argc,argv);
     std::ifstream mfile(a.model,std::ios::binary|std::ios::ate);
     if(!mfile||mfile.tellg()<=0)throw std::runtime_error("Model missing or empty");
+    const std::streamoff model_bytes=mfile.tellg();
     const std::string prompt=read_prompt(a.prompt);
     Session session;Metrics m;
     RKLLMParam p=rkllm_createDefaultParam();
@@ -142,7 +143,7 @@ int main(int argc,char**argv){
     int rc=rkllm_run(session.handle,&input,&infer,&m);
     double elapsed=ms(Clock::now()-m.started);
     std::cout<<"\n";
-    write_report(a,m,init_ms,elapsed,rc);
+    write_report(a,m,init_ms,elapsed,rc,model_bytes);
     if(rc||m.error||!m.finished)throw std::runtime_error("RKLLM run failed/incomplete");
     std::cerr<<"RKLLM callback chunks="<<m.chunks<<" run_ms="<<elapsed<<"\n";
     return 0;
