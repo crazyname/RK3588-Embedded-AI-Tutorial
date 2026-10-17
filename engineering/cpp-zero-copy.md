@@ -1,5 +1,9 @@
 # RKNPU2 C++ 张量绑定与零拷贝边界：独立工程实验与验收
 
+## 对应课程讲义与 HTML 课件
+
+- [Markdown：docs/26_RKNPU2—零拷贝C API.md](../docs/26_RKNPU2—零拷贝C API.md) · [HTML 连续滚动课件](../courseware/lessons/26_RKNPU2—零拷贝C API.html)
+
 ## 源码清单
 - [`examples/hardware/rknn_zero_copy.cpp`](../examples/hardware/rknn_zero_copy.cpp)
 
