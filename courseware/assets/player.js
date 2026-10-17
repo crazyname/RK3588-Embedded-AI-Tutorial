@@ -121,6 +121,26 @@ add("SUMMARY","本节总结",cards(['<h3>三件需要记住的事</h3>'+list(dat
 const prev=db[data.id-1],next=db[data.id+1];
 const sectionId=i=>"lesson-section-"+(i+1);
 function lessonLink(x,label){return x?'<a class="btn ghost" href="'+encodeURIComponent(x.slug).replaceAll("(","%28").replaceAll(")","%29")+'.html">'+label+'</a>':"";}
+// Teaching P0: show a direct, verified repository experiment entry for core deployment lessons.
+const handsOn={
+  24:["Python RKNNLite 图片分类","mobilenet-image","boards/radxa-rock5b/apps/mobilenet_image_lite.py"],
+  25:["RKNPU2 C++ 分类","cpp-rknn-classify","examples/hardware/rknn_classify.cpp"],
+  26:["V4L2、RGA 与 RKNN 数据链","v4l2-rga-rknn","examples/hardware/v4l2_rga_rknn_yolov8.cpp"],
+  27:["MobileNet 图片分类","mobilenet-image","boards/radxa-rock5b/apps/mobilenet_image_lite.py"],
+  28:["MobileNet 与 C++ 对照","cpp-rknn-classify","examples/hardware/rknn_classify.cpp"],
+  29:["YOLO 官方模型与导出","official-yolo-and-export","boards/radxa-rock5b/tools/run_official_yolov8.py"],
+  31:["YOLOv8 摄像头检测","yolov8-camera","boards/radxa-rock5b/apps/camera_yolov8_lite.py"],
+  32:["RKLLM 流式文本生成","rkllm-native","examples/hardware/rkllm/rkllm_stream.cpp"]
+};
+if(handsOn[data.id]){
+ const [label,doc,source]=handsOn[data.id];
+ add("P0 LAB","本讲真实工程入口与上板验收",
+ '<div class="panel good"><h3>'+esc(label)+'</h3><p>课程页解释原理；独立工程手册提供所需模型、实际执行命令、输出和验收要求。先阅读实验手册，再执行源码。</p>'+
+ '<p><a href="../../engineering/'+encodeURIComponent(doc)+'.md">打开完整工程实验手册 ↗</a></p>'+
+ '<p><a href="../../'+source+'">查看本讲核心源码 ↗</a></p></div>'+
+ '<div class="panel soft"><h3>完成的证据</h3><p>写明模型及输入协议、板端 SDK/驱动版本、运行命令和实际输出。PC 模拟或仅运行 --help 不能算 NPU 实测。</p></div>',
+ "依据源码的实际参数运行；不把假 SDK 或构建成功当成 ROCK 5B 功能验收。");
+}
 const toc=slides.map((s,i)=>'<a class="outline-item" href="#'+sectionId(i)+'" data-section="'+i+'"><span>'+String(i+1).padStart(2,"0")+'</span>'+esc(s.title)+'</a>').join("");
 const content=slides.map((s,i)=>'<section id="'+sectionId(i)+'" class="slide lesson-section" aria-labelledby="section-heading-'+i+'"><div class="kicker">'+esc(s.cat)+' / '+String(i+1).padStart(2,"0")+'</div><h2 id="section-heading-'+i+'">'+esc(s.title)+'</h2>'+s.body+'<div class="teacher-note"><strong>讲师提示：</strong> '+fmt(s.note)+'</div></section>').join("");
 document.body.classList.add("continuous");
