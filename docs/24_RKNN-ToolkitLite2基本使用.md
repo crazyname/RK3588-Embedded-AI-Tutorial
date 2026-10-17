@@ -166,14 +166,12 @@ for index in top:
 
 ## 配套可运行源码
 
-- [本讲独立操作手册（只含运行、参数与验收）](../examples/notes/lesson_24.md)
+- [本讲 Python 课程实例](../examples/lesson_24.py) · [独立操作说明](../examples/notes/lesson_24.md)
+- [核心 SDK / 板端源码](../boards/radxa-rock5b/apps/mobilenet_image_lite.py) · [完整工程实验手册](../engineering/mobilenet-image.md)
 
-- [本节可运行 Python 基础实验](../examples/lesson_24.py)（算法实现于 [labs.py](../examples/labs.py)）
-- [真实 SDK / 板端代码：lite_infer.py](../examples/hardware/lite_infer.py)
-- [真实 SDK / 板端代码：prepare_image.py](../examples/hardware/prepare_image.py)
-- [环境准备、运行命令及限制](../examples/README.md)
+本讲的 `examples/lesson_24.py` 是对应课程软件实验；真正的板端图片分类应使用上面所列的 RKNNLite 源码和配套 `.rknn` 模型。
 
-从根目录执行 `python3 examples/lesson_24.py --help`。RKNPU2 C/C++、Lite2 与零拷贝相关环节需要实际 RK3588 SDK/模型/驱动；当前仅提供完整单输入分类 C API 程序，零拷贝专用 API 还应对照官方同版本示例，不把一般 C API 误称为零拷贝实现。
+**教学与实测分界：** 先理解本讲“源码精读”中各步骤的张量与返回值，再按实验手册执行。没有真实模型、匹配 SDK、ROCK 5B 和实际输出日志时，不标记 NPU 实测通过。
 
 ## 原始字幕附录（仅供核对）
 
