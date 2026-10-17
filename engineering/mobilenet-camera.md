@@ -2,6 +2,12 @@
 
 > 工程编号：`mobilenet-camera`。本页面向实际操作，与课程 `docs/` 中的概念讲解区分；所有设备测试须由使用者在真实 ROCK 5B 上执行。
 
+## 对应课程讲义与 HTML 课件
+
+- [Markdown：docs/24_RKNN-ToolkitLite2基本使用.md](../docs/24_RKNN-ToolkitLite2基本使用.md) · [HTML 连续滚动课件](../courseware/lessons/24_RKNN-ToolkitLite2基本使用.html)
+- [Markdown：docs/27_mobilenet模型部署.md](../docs/27_mobilenet模型部署.md) · [HTML 连续滚动课件](../courseware/lessons/27_mobilenet模型部署.html)
+- [Markdown：docs/28_mobilenet模型代码封装.md](../docs/28_mobilenet模型代码封装.md) · [HTML 连续滚动课件](../courseware/lessons/28_mobilenet模型代码封装.html)
+
 ## 源码清单
 
 - [`boards/radxa-rock5b/apps/camera_mobilenet_lite.py`](../boards/radxa-rock5b/apps/camera_mobilenet_lite.py)
