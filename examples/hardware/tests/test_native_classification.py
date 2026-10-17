@@ -63,6 +63,18 @@ class NativeClassificationTests(unittest.TestCase):
         self.assertEqual(p.returncode, 0, p.stderr)
         self.assertTrue(p.stdout.strip())
 
+    def test_zero_copy_actual_fake_runtime_binding(self):
+        p = self.run_app("zero_copy", self.model, self.good, "2")
+        self.assertEqual(p.returncode, 0, p.stderr)
+        self.assertIn("output[0]=", p.stdout)
+        self.assertIn("runs=2", p.stdout)
+        self.assertIn("Input staging memcpy", p.stdout)
+
+    def test_comparison_actual_fake_runtime_parity(self):
+        p = self.run_app("comparison", self.model, self.good, "4", "1")
+        self.assertEqual(p.returncode, 0, p.stderr)
+        self.assertIn("allclose_atol_0.01_rtol_0.01=true", p.stdout)
+
     def test_zero_copy_invalid_run_count(self):
         p = self.run_app("zero_copy", self.model, self.good, "0")
         self.assertNotEqual(p.returncode, 0)
