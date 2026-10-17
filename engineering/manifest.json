@@ -14,7 +14,21 @@
       ],
       "acceptance_heading": "## 验收标准",
       "test_heading": "## 自动化测试",
-      "hardware_heading": "## 验证边界"
+      "hardware_heading": "## 验证边界",
+      "lesson_ids": [
+        1,
+        6
+      ],
+      "lesson_pages": [
+        {
+          "md": "docs/01_快速了解rk3588.md",
+          "html": "courseware/lessons/01_快速了解rk3588.html"
+        },
+        {
+          "md": "docs/06_设备端npu环境搭建与npu驱动更新.md",
+          "html": "courseware/lessons/06_设备端npu环境搭建与npu驱动更新.html"
+        }
+      ]
     },
     {
       "id": "camera-probe",
@@ -28,7 +42,21 @@
       ],
       "acceptance_heading": "## 验收标准",
       "test_heading": "## 自动化测试",
-      "hardware_heading": "## 验证边界"
+      "hardware_heading": "## 验证边界",
+      "lesson_ids": [
+        6,
+        8
+      ],
+      "lesson_pages": [
+        {
+          "md": "docs/06_设备端npu环境搭建与npu驱动更新.md",
+          "html": "courseware/lessons/06_设备端npu环境搭建与npu驱动更新.html"
+        },
+        {
+          "md": "docs/08_快速体验rknn_demo.md",
+          "html": "courseware/lessons/08_快速体验rknn_demo.html"
+        }
+      ]
     },
     {
       "id": "mobilenet-image",
@@ -42,7 +70,21 @@
       ],
       "acceptance_heading": "## 验收标准",
       "test_heading": "## 自动化测试",
-      "hardware_heading": "## 验证边界"
+      "hardware_heading": "## 验证边界",
+      "lesson_ids": [
+        24,
+        27
+      ],
+      "lesson_pages": [
+        {
+          "md": "docs/24_RKNN-ToolkitLite2基本使用.md",
+          "html": "courseware/lessons/24_RKNN-ToolkitLite2基本使用.html"
+        },
+        {
+          "md": "docs/27_mobilenet模型部署.md",
+          "html": "courseware/lessons/27_mobilenet模型部署.html"
+        }
+      ]
     },
     {
       "id": "mobilenet-camera",
@@ -58,7 +100,26 @@
       ],
       "acceptance_heading": "## 验收标准",
       "test_heading": "## 自动化测试",
-      "hardware_heading": "## 验证边界"
+      "hardware_heading": "## 验证边界",
+      "lesson_ids": [
+        24,
+        27,
+        28
+      ],
+      "lesson_pages": [
+        {
+          "md": "docs/24_RKNN-ToolkitLite2基本使用.md",
+          "html": "courseware/lessons/24_RKNN-ToolkitLite2基本使用.html"
+        },
+        {
+          "md": "docs/27_mobilenet模型部署.md",
+          "html": "courseware/lessons/27_mobilenet模型部署.html"
+        },
+        {
+          "md": "docs/28_mobilenet模型代码封装.md",
+          "html": "courseware/lessons/28_mobilenet模型代码封装.html"
+        }
+      ]
     },
     {
       "id": "yolov8-camera",
@@ -73,7 +134,16 @@
       ],
       "acceptance_heading": "## 验收标准",
       "test_heading": "## 自动化测试",
-      "hardware_heading": "## 验证边界"
+      "hardware_heading": "## 验证边界",
+      "lesson_ids": [
+        31
+      ],
+      "lesson_pages": [
+        {
+          "md": "docs/30_yolov26模型部署(从0到1版)_数据集构建与模型训练.md",
+          "html": "courseware/lessons/30_yolov26模型部署(从0到1版)_数据集构建与模型训练.html"
+        }
+      ]
     },
     {
       "id": "cpp-yolov8",
@@ -89,7 +159,21 @@
       ],
       "acceptance_heading": "## 验收标准",
       "test_heading": "## 自动化测试",
-      "hardware_heading": "## 验证边界"
+      "hardware_heading": "## 验证边界",
+      "lesson_ids": [
+        25,
+        31
+      ],
+      "lesson_pages": [
+        {
+          "md": "docs/25_RKNPU2—通用C API.md",
+          "html": "courseware/lessons/25_RKNPU2—通用C API.html"
+        },
+        {
+          "md": "docs/30_yolov26模型部署(从0到1版)_数据集构建与模型训练.md",
+          "html": "courseware/lessons/30_yolov26模型部署(从0到1版)_数据集构建与模型训练.html"
+        }
+      ]
     },
     {
       "id": "rga-preprocess",
@@ -104,7 +188,21 @@
       ],
       "acceptance_heading": "## 验收标准",
       "test_heading": "## 自动化测试",
-      "hardware_heading": "## 验证边界"
+      "hardware_heading": "## 验证边界",
+      "lesson_ids": [
+        26,
+        31
+      ],
+      "lesson_pages": [
+        {
+          "md": "docs/26_RKNPU2—零拷贝C API.md",
+          "html": "courseware/lessons/26_RKNPU2—零拷贝C API.html"
+        },
+        {
+          "md": "docs/30_yolov26模型部署(从0到1版)_数据集构建与模型训练.md",
+          "html": "courseware/lessons/30_yolov26模型部署(从0到1版)_数据集构建与模型训练.html"
+        }
+      ]
     },
     {
       "id": "v4l2-dmabuf",
@@ -118,7 +216,16 @@
       ],
       "acceptance_heading": "## 验收标准",
       "test_heading": "## 自动化测试",
-      "hardware_heading": "## 验证边界"
+      "hardware_heading": "## 验证边界",
+      "lesson_ids": [
+        26
+      ],
+      "lesson_pages": [
+        {
+          "md": "docs/26_RKNPU2—零拷贝C API.md",
+          "html": "courseware/lessons/26_RKNPU2—零拷贝C API.html"
+        }
+      ]
     },
     {
       "id": "v4l2-rga-rknn",
@@ -133,7 +240,21 @@
       ],
       "acceptance_heading": "## 验收标准",
       "test_heading": "## 自动化测试",
-      "hardware_heading": "## 验证边界"
+      "hardware_heading": "## 验证边界",
+      "lesson_ids": [
+        26,
+        31
+      ],
+      "lesson_pages": [
+        {
+          "md": "docs/26_RKNPU2—零拷贝C API.md",
+          "html": "courseware/lessons/26_RKNPU2—零拷贝C API.html"
+        },
+        {
+          "md": "docs/30_yolov26模型部署(从0到1版)_数据集构建与模型训练.md",
+          "html": "courseware/lessons/30_yolov26模型部署(从0到1版)_数据集构建与模型训练.html"
+        }
+      ]
     },
     {
       "id": "cpp-benchmark",
@@ -147,7 +268,21 @@
       ],
       "acceptance_heading": "## 验收标准",
       "test_heading": "## 自动化测试",
-      "hardware_heading": "## 验证边界"
+      "hardware_heading": "## 验证边界",
+      "lesson_ids": [
+        15,
+        31
+      ],
+      "lesson_pages": [
+        {
+          "md": "docs/15_模型性能评估.md",
+          "html": "courseware/lessons/15_模型性能评估.html"
+        },
+        {
+          "md": "docs/30_yolov26模型部署(从0到1版)_数据集构建与模型训练.md",
+          "html": "courseware/lessons/30_yolov26模型部署(从0到1版)_数据集构建与模型训练.html"
+        }
+      ]
     },
     {
       "id": "rkllm-native",
@@ -161,7 +296,16 @@
       ],
       "acceptance_heading": "## 验收标准",
       "test_heading": "## 自动化测试",
-      "hardware_heading": "## 验证边界"
+      "hardware_heading": "## 验证边界",
+      "lesson_ids": [
+        34
+      ],
+      "lesson_pages": [
+        {
+          "md": "docs/32_Deepseek_Qwen大模型部署.md",
+          "html": "courseware/lessons/32_Deepseek_Qwen大模型部署.html"
+        }
+      ]
     },
     {
       "id": "rkllm-aggregate",
@@ -175,7 +319,16 @@
       ],
       "acceptance_heading": "## 验收标准",
       "test_heading": "## 自动化测试",
-      "hardware_heading": "## 验证边界"
+      "hardware_heading": "## 验证边界",
+      "lesson_ids": [
+        34
+      ],
+      "lesson_pages": [
+        {
+          "md": "docs/32_Deepseek_Qwen大模型部署.md",
+          "html": "courseware/lessons/32_Deepseek_Qwen大模型部署.html"
+        }
+      ]
     },
     {
       "id": "rkllm-integrity",
@@ -189,7 +342,16 @@
       ],
       "acceptance_heading": "## 验收标准",
       "test_heading": "## 自动化测试",
-      "hardware_heading": "## 验证边界"
+      "hardware_heading": "## 验证边界",
+      "lesson_ids": [
+        34
+      ],
+      "lesson_pages": [
+        {
+          "md": "docs/32_Deepseek_Qwen大模型部署.md",
+          "html": "courseware/lessons/32_Deepseek_Qwen大模型部署.html"
+        }
+      ]
     },
     {
       "id": "onnx-toolchain",
@@ -206,7 +368,26 @@
       ],
       "acceptance_heading": "## 验收标准",
       "test_heading": "## 自动化测试",
-      "hardware_heading": "## 验证边界"
+      "hardware_heading": "## 验证边界",
+      "lesson_ids": [
+        9,
+        13,
+        27
+      ],
+      "lesson_pages": [
+        {
+          "md": "docs/09_rknn模型转换.md",
+          "html": "courseware/lessons/09_rknn模型转换.html"
+        },
+        {
+          "md": "docs/13_rknn-toolkit2模型推理.md",
+          "html": "courseware/lessons/13_rknn-toolkit2模型推理.html"
+        },
+        {
+          "md": "docs/27_mobilenet模型部署.md",
+          "html": "courseware/lessons/27_mobilenet模型部署.html"
+        }
+      ]
     },
     {
       "id": "official-yolo-and-export",
@@ -223,7 +404,21 @@
       ],
       "acceptance_heading": "## 验收标准",
       "test_heading": "## 自动化测试",
-      "hardware_heading": "## 验证边界"
+      "hardware_heading": "## 验证边界",
+      "lesson_ids": [
+        29,
+        31
+      ],
+      "lesson_pages": [
+        {
+          "md": "docs/29_yolov5模型部署实战.md",
+          "html": "courseware/lessons/29_yolov5模型部署实战.html"
+        },
+        {
+          "md": "docs/30_yolov26模型部署(从0到1版)_数据集构建与模型训练.md",
+          "html": "courseware/lessons/30_yolov26模型部署(从0到1版)_数据集构建与模型训练.html"
+        }
+      ]
     },
     {
       "id": "cpp-rknn-classify",
@@ -239,7 +434,21 @@
       ],
       "acceptance_heading": "## 验收标准",
       "test_heading": "## 自动化测试",
-      "hardware_heading": "## 验证边界"
+      "hardware_heading": "## 验证边界",
+      "lesson_ids": [
+        25,
+        28
+      ],
+      "lesson_pages": [
+        {
+          "md": "docs/25_RKNPU2—通用C API.md",
+          "html": "courseware/lessons/25_RKNPU2—通用C API.html"
+        },
+        {
+          "md": "docs/28_mobilenet模型代码封装.md",
+          "html": "courseware/lessons/28_mobilenet模型代码封装.html"
+        }
+      ]
     },
     {
       "id": "cpp-zero-copy",
@@ -253,7 +462,16 @@
       ],
       "acceptance_heading": "## 验收标准",
       "test_heading": "## 自动化测试",
-      "hardware_heading": "## 验证边界"
+      "hardware_heading": "## 验证边界",
+      "lesson_ids": [
+        26
+      ],
+      "lesson_pages": [
+        {
+          "md": "docs/26_RKNPU2—零拷贝C API.md",
+          "html": "courseware/lessons/26_RKNPU2—零拷贝C API.html"
+        }
+      ]
     }
   ]
 }
