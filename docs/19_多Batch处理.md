@@ -149,14 +149,18 @@ python3 -c "import numpy as np,json; a=np.load('build/lesson19/batch.npy'); prin
 
 **验收边界：** 使用两张真实图片生成 NPY 与 JSON，能从 batch 索引定位原图；仅证明组 Batch 正确，是否可由 RK3588 NPU 接收需要同协议模型上板验收。
 
-## 配套可运行源码
+## 配套可运行源码（第 19 讲）
 
-- [本讲独立操作手册（只含运行、参数与验收）](../examples/notes/lesson_19.md)
+- [本讲独立 Python 实例](../examples/lesson_19.py) · [操作手册与参数说明](../examples/notes/lesson_19.md)
+- [通用依赖与课程代码说明](../examples/README.md)
 
-- [本节可执行 Python 实验](../examples/lesson_19.py)（算法/系统诊断实现在 [labs.py](../examples/labs.py)）
-- [源码目录与运行说明](../examples/README.md)
+在仓库根目录运行：
 
-从仓库根目录执行 `python3 examples/lesson_19.py --help`。此部分重点练习量化、统计、内存监控、剪枝原理与批处理；没有模型权重或 SDK 时不会伪造 NPU 实测结果。第 18 讲的 SHA-256 不等于 RKNN 模型加密。
+```bash
+python3 examples/lesson_19.py --images /path/to/a.jpg /path/to/b.jpg --batch 2 --output build/lesson19/batch.npy
+```
+
+**如何验收：** 用两张真实图片生成 uint8 NHWC 的 N=2 张量和顺序 JSON；实际 RKNN 是否支持 batch=2 需单独验证。 占位文件路径需要替换为真实模型、图像或 NPY，不把命令行帮助信息当成完整实验。
 
 ## 视频原始字幕附录
 
