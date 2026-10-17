@@ -117,6 +117,20 @@ CPU 写入共享数据后，NPU 需要看到最新内容；NPU 写输出后，CP
 
 配套 [RKNPU2 两条输入路径比较](../examples/hardware/rknn_compare_input_io.cpp)、[librga RGB888 预处理](../examples/hardware/rga_letterbox_rgb888.cpp)、[OpenCV 同图误差校验](../tools/compare_rga_letterbox.py) 与 [完整实验说明](../boards/radxa-rock5b/CPP_RGA_IO_BENCHMARK.md)。目前有虚拟地址导入和 CPU 数据复制，非端到端 DMA-BUF 零拷贝。
 
+## 工程机理与知识深化
+
+### 数据契约与 SDK 工作机理
+
+SDK 内存绑定路径通过 `rknn_create_mem` 分配模型可访问缓冲，再用 `rknn_set_io_mem` 将输入/输出绑定到模型，执行 `rknn_run` 后从绑定的输出内存读取结果。它能控制内存生命周期，但并不自动消除 CPU 到 SDK 缓冲的复制；与 V4L2 DMA-BUF fd → RGA 共享图像缓冲属于不同层次。
+
+### 张量算例与完整数据路径
+
+一个宽为 224、每行 RGB888 紧密 672 字节的图像，在 NPU native attr 需要额外行对齐时，内存需按 `size_with_stride` 分配，RAW 字节也必须与该布局相符；单纯 W×H×3 可能不够。性能测试必须比较同模型、同输入、同精度结果，区分 CPU memcpy、rknn_run 和总调用时间。
+
+### 实验设计、取舍与判断
+
+本课程把“普通 SDK 输入”“SDK 张量内存绑定”“摄像头 DMA-BUF 共享”分别验收。不能把 SDK create_mem 视为全链路零拷贝，也不能假定所有 cache flush/同步都是自动的；应遵守所用 SDK release 的内存契约。
+
 ## 源码精读：关键 API、张量与验收
 
 本讲先讲普通输入与 SDK 内存绑定的区别，不把 DMA-BUF fd 导出或 RGA 加速误称为完整零拷贝。代码 rknn_zero_copy.cpp 是 SDK buffer 绑定教学。

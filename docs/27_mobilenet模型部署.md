@@ -119,6 +119,20 @@ print([(int(i),float(scores[i])) for i in idx])
 
 程序从 USB UVC 摄像头持续取帧，按模型协议执行 BGR→RGB 和缩放/裁切，使用真实 RKNNLite 推理；可以导出每帧 Top-K、采集/预处理/SDK 调用耗时及 p95 统计。**它是分类应用，不是 YOLO 检测；CI 使用模拟摄像头与 SDK 校验控制流程，硬件性能仍需 ROCK 5B 实测。**
 
+## 工程机理与知识深化
+
+### 数据契约与 SDK 工作机理
+
+MobileNet 分类的端到端路径是磁盘图像→RGB 解码/缩放→归一化/布局→模型推理→输出分数→Top-K 类名。`examples/lesson_27.py` 提供实际 ONNX Runtime 与 RKNNLite 两条路径，但 ONNX 端常为 float32 NCHW，RKNN 端可能把 mean/std 编入模型而接收 uint8 NHWC；要比较的是同一张图片的语义输入，而不只是 NumPy 数组值完全相同。
+
+### 张量算例与完整数据路径
+
+对同一 bell.jpg，先记录 ONNX 和 RKNN 的模型哈希、resize 模式、color/layout/normalize、标签 offset 和 raw score。若 Top-1 类别不一致，先查看首像素与归一化范围；将 logits 重复做 softmax 或额外偏移 1 会改变分数解释或标签映射。
+
+### 实验设计、取舍与判断
+
+先在 PC 跑 ONNX 建立参考分类，然后使用目标板兼容 RKNN 同图运行、保存原始输出 NPZ，并判断 Top-5 索引/分数误差。没有真实模型、图片或板端运行时，只能完成代码阅读或参数验证。
+
 ## 源码精读：关键 API、张量与验收
 
 本讲的真实模型主线在 examples/lesson_27.py：同一张图片分别交给 ONNX Runtime（PC）和 RKNNLite（ROCK 5B），不是用随机分数假装 MobileNet。

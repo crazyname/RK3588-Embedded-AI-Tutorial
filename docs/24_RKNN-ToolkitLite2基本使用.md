@@ -115,6 +115,20 @@ Toolkit-Lite2 主要做什么？
 
 > 版本敏感功能请依赖当前 SDK 的官方文档；实际运行结果需要用户在目标板上验证。
 
+## 工程机理与知识深化
+
+### 数据契约与 SDK 工作机理
+
+RKNNLite2 在目标板 Python 环境中使用：`load_rknn` 读取编译后的模型，`init_runtime` 初始化 NPU 上下文，`inference(inputs=[...])` 提供真实输入并返回模型输出，最终 `release` 回收资源。它与开发机上的 RKNN Toolkit2 不同，不负责将 ONNX 编译成 `.rknn`。MobileNet 类模型通常要求明确的 RGB、224×224、UINT8、NHWC 输入，但必须以实际转换脚本和属性为准。
+
+### 张量算例与完整数据路径
+
+若模型要求 uint8 NHWC，输入 shape `(224,224,3)`，类型应是 `uint8`，而不是已在 Python 中归一化的 float32 NCHW。输出 `(1,1000)` 若为 logits，Top-K 排序有意义，但其中的 score 不能直接写成“99% 概率”；使用不同的 1000/1001 类标签会导致名字错位。
+
+### 实验设计、取舍与判断
+
+板端初次运行时分开保存模型哈希、输入图片、RGB/resize 规则、SDK/Runtime 版本、Top-5 类别及原始分数。`init_runtime()==0` 只是初始化成功，必须实际执行 `inference` 并解释输出才算闭环。
+
 ## 源码精读：关键 API、张量与验收
 
 第 24 讲的板端入口是 mobilenet_image_lite.py；SDK 示例 lite_infer.py 只负责从 NPY 张量推理。两者不应被当成 ONNX→RKNN 转换器。

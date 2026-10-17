@@ -120,6 +120,20 @@ rknn_context ctx = 0;
 
 本讲配套 [同模型标准输入/绑定输入比较源码](../examples/hardware/rknn_compare_input_io.cpp) 与 [ROCK 5B 实测和编译手册](../boards/radxa-rock5b/CPP_RGA_IO_BENCHMARK.md)。需真实 ARM64 runtime、单输入单输出分类模型和完整输入，不能把 CPU mock 成功视为板端数据。
 
+## 工程机理与知识深化
+
+### 数据契约与 SDK 工作机理
+
+RKNPU2 C API 使用 `rknn_context` 代表模型实例。典型生命周期为 `rknn_init → rknn_query → rknn_inputs_set → rknn_run → rknn_outputs_get → rknn_outputs_release → rknn_destroy`；每一调用返回码都需要检查。`rknn_query` 报告模型输入 output tensor 的 `dims、size、type、fmt`，通用 C++ 分类器读取的是预处理 RAW 字节而非 JPG 图片。
+
+### 张量算例与完整数据路径
+
+224×224×3 的紧密 uint8 RGB RAW 理论占 150528 字节，但该值不保证等于带 stride 的 native SDK 布局或 FP16 模型的输入大小。设置输入时 `buf、size、type、fmt` 应与实际模型接口一致；输出使用 `want_float=1` 可请求便于 CPU 处理的浮点张量，score 是否经过 softmax 仍取决于网络。
+
+### 实验设计、取舍与判断
+
+先让 C++ 路径与 Python RKNNLite 同图同模型对照 Top-K，记录模型哈希和各输入 attr；编译通过只能证明头文件与链接基础正确，不能推出板端预测精度。所有获取的 SDK 输出内存都必须按接口释放。
+
 ## 源码精读：关键 API、张量与验收
 
 C++ 示例 rknn_classify.cpp 读取预处理好的 RAW 张量，而非 JPEG；它直接调用 rknn_api.h，并要求单输入、单输出的分类模型。
