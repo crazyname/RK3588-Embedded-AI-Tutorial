@@ -24,7 +24,7 @@ PC 可先生成仓库自带的真实 ONNX Tiny CNN 并运行 ONNX Runtime。RKNP
 
 - [连续滚动的 17 项工程 HTML 实验索引](engineering/index.html)
 - [工程映射清单：源码、专门实验 MD、测试与验收入口](engineering/manifest.json)
-- [自动检测新增工程是否遗漏文档或测试链接](tools/audit_engineering.py)
+- [工程源码与实验文档映射检查](tools/audit_engineering.py)
 
 在仓库根目录执行 `python3 tools/audit_engineering.py --strict`。GitHub Actions 同步检查映射，以免后续添加 `boards/radxa-rock5b/apps|tools` 或 `examples/hardware` 工程时忘记建立实验手册。**注意：机器审计只检查文件映射与必要章节，不检查测试是否真的运行了 NPU，也不证明已有工程完全具备行为覆盖。** 部分 C++ 示例的自动化测试使用 Fake SDK，硬件正确性仍应依据真实板端结果验收。
 

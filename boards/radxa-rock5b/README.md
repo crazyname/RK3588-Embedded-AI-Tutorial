@@ -42,7 +42,7 @@
 - `run_official_yolov8.py` **不会自动 sudo、apt install、下载模型或刷写固件**。没有官方文件将明确报错，文件齐全才启动原版实例。
 - 真正的 RKNN 模型输出和 FPS，必须由实物板端运行记录来确认。板端路径不兼容时优先查官方发布说明。
 
-## MobileNet：真正的图片到 RKNNLite 分类源码
+## MobileNet 图片分类（RKNNLite）
 
 厂商的 [MobileNet 示例](https://docs.radxa.com/en/rock5/rock5b/app-development/ai/mobilenet) 提供了模型转换和 C API 工程；此处补充一个本仓库自己实现的 [Python RKNNLite 图片分类程序](apps/mobilenet_image_lite.py)。
 
@@ -57,7 +57,7 @@
 
 **测试状态**：Python 代码可以在 CI 用伪运行时测试控制流程和预处理，但模型输出和速度仍需在 ROCK 5B 实机核对；不同 SDK release 的 RKNN 模型输入契约可能变化。
 
-## USB 摄像头 → NPU 的真正闭环
+## USB 摄像头与 NPU 分类
 
 在静态图片分类和单独摄像头读帧检查通过后，使用 [完整摄像头 MobileNet 实验](CAMERA_MOBILENET.md) 和 [实际 RKNNLite 源码](apps/camera_mobilenet_lite.py) 将两者组合：BGR→RGB、缩放/裁切、RKNNLite 推理、Top-K、单帧耗时与 p95 统计、输出 JSON/JSONL，并使用 [报告校验工具](tools/validate_camera_report.py) 自动检查模型哈希和性能门槛。默认不保存原始摄像头图片。
 
