@@ -15,87 +15,85 @@ const sectionNames={OPENING:"课程导入",SCENARIO:"工程问题",GOALS:"本讲
 const slides=[];
 function add(cat,title,body,note){slides.push({cat,title,body,note:note||"根据实际设备和软件版本判断，不要用未经验证的结果替代课堂证据。"});}
 const name=data.title||m.title,intro=data.intro||"把理论、转换与运行验证连接成可重复的学习闭环。";
-add("OPENING","本讲课程介绍",'<div class="eyebrow">'+esc(m.unit)+'</div><h1>'+esc(name)+'</h1><p class="big">'+fmt(intro)+'</p><p class="footnote">上下滚动阅读 · N 切换讲师提示 · P 打印</p>',"问学生：本节课最想解决的一个实际工程问题是什么？");
-add("SCENARIO","工程问题",'<div class="panel good"><h3>'+fmt(extra.scene||intro)+'</h3></div>',"先让学习者说出输入、预期结果和失败现象。");
-add("GOALS","学习目标与验收方向",'<div class="panel">'+list(data.goals)+'</div><p class="footnote">每个目标对应可被检查的解释、操作、图示或运行证据。</p>',"把目标转为三个问题：知道什么、能够做什么、如何验证。");
-if(extra.terms&&extra.terms.length)add("KEYWORDS","术语与接口",'<div class="three-cols">'+extra.terms.map(x=>'<div class="panel"><div class="eyebrow">KEY TERM</div><h3>'+esc(x[0])+'</h3><p>'+fmt(x[1])+'</p></div>').join("")+'</div>',"逐一说明术语对应哪个软件层、数据或硬件资源。");
+add("OPENING",name,'<p class="lesson-lead">'+fmt(intro)+'</p>',"说明本讲的输入、输出和实测边界。");
+add("SCENARIO","先解决什么问题？",'<p class="scenario-question">'+fmt(extra.scene||intro)+'</p>',"让学习者先说出预期结果，再执行实验。");
+add("GOALS","学完应该会什么",list(data.goals),"逐项对照后面的实验与验收。");
+if(extra.terms&&extra.terms.length)
+ add("KEYWORDS","必要术语",'<dl class="term-grid">'+extra.terms.map(x=>'<div><dt>'+esc(x[0])+'</dt><dd>'+fmt(x[1])+'</dd></div>').join("")+'</dl>',"术语与实际代码和数据对应，不单独记忆定义。");
 
 if(Array.isArray(depth.concepts)&&depth.concepts.length){
- depth.concepts.forEach((c,i)=>{
-  add("THEORY","讲透原理 "+(i+1)+" · "+c.title,
-    '<div class="panel"><h3>'+fmt(c.title)+'</h3><p>'+fmt(c.explain)+'</p></div>'+
-    '<div class="panel soft"><strong>检查理解</strong><p>'+fmt(c.takeaway)+'</p></div>',
-    "请学生画出输入与输出关系，再用真实张量或一个数值例子验证。");
- });
-}else{
- add("THEORY","原理与工程约束",'<div class="panel"><p>'+fmt(data.core||"请阅读对应 Markdown 讲义。")+'</p></div>');
-}
+ depth.concepts.forEach((c,i)=>add("THEORY",String(i+1)+". "+c.title,
+   '<p>'+fmt(c.explain)+'</p><p class="concept-check"><strong>要点：</strong>'+fmt(c.takeaway)+'</p>',
+   "说明原理怎样决定实际数据类型、接口或者硬件选择。"));
+}else add("THEORY","关键原理",'<p>'+fmt(data.core||"参考对应 Markdown 教材的原理章节。")+'</p>');
 const teach=depth.guidance;
 if(teach&&Array.isArray(teach.phases)){
  teach.phases.forEach((phase,i)=>{
-  const command=phase.command?'<div class="code-wrap"><button type="button" class="copy-code">复制命令</button><pre><code>'+esc(phase.command)+'</code></pre></div>':'';
-  add("GUIDED LAB",["准备：明确实验条件","演示：运行真实程序","验收：解释实际结果"][i]||phase.title,
-    '<div class="panel good"><h3>'+fmt(phase.title)+'</h3><p>'+fmt(phase.action)+'</p></div>'+command+
-    '<div class="panel"><strong>观察与判断</strong><p>'+fmt(phase.observe)+'</p></div>'+
-    '<div class="panel soft"><strong>未达到时排查</strong><p>'+fmt(phase.diagnose)+'</p></div>',
-    phase.teach||"让学生展示输出并解释原因后进入下一步。");
+   const command=phase.command?'<div class="code-wrap"><button type="button" class="copy-code">复制</button><pre><code>'+esc(phase.command)+'</code></pre></div>':'';
+   const observe='<p class="guide-observe"><strong>预期结果：</strong>'+fmt(phase.observe)+'</p>';
+   const diagnose='<p class="guide-diagnose"><strong>没通过先查：</strong>'+fmt(phase.diagnose)+'</p>';
+   add("GUIDED LAB",["步骤 1｜准备条件","步骤 2｜实际执行","步骤 3｜结果验收"][i]||phase.title,
+     '<p class="lab-action">'+fmt(phase.action)+'</p>'+command+observe+diagnose,
+     phase.teach||"结合真实输入和输出核对，不用示例数值冒充实测。");
  });
-}else{
- add("GUIDED LAB","本节动手实践",stepList(data.steps,0));
-}
+}else add("GUIDED LAB","实验操作",stepList(data.steps,0));
 // Source-code guided explanation shared with the corresponding MD theory chapter.
 // No external fetch: all detailed lesson data is embedded in the individual HTML file.
 if(depth.walkthrough){
  const w=depth.walkthrough;
- const path=(w.flow||[]).map((part,i)=>(i?'<span class="arrow">→</span>':'')+
-   '<div class="flow-box"><span>'+fmt(part)+'</span></div>').join('');
- add("CODE READING","源码精读 · 输入如何到达输出",
-   '<div class="panel good"><p>'+fmt(w.intro)+'</p></div>'+
-   '<div class="flow">'+path+'</div>'+
-   '<div class="panel soft"><h3>本讲需要理解的张量/协议</h3><p>'+fmt(w.example)+'</p></div>',
-   "沿输入→关键 API→输出读源码，先看张量的 dtype/shape，再讨论是否得到真实模型结果。");
+ const path=(w.flow||[]).map(x=>'<span>'+fmt(x)+'</span>').join('<b aria-hidden="true">→</b>');
+ add("CODE READING","源码数据路径",
+   '<p>'+fmt(w.intro)+'</p><div class="flow-inline" aria-label="数据处理路径">'+path+'</div>'+
+   '<p class="worked-example"><strong>例题：</strong>'+fmt(w.example)+'</p>',
+   "跟随数据形状和类型从输入走到最终结果。");
  (w.steps||[]).forEach((step,i)=>{
-   add("CODE READING","关键函数 "+(i+1)+" · "+step.api,
-      '<div class="panel"><h3>'+fmt(step.api)+'</h3>'+
-      '<p><strong>输入：</strong>'+fmt(step.input)+'</p>'+
-      '<p><strong>输出：</strong>'+fmt(step.output)+'</p>'+
-      '<p>'+fmt(step.why)+'</p></div>'+
-      (step.code?'<div class="code-wrap"><button type="button" class="copy-code">复制片段</button><pre><code>'+esc(step.code)+'</code></pre></div>':''),
-      "把代码中的变量对应到模型输入、API 的返回值、缓冲区或坐标单位；片段用于理解，完整运行入口见工程手册。");
+   add("CODE READING",String(i+1)+". "+step.api,
+      '<dl class="api-contract"><dt>输入</dt><dd>'+fmt(step.input)+'</dd><dt>输出</dt><dd>'+fmt(step.output)+'</dd></dl>'+
+      '<p>'+fmt(step.why)+'</p>'+
+      (step.code?'<div class="code-wrap"><button type="button" class="copy-code">复制</button><pre><code>'+esc(step.code)+'</code></pre></div>':''),
+      "先识别 API、参数、返回值，再查验它和模型契约是否相符。");
  });
- 
 }
-
 if(Array.isArray(depth.diagnosis)&&depth.diagnosis.length){
- add("DIAGNOSTIC","具体报错与定位路径",
- '<div class="three-cols">'+depth.diagnosis.map((x,i)=>'<div class="panel warn"><span class="eyebrow">ISSUE 0'+(i+1)+'</span><h3>'+fmt(x.symptom)+'</h3><p><strong>可能原因：</strong>'+fmt(x.reason)+'</p><p><strong>如何查证：</strong>'+fmt(x.check)+'</p></div>').join("")+'</div>',
- "帮助学生区分现象、假设和验证动作；从最小改动开始排查。");
+ add("DIAGNOSTIC","错误定位",
+ '<div class="diagnostic-list">'+depth.diagnosis.map(x=>
+ '<div class="diagnostic-row"><strong>'+fmt(x.symptom)+'</strong>'+
+ '<span><b>可能原因</b>　'+fmt(x.reason)+'</span>'+
+ '<span><b>检查方法</b>　'+fmt(x.check)+'</span></div>').join("")+'</div>',
+ "先确认症状和错误码，再做最小修改验证原因。");
 }
 if(depth.case){
  const c=depth.case;
- add("CASE STUDY","情境分析 · 从症状到证据",
-  '<div class="panel"><h3>情境题</h3><p class="big">'+fmt(c.problem)+'</p></div>'+cards(['<h3>建议推理过程</h3><p>'+fmt(c.analysis)+'</p>','<h3>需提交的证据</h3><p>'+fmt(c.evidence)+'</p>']),
-  "先隐藏讲解答案让学生讨论，再用诊断链逐步收束。");
+ add("CASE STUDY","案例与分析",
+  '<p><strong>问题：</strong>'+fmt(c.problem)+'</p>'+
+  '<p><strong>分析：</strong>'+fmt(c.analysis)+'</p>'+
+  '<p><strong>验收证据：</strong>'+fmt(c.evidence)+'</p>',
+  "把场景与课程实验关联，避免只给抽象答案。");
 }
-
 if(extra.quiz){
-const q=extra.quiz;
-add("CHECK","课堂互动测验",'<div class="panel"><h3>'+fmt(q[0])+'</h3><div class="quiz-options">'+q[1].map((x,i)=>'<label class="quiz-option"><input type="radio" name="quiz" value="'+i+'">'+String.fromCharCode(65+i)+'. '+fmt(x)+'</label>').join("")+'</div><button id="checkQuiz" type="button" class="btn">提交并解释</button><div id="quizFeedback" class="quiz-feedback" role="status"></div></div>',"先让学生独立作答，再请一位同学解释原因。");
-}else add("CHECK","课堂讨论",'<div class="panel"><h3>从下面的目标中选一项，用自己的话解释其工作原理和验证方式。</h3>'+list(data.goals.slice(0,2))+'</div>',"讨论的目标是解释因果，而非复述术语。");
-
+ const q=extra.quiz;
+ add("CHECK","随堂自测",
+ '<p class="quiz-question">'+fmt(q[0])+'</p><div class="quiz-options">'+q[1].map((x,i)=>
+ '<label class="quiz-option"><input type="radio" name="quiz" value="'+i+'">'+String.fromCharCode(65+i)+'. '+fmt(x)+'</label>').join("")+
+ '</div><button id="checkQuiz" type="button" class="btn quiz-submit">检查答案</button><div id="quizFeedback" class="quiz-feedback" role="status"></div>',
+ "先自己作答，核对后解释为什么其他答案不正确。");
+}else add("CHECK","理解检查",list(data.goals.slice(0,2)));
 if(Array.isArray(depth.refs)&&depth.refs.length){
-add("READING","学习资料与权威参考",
-'<div class="panel"><h3>按照主题选择阅读资料</h3><ul>'+depth.refs.map(r=>{
-const safeUrl=/^https:\/\/[a-zA-Z0-9.-]+\//.test(r[1])?r[1]:"#";
-return '<li><a href="'+esc(safeUrl)+'" target="_blank" rel="noopener noreferrer">'+esc(r[0])+' ↗</a></li>';
-}).join("")+'</ul><p>先以 RKNN 官方 SDK 与示例确定版本兼容性，再读理论书籍理解算子、张量与优化原理。外部网页需联网。</p></div>',
-"请学生辨别：官方工具与版本契约、模型框架文档、原理教材分别解决不同问题。");
+ add("READING","参考资料",
+ '<ul class="reference-list">'+depth.refs.map(r=>{
+  const url=/^https:\/\/[a-zA-Z0-9.-]+\//.test(r[1])?r[1]:"#";
+  return '<li><a href="'+esc(url)+'" target="_blank" rel="noopener noreferrer">'+esc(r[0])+' ↗</a></li>';
+ }).join("")+'</ul>',
+ "遇到版本差异时优先阅读所用 SDK 版本的官方说明。");
 }
 
-add("ACCEPT","本节验收标准",'<p>以下勾选仅用于辅助复习，实际完成请提供可观察的证据。</p><div id="checks">'+data.checks.map((s,i)=>'<label class="check-item"><input data-check="'+i+'" type="checkbox">'+fmt(s)+'</label>').join("")+'</div><p class="footnote">学习进度仅存储在当前浏览器本地；不会上传到服务器。</p>',"未达标的部分对应哪一张幻灯片？请学生指出具体位置。");
+add("ACCEPT","完成标准",
+ '<div id="checks">'+data.checks.map((x,i)=>
+ '<label class="check-item"><input data-check="'+i+'" type="checkbox">'+fmt(x)+'</label>').join("")+'</div>'+
+ '<p class="help-text">勾选仅保存在本机浏览器；实机验收仍需要实际日志与模型输出。</p>',
+ "每项结论要对应实际操作或能够检查的证据。");
 
 // One concise source reference; the actual commands and runbooks are shown below.
-const codeFile="lesson_"+String(data.id).padStart(2,"0")+".py";
 const prev=db[data.id-1],next=db[data.id+1];
 const sectionId=i=>"lesson-section-"+(i+1);
 function lessonLink(x,label){return x?'<a class="btn ghost" href="'+encodeURIComponent(x.slug).replaceAll("(","%28").replaceAll(")","%29")+'.html">'+label+'</a>':"";}
@@ -105,13 +103,16 @@ const sourceIndex=String(data.id).padStart(2,"0");
 const notePath=data.id===27?"examples/LESSON_27.md":"examples/notes/lesson_"+sourceIndex+".md";
 const manualById={6:"board-inspection",9:"onnx-toolchain",24:"mobilenet-image",25:"cpp-rknn-classify",26:"cpp-zero-copy",27:"mobilenet-image",28:"mobilenet-camera",29:"official-yolo-and-export",32:"onnx-toolchain",33:"yolov8-camera",34:"rkllm-native"};
 const manual=manualById[data.id];
-add("SOURCE","源码与工程实验说明",
- '<div class="panel"><p><a href="../../examples/lesson_'+sourceIndex+'.py">Python 课程源码 ↗</a> · '+
- '<a href="../../'+notePath+'">独立实验手册 ↗</a>'+
- (manual?' · <a href="../../engineering/'+manual+'.md">板端工程指南 ↗</a>':'')+
- '</p><p>先完成前面的准备、演示和验收，再阅读完整源码；需要第三方模型、图片或 SDK 的项目须准备真实文件。</p></div>');
+add("SOURCE","源码和详细实验",
+ '<p class="source-links"><a href="../../examples/lesson_'+sourceIndex+'.py">课程 Python 源码 ↗</a> · '+
+ '<a href="../../'+notePath+'">操作说明 ↗</a>'+
+ (manual?' · <a href="../../engineering/'+manual+'.md">工程手册 ↗</a>':'')+
+ '</p>',
+ "实际模型和设备依赖以对应工程手册为准。");
 const toc=slides.map((s,i)=>'<a class="outline-item" href="#'+sectionId(i)+'" data-section="'+i+'"><span>'+String(i+1).padStart(2,"0")+'</span>'+esc(s.title)+'</a>').join("");
-const content=slides.map((s,i)=>'<section id="'+sectionId(i)+'" class="slide lesson-section" aria-labelledby="section-heading-'+i+'"><div class="kicker">'+esc(sectionNames[s.cat]||s.cat)+' / '+String(i+1).padStart(2,"0")+'</div><h2 id="section-heading-'+i+'">'+esc(s.title)+'</h2>'+s.body+'<div class="teacher-note"><strong>讲师提示：</strong> '+fmt(s.note)+'</div></section>').join("");
+const content=slides.map((s,i)=>'<section id="'+sectionId(i)+'" data-kind="'+esc(s.cat)+'" class="slide lesson-section" aria-labelledby="section-heading-'+i+'">'+
+ '<h2 id="section-heading-'+i+'">'+esc(s.title)+'</h2>'+s.body+
+ '<div class="teacher-note"><strong>讲师提示：</strong> '+fmt(s.note)+'</div></section>').join("");
 document.body.classList.add("continuous");
 host.innerHTML='<header class="player-header"><div class="header-row"><a class="brand" href="../index.html">RK<b>3588</b> / COURSE</a><div class="lesson-name">'+esc(name)+'</div><div class="actions"><button class="btn ghost" id="menuBtn" type="button" aria-expanded="false" aria-controls="slideOutline">章节目录</button><button class="btn ghost" id="noteBtn" type="button" aria-pressed="false">讲师提示</button><button class="btn ghost" id="printBtn" type="button">打印全文</button></div></div><div class="player-progress"><i id="progressBar"></i></div></header><div class="player-layout"><nav id="slideOutline" class="slide-outline" aria-label="本节课目录"><h3>本节课程目录</h3>'+toc+'<p style="padding:12px"><a href="../../docs/'+encodeURIComponent(m.slug).replaceAll("(","%28").replaceAll(")","%29")+'.md">Markdown 详细讲义 ↗</a></p></nav><main class="player-main"><article id="lessonArticle" class="lesson-article">'+content+'</article><nav class="lesson-footer-nav" aria-label="课程导航">'+lessonLink(prev,"← 上一讲")+'<a class="btn ghost" href="../index.html">全部课程</a>'+lessonLink(next,"下一讲 →")+'</nav><p class="hotkeys">使用浏览器正常滚动阅读 · 点击目录跳转 · N 显示讲师提示 · P 打印整篇 · F 全屏</p></main></div><button id="backTop" class="back-top" type="button" aria-label="返回顶部">↑ 顶部</button>';
 const nav=document.getElementById("slideOutline");
