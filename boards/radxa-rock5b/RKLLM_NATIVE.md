@@ -63,6 +63,33 @@
 
 正式性能对照还需要重复运行、记录热节流、温度、电源、GPU/NPU 负载、模型量化参数与上下文。代码没有接入 token callback 的**真实 token ID 逐条时序**时，不可根据文本 chunk 推断 TTFT；可通过精确 SDK release 的性能字段或进一步 instrumentation 实现严格测量。
 
+
+## 多次推理统计：新增离线验收工具
+
+单次 `rkllm_stream` 的性能易受到模型首次加载、CPU/NPU 频率、温度与后台负载影响。先固定 **同一真实模型、提示词、上下文长度、max-new、板卡镜像、Runtime 以及测量流程**，按上面的命令重复推理并保存各次 `--report`（例如 `run01.json`、`run02.json`、`run03.json`）。建议至少进行一次独立预热，并记录实际配置和环境版本；不要将不同实验条件的 JSON 混合平均。
+
+在仓库根目录运行：
+
+```bash
+python3 boards/radxa-rock5b/tools/summarize_rkllm_runs.py \
+  boards/radxa-rock5b/results/run01.json \
+  boards/radxa-rock5b/results/run02.json \
+  boards/radxa-rock5b/results/run03.json \
+  --output boards/radxa-rock5b/results/rkllm_summary.json
+```
+
+输出汇总 `initialized_ms`、`run_wall_ms`、`first_text_chunk_ms`、SDK token 数/生成时长/tokens/s、SDK prefill 时长和 SDK 峰值内存的样本数、平均数、p50、p95、最大值；`p95` 采用最近秩法，小样本下很容易近似最大值。
+
+如果实验要求必须有可比较的 SDK token 测量，增加 `--require-sdk-tokens`，则任一报告缺少 SDK token 数、生成时间或匹配的速率都会失败。**不允许把文本回调次数当作 token 数，也不能把首段文本回调时间宣称为准确 TTFT。** 汇总结果的 `hardware_verified` 永远是 `false`：只有板端原始执行和独立环境证据才能支持实机结论。
+
+默认拒绝聚合含 `generated_text` 的报告，以减少意外处理敏感文本的风险。确有必要时可显式加 `--allow-text`，汇总数据仍不输出文本。工具会拒绝运行失败、未完成回调、NaN/Inf、无输出文本、SDK token 速率自相矛盾和模型文件路径不同的报告。由于原始 C++ 单次报告暂未记录 **模型实际哈希、提示词哈希及配置参数**，路径一致并不足以证明文件内容相同，正式实验必须另行保存这些哈希及板端版本记录。
+
+无设备可运行离线回归（这不代表真实 RKLLM 硬件验收）：
+
+```bash
+python3 -m unittest discover -s boards/radxa-rock5b/tests -p 'test_summarize_rkllm_runs.py' -v
+```
+
 ## 验收状态
 
 CI 对照公开的官方 RKLLM 头文件做语法编译，并链接**明确命名为 Fake 的 SDK**来测试 API 结构、回调事件、空性能数据和错误分支；这是自动化质量证据，**不是 RK3588 实机通过**。真实板端部署后还需填写 release、模型 SHA256、初始空闲内存、生成输出、运行日志、重复次数和温度。
