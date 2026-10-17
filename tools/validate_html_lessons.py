@@ -79,9 +79,9 @@ def audit():
         if not isinstance(depth.get("case"),dict):
             errors.append(f"{n:02d}: missing applied case")
 
-        # Only core deployment lessons require paired MD/HTML source walkthroughs.
+        # Required teaching walkthroughs: P0 toolkit/inference/metrics and core deployment lessons.
         # This protects teaching alignment without adding hardware mocks or regression machinery.
-        if 24 <= n <= 34:
+        if n in (5, 8, 9, 13, 14, 15, 16) or 24 <= n <= 34:
             walk=depth.get("walkthrough")
             md_path=ROOT/"docs"/(item["slug"]+".md")
             if not isinstance(walk,dict) or len(walk.get("steps",[]))<3:
