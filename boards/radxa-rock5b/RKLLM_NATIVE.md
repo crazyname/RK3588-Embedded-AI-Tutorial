@@ -90,6 +90,34 @@ python3 boards/radxa-rock5b/tools/summarize_rkllm_runs.py \
 python3 -m unittest discover -s boards/radxa-rock5b/tests -p 'test_summarize_rkllm_runs.py' -v
 ```
 
+## 模型、提示词与报告 SHA256 绑定
+
+为了防止在不知情的情况下用不同模型或不同提示词比较速度，新增 [RKLLM 实验来源清单工具](tools/rkllm_provenance.py)。运行一次原生 C++ 推理并生成 JSON 报告后，在仓库根目录执行：
+
+```bash
+python3 boards/radxa-rock5b/tools/rkllm_provenance.py \
+  --report boards/radxa-rock5b/results/run01.json \
+  --model /data/models/model.rkllm \
+  --prompt boards/radxa-rock5b/results/prompt.txt \
+  --output boards/radxa-rock5b/results/run01.provenance.json
+
+python3 boards/radxa-rock5b/tools/rkllm_provenance.py \
+  --report boards/radxa-rock5b/results/run01.json \
+  --model /data/models/model.rkllm \
+  --prompt boards/radxa-rock5b/results/prompt.txt \
+  --verify boards/radxa-rock5b/results/run01.provenance.json
+```
+
+清单只保存 SHA256、上下文与生成参数、模型字节数，不保存提示词或回答正文。校验会重新哈希三份原始文件：同一路径下模型或提示词内容被修改，以及报告被改写，都会失败。**请在实际运行后尽快生成清单**，因为工具无法追溯文件是否曾在推理执行和生成清单之间发生变化。若要严格保证执行时的来源，还需在执行脚本中对文件加锁、保留受控副本并记录板端固件/SDK 版本。
+
+注意：仅有合法的 SHA256 清单仍**无法证明**推理实际发生在 RK3588 上，或证明模型输出内容正确。请同时保留厂商运行时日志、系统环境、测量负载和原始模型许可来源。由于低熵提示词的哈希可能被字典攻击识别，敏感场景也不宜公开该清单。
+
+离线单元测试：
+
+```bash
+python3 -m unittest discover -s boards/radxa-rock5b/tests -p 'test_rkllm_provenance.py' -v
+```
+
 ## 验收状态
 
 CI 对照公开的官方 RKLLM 头文件做语法编译，并链接**明确命名为 Fake 的 SDK**来测试 API 结构、回调事件、空性能数据和错误分支；这是自动化质量证据，**不是 RK3588 实机通过**。真实板端部署后还需填写 release、模型 SHA256、初始空闲内存、生成输出、运行日志、重复次数和温度。
