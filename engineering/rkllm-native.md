@@ -1,63 +1,46 @@
-# RKLLM 原生 C API 流式生成：独立工程实验与验收
+# 实验 F｜RKLLM C++ 流式文本生成
 
-> 工程编号：`rkllm-native`。本页面向实际操作，与课程 `docs/` 中的概念讲解区分；所有设备测试须由使用者在真实 ROCK 5B 上执行。
+目标：在 ROCK 5B 运行与当前 SDK 匹配的 .rkllm 小模型，从 C++ 回调获取文字并正确判断生成结束。
 
 ## 对应课程讲义与 HTML 课件
 
-- [Markdown：docs/32_Deepseek_Qwen大模型部署.md](../docs/32_Deepseek_Qwen大模型部署.md) · [HTML 连续滚动课件](../courseware/lessons/32_Deepseek_Qwen大模型部署.html)
+- [第32讲大模型部署](../docs/32_Deepseek_Qwen大模型部署.md) · [HTML](../courseware/lessons/32_Deepseek_Qwen大模型部署.html)
 
 ## 源码清单
 
-- [`examples/hardware/rkllm/rkllm_stream.cpp`](../examples/hardware/rkllm/rkllm_stream.cpp)
+- [C++ 原生 RKLLM 调用](../examples/hardware/rkllm/rkllm_stream.cpp)
+- [完整 RKLLM 运行指南](../boards/radxa-rock5b/RKLLM_NATIVE.md)
 
-## 环境与准备
+## 环境与输入
 
-在仓库根目录操作。普通 PC 可检查 CLI、纯数学及假 SDK 回归；需要 RKNN、RGA 或摄像头能力的环节必须准备原版 ROCK 5B、适配系统及对应 SDK。记录模型和源文件 SHA256、系统镜像、驱动/Runtime 版本。绝不将模拟环境的通过记录为硬件验收。
+需要真实 ROCK 5B、匹配的 librkllmrt.so/头文件、兼容的 .rkllm 模型及一个本地 UTF-8 提示词文件。模型转换由对应 RKLLM Toolkit 完成；仓库没有内置真实模型，也不能替代模型许可审核。
 
 ## 实验命令
-
-```bash
-python3 -m unittest discover -s examples/hardware/rkllm/tests -p test_native_stream.py -v
-```
-
-正式板端调用参数和外部模型文件以源码的 `--help`、板级手册及 SDK 对应 release 为准；构建命令只能证明编译步骤，不自动证明硬件运行。留存 stdout、stderr、运行时间和版本信息，不要向公开仓库推送隐私图片或提示词。
-
-## 上板执行路径
-
-在 ROCK 5B 准备来自**相同 RKLLM SDK 版本**、明确支持 RK3588 的已转换模型及 `librkllmrt.so`。先读 [板端 RKLLM 完整操作指南](../boards/radxa-rock5b/RKLLM_NATIVE.md)，其中包含 C++ 构建参数和 runtime/模型匹配说明；本页不臆造编译器路径、模型文件名或不存在的发行包。
-
-```bash
-python3 -m unittest discover -s examples/hardware/rkllm/tests -p test_native_stream.py -v
-grep -n 'rkllm_init\|rkllm_run\|rkllm_destroy\|callback' examples/hardware/rkllm/rkllm_stream.cpp
-```
-
-前一条只检查离线模拟回调；真实验收需运行编译出的板端程序，保留模型路径、实际提示词、首段输出、结束状态、生成文本及设备信息。回调收到的 `chunk` 不一定对应一个 token，不能据此计算 tok/s。
-
-## C++ 板端构建与真实生成命令
-
-安装和当前 ROCK 5B 镜像匹配的 RKLLM SDK/ARM64 运行库，准备其支持的真实 .rkllm 模型。命令来自本仓库 CMake 工程，实际 SDK 路径须替换：
 
 ~~~bash
 cmake -S examples/hardware/rkllm -B build/rkllm-native -DRKLLM_INCLUDE_DIR=/actual/rkllm/include -DRKLLM_LIB=/actual/arm64/librkllmrt.so
 cmake --build build/rkllm-native -j2
-printf '请简单介绍 RK3588 的 CPU 和 NPU 区别。\n' > /tmp/rkllm_prompt.txt
-./build/rkllm-native/rkllm_stream --model /path/to/compatible-model.rkllm --prompt-file /tmp/rkllm_prompt.txt --context 2048 --max-new 128 --report /tmp/rkllm_run.json
+printf '请简单解释 RK3588 的 NPU 是什么。\n' > /tmp/rkllm_prompt.txt
+./build/rkllm-native/rkllm_stream --model /path/to/model.rkllm --prompt-file /tmp/rkllm_prompt.txt --context 2048 --max-new 128 --report /tmp/rkllm_run.json
 ~~~
 
-观察输出、退出码和 finished_callback；first_text_chunk_ms 是首次文字回调时间，不一定等于真实首 token 延迟。完整转换、SDK 匹配细节见 [板端 RKLLM 指南](../boards/radxa-rock5b/RKLLM_NATIVE.md)。
+关键流程：rkllm_createDefaultParam → rkllm_init → rkllm_run(同步) → callback 按块输出文字 → RKLLM_RUN_FINISH → rkllm_destroy。模型路径和参数必须替换为真实值。报告默认不保存提示词或生成文本内容；生成文本显示在终端。
 
 ## 自动化测试
 
-对应可审查的测试文件（某些为共用测试文件；**不保证每个子功能都已覆盖**）：
+- [明确标注为 Fake SDK 的回调测试](../examples/hardware/rkllm/tests/test_native_stream.py)
 
-- [`examples/hardware/rkllm/tests/test_native_stream.py`](../examples/hardware/rkllm/tests/test_native_stream.py)
+可在 PC 上执行：
 
-离线检查和 SDK/真实设备检查必须分开记录。如果对应测试只覆盖入口或相邻模块，还需要补充本工程的功能、错误输入和边界情况测试；不得写成已经实现全覆盖。
+~~~bash
+python3 -m unittest discover -s examples/hardware/rkllm/tests -p test_native_stream.py -v
+~~~
 
 ## 验收标准
 
-真实板端必须记录模型、提示词、SDK 版本、生成文本、回调结束标志和时延指标。保存成功与失败示例、真实输入、输出及复现实验的设备信息；对涉及性能的项目至少记录实际采样次数和 p50/p95，不能根据无硬件测试推断 NPU 性能。
+真实板端能够生成可读文本且收到完成回调，退出码为零；记录模型/运行库版本、输入提示词和实际输出。文本 chunk 数不能直接视为 token 数，首个文本块时间也不必然等于准确 TTFT。
 
 ## 验证边界
 
-Fake runtime 的 callback 测试不等于硬件运行；文本 chunks 非 tokens。**默认状态：源码/离线检查可用，硬件结果待上板核验**；此页面不是实测报告，也不包含伪造 FPS 或 mAP。
+Fake SDK 验证的是回调与资源处理，不是 RK3588 上模型生成。没有实机日志前保持待验证状态。
+
