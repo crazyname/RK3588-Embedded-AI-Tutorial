@@ -152,15 +152,19 @@ python3 -c "import json; print(json.load(open('build/lesson11/manifest.json')))"
 
 **验收边界：** 在具备 Toolkit2 的真实主机上保存逐任务日志、输出模型及成功/失败清单；在无 Toolkit2 时先完成 JSON 配置理解。
 
-## 配套可运行源码
+## 配套可运行源码（第 11 讲）
 
-- [本讲独立操作手册（只含运行、参数与验收）](../examples/notes/lesson_11.md)
+- [本讲独立 Python 实例](../examples/lesson_11.py) · [操作手册与参数说明](../examples/notes/lesson_11.md)
+- [通用依赖与课程代码说明](../examples/README.md)
+- [关联工程实验手册](../engineering/onnx-toolchain.md)
 
-- [本节可运行 Python 实验](../examples/lesson_11.py)（实现于 [labs.py](../examples/labs.py)）
-- [真实 SDK / 模型程序：convert_onnx.py](../examples/hardware/convert_onnx.py)
-- [代码环境、依赖、输入输出及使用说明](../examples/README.md)
+在仓库根目录运行：
 
-先从仓库根目录运行 `python3 examples/lesson_11.py --help`。需要 SDK 的程序只有在提供真实模型、匹配的 Toolkit2/ONNX Runtime 与正确输入后才能验证；不能把便携算法演示当作 NPU 性能实测。
+```bash
+python3 examples/lesson_11.py --jobs /path/to/jobs.json --log-dir build/lesson11
+```
+
+**如何验收：** 读取非空 JSON 任务数组，逐项调用真实转换器，保留各任务日志和返回码。 路径包含 `/path/to/` 时必须换成实际文件，不能把 CLI `--help` 或 PC 模拟当成设备实测。
 
 ## 原始字幕（仅供核对）
 
