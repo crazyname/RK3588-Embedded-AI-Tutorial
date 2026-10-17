@@ -165,12 +165,12 @@ int callback(RKLLMResult* r, void* ctx, LLMCallState state) {
 
 ## 配套可运行源码
 
-- [本讲独立操作手册（只含运行、参数与验收）](../examples/notes/lesson_34.md)
+- [第 34 个课程程序（源码编号）](../examples/lesson_34.py) · [对应操作手册](../examples/notes/lesson_34.md)
+- [本专题实际工程源码](../examples/hardware/rkllm/rkllm_stream.cpp) · [独立工程实验手册](../engineering/rkllm-native.md)
 
-- [本节可执行 Python 实验](../examples/lesson_34.py)（基础算法实现在 [labs.py](../examples/labs.py)）
-- [完整运行说明和 SDK/模型前置条件](../examples/README.md)
+`lesson_34.py` 调用用户实际安装的 RKLLM 演示可执行文件；更直接的原生 C++ RKLLM 回调实现是 `rkllm_stream.cpp`，必须在匹配的 ARM64 Runtime 和真实模型下执行。
 
-先从仓库根目录运行 `python3 examples/lesson_34.py --help`。训练、ONNX 与 SDK 实例需要真实模型文件、数据和匹配环境。YOLO26 的 ONNX 导出不保证 RKNN 兼容；YOLOv5/v8 检测头和后处理应以同一版本官方 Model Zoo 为准。RKLLM 仍需使用官方匹配模型与板端运行 SDK，当前示例只实现真实内存估算，没有伪造的大模型部署结果。
+**验收边界：** PC/离线测试不等于 RK3588 实测。真正上板必须记录模型、SDK/Runtime 版本、实际输入、终端输出和结果解释。
 
 ## 原始字幕（仅供核对）
 
