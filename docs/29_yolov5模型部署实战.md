@@ -159,14 +159,12 @@ NMS 是后处理，不会提升 NPU 的算子速度。分类与坐标单位必�
 
 ## 配套可运行源码
 
-- [本讲独立操作手册（只含运行、参数与验收）](../examples/notes/lesson_29.md)
+- [本讲真实 Python 课程实例](../examples/lesson_29.py) · [对应操作手册](../examples/notes/lesson_29.md)
+- [相邻官方模型/导出实验](../engineering/official-yolo-and-export.md)
 
-- [本节可执行 Python 实验](../examples/lesson_29.py)（基础算法实现在 [labs.py](../examples/labs.py)）
-- [配套实际模型工具：lite_infer.py](../examples/hardware/lite_infer.py)
-- [配套实际模型工具：prepare_image.py](../examples/hardware/prepare_image.py)
-- [完整运行说明和 SDK/模型前置条件](../examples/README.md)
+`lesson_29.py` 支持 Ultralytics 或匹配的 RKNN Demo 程序两种运行入口，但必须提供对应模型、图片和执行程序。YOLOv5 的检测头和 YOLOv8 优化版输出并不通用。
 
-先从仓库根目录运行 `python3 examples/lesson_29.py --help`。训练、ONNX 与 SDK 实例需要真实模型文件、数据和匹配环境。YOLO26 的 ONNX 导出不保证 RKNN 兼容；YOLOv5/v8 检测头和后处理应以同一版本官方 Model Zoo 为准。RKLLM 仍需使用官方匹配模型与板端运行 SDK，当前示例只实现真实内存估算，没有伪造的大模型部署结果。
+**验收边界：** 不以 `--help`、空模型、模拟图像或未验证输出代替实验结果。需要在相应 PC 环境/ROCK 5B 设备上用真实输入运行并保存实际日志。
 
 ## 原始字幕附录（仅供核对）
 
