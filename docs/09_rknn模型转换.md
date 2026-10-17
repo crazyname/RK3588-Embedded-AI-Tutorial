@@ -116,6 +116,20 @@ finally:
 
 > 以具体 release 的官方文档为准；本教程中的设备结果尚未在你的硬件环境实测。
 
+## 工程机理与知识深化
+
+### 系统机制与数据协议
+
+RKNN Toolkit2 的主机转换是一个分阶段编译过程：`config(target_platform, mean/std)` 指定平台与输入配置，`load_onnx` 解析源图，`build` 做算子编译并可能量化，`export_rknn` 写出执行文件。ONNX checker 只检查图合法，不代表所有算子支持目标 NPU；量化还必须提供代表性校准数据，不能凭空开启 INT8。
+
+### 具体算例与故障现场
+
+最小 Tiny CNN 的输入 `(1,3,4,4)` float32 NCHW，输出为 `(1,2)`；先在 ONNX Runtime 保存参考 NPZ，再尝试非量化 RKNN 转换。出现 `load_onnx` 不支持算子时检查 opset/图结构，而不是改动已经未使用的摄像头驱动。
+
+### 设计选择与验收判据
+
+实验分别核对 ONNX 图通过、RKNN 导出成功和板端输出一致三道门槛。`mean_values=[[0,0,0]], std_values=[[1,1,1]]` 只是适用于特定小模型的中性转换设置，不应直接照搬到 ImageNet/Yolo 权重。
+
 ## 源码精读：关键 API、张量与验收
 
 第 09 讲以仓库生成的 Tiny CNN 为固定输入，演示 ONNX checker、RKNN config/load_onnx/build/export 四个阶段；先不量化，以减少变量。
