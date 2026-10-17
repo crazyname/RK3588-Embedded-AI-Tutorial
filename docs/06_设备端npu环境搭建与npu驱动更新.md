@@ -152,7 +152,7 @@ python3 boards/radxa-rock5b/tools/board_probe.py --output build/lesson06/board_p
 
 **验收边界：** 在实际设备保存只读版本信息与真实可见节点；若无实体板卡，只能完成查询逻辑学习，不能勾选 NPU 环境验收。
 
-## 配套可运行源码（第 06 讲）
+## 配套可运行源码
 
 - [本讲独立 Python 实例](../examples/lesson_06.py) · [操作手册与参数说明](../examples/notes/lesson_06.md)
 - [通用依赖与课程代码说明](../examples/README.md)

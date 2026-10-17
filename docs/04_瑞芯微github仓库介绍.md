@@ -157,7 +157,7 @@ python3 examples/lesson_04.py --repo model_zoo --ref HEAD
 
 **验收边界：** 明确列出四个仓库的用途、实际 HEAD commit、目标板 BSP/Runtime 来源，并保存查到的结果；无网络时记录此项待完成。
 
-## 配套可运行源码（第 04 讲）
+## 配套可运行源码
 
 - [本讲独立 Python 实例](../examples/lesson_04.py) · [操作手册与参数说明](../examples/notes/lesson_04.md)
 - [通用依赖与课程代码说明](../examples/README.md)
@@ -168,7 +168,7 @@ python3 examples/lesson_04.py --repo model_zoo --ref HEAD
 python3 examples/lesson_04.py --repo toolkit2 --ref HEAD --output build/upstream.json
 ```
 
-**如何验收：** 联网读取实际 Rockchip 工具仓库 HEAD commit，不自动安装 SDK。 以上执行命令需要对应输入、依赖和运行环境；路径包含占位符时先替换实际文件。
+**如何验收：** 联网读取实际 Rockchip 工具仓库 HEAD commit，不自动安装 SDK。
 
 ## 原始字幕（仅供核对）
 

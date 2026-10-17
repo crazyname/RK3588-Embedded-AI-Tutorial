@@ -153,7 +153,7 @@ python3 examples/hardware/convert_onnx.py --help
 
 **验收边界：** 保存实际工具链版本/架构与导入检查，不凭一张 pip 安装成功的截图认为所有 SDK 已兼容。
 
-## 配套可运行源码（第 05 讲）
+## 配套可运行源码
 
 - [本讲独立 Python 实例](../examples/lesson_05.py) · [操作手册与参数说明](../examples/notes/lesson_05.md)
 - [通用依赖与课程代码说明](../examples/README.md)
@@ -164,7 +164,7 @@ python3 examples/hardware/convert_onnx.py --help
 python3 examples/lesson_05.py --output build/toolkit_env.json
 ```
 
-**如何验收：** 读取当前 Python ABI 与 Toolkit2 导入状态；另加 --require-toolkit 可严格判定是否安装可用。 以上执行命令需要对应输入、依赖和运行环境；路径包含占位符时先替换实际文件。
+**如何验收：** 读取当前 Python ABI 与 Toolkit2 导入状态；另加 --require-toolkit 可严格判定是否安装可用。
 
 ## 原始字幕（仅供核对）
 

@@ -156,7 +156,7 @@ dot -Tpng build/lesson03/pipeline.dot -o build/lesson03/pipeline.png
 
 **验收边界：** 交一张有六阶段的依赖图，并给出每一项需要的实际证据、PC/板端工作归属与下一步实验。
 
-## 配套可运行源码（第 03 讲）
+## 配套可运行源码
 
 - [本讲独立 Python 实例](../examples/lesson_03.py) · [操作手册与参数说明](../examples/notes/lesson_03.md)
 - [通用依赖与课程代码说明](../examples/README.md)
@@ -167,7 +167,7 @@ dot -Tpng build/lesson03/pipeline.dot -o build/lesson03/pipeline.png
 python3 examples/lesson_03.py --dot build/lesson03/pipeline.dot
 ```
 
-**如何验收：** 生成部署依赖图 DOT 和 remaining 阶段，可选用 Graphviz 转 PNG。 以上执行命令需要对应输入、依赖和运行环境；路径包含占位符时先替换实际文件。
+**如何验收：** 生成部署依赖图 DOT 和 remaining 阶段，可选用 Graphviz 转 PNG。
 
 ## 原始字幕（仅供核对）
 
