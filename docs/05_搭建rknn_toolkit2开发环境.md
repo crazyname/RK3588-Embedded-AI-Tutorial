@@ -112,6 +112,20 @@ x86_64 Linux 开发机应选择哪种 wheel？
 
 > 以具体 release 的官方文档为准；本教程中的设备结果尚未在你的硬件环境实测。
 
+## 工程机理与知识深化
+
+### 模型与系统的约束
+
+Toolkit2 Python wheel 的可用性同时取决于操作系统、CPU 架构、Python ABI、NumPy/protobuf 依赖以及官方 SDK release。宿主通常为 x86_64 Linux，开发板的 aarch64 环境使用 RKNNLite2 或 librknnrt.so；同名的 rknn 包不能跨平台直接复制。`pip show` 表示包已记录安装，不保证二进制扩展成功导入。
+
+### 计算例题或现场案例
+
+例如 wheel 文件名含 cp310 与 manylinux_x86_64，必须用与之兼容的 Python 3.10、x86_64 环境；板端 aarch64 Python 即使也为 3.10，架构仍不匹配。出现 undefined symbol 应检查 Python ABI、动态依赖库和 SDK release，而非盲目重装驱动。
+
+### 技术判断与实验设计
+
+先保存 `sys.executable` 与 SOABI，再安装兼容 wheel，最后在同一环境运行 `from rknn.api import RKNN` 和最小 ONNX 构建。若导入通过但 build 报不支持算子，问题已不属于 wheel 的基础安装层。
+
 ## 源码精读：关键 API、张量与验收
 
 第 05 讲先做主机端 ABI 与 RKNN Toolkit2 版本检查：RKNN-Toolkit2 是 x86_64 Linux 的模型转换工具，不能把其 wheel 安装到 ROCK 5B 的 ARM64 RKNNLite 环境。
