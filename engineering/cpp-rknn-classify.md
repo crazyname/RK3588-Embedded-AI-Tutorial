@@ -22,6 +22,8 @@ cmake -S examples/hardware -B build/native-rknn -DRKNN_INCLUDE_DIR=/actual/rknn/
 
 ## 自动化测试
 
+- [原生 C++ 分类/内存绑定假 SDK 行为测试](../examples/hardware/tests/test_native_classification.py)：编译真实 C++ 主程序，在显式 FAKE SDK 上运行成功和错误输入路径；不代表实机 NPU
+
 - [新增专项行为测试](../tools/tests/test_engineering_image_io.py)
 - [`tools/tests/test_resource_tools.py`](../tools/tests/test_resource_tools.py)
 
