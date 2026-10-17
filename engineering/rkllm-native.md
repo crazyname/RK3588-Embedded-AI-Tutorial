@@ -33,6 +33,19 @@ grep -n 'rkllm_init\|rkllm_run\|rkllm_destroy\|callback' examples/hardware/rkllm
 
 前一条只检查离线模拟回调；真实验收需运行编译出的板端程序，保留模型路径、实际提示词、首段输出、结束状态、生成文本及设备信息。回调收到的 `chunk` 不一定对应一个 token，不能据此计算 tok/s。
 
+## C++ 板端构建与真实生成命令
+
+安装和当前 ROCK 5B 镜像匹配的 RKLLM SDK/ARM64 运行库，准备其支持的真实 .rkllm 模型。命令来自本仓库 CMake 工程，实际 SDK 路径须替换：
+
+~~~bash
+cmake -S examples/hardware/rkllm -B build/rkllm-native -DRKLLM_INCLUDE_DIR=/actual/rkllm/include -DRKLLM_LIB=/actual/arm64/librkllmrt.so
+cmake --build build/rkllm-native -j2
+printf '请简单介绍 RK3588 的 CPU 和 NPU 区别。\n' > /tmp/rkllm_prompt.txt
+./build/rkllm-native/rkllm_stream --model /path/to/compatible-model.rkllm --prompt-file /tmp/rkllm_prompt.txt --context 2048 --max-new 128 --report /tmp/rkllm_run.json
+~~~
+
+观察输出、退出码和 finished_callback；first_text_chunk_ms 是首次文字回调时间，不一定等于真实首 token 延迟。完整转换、SDK 匹配细节见 [板端 RKLLM 指南](../boards/radxa-rock5b/RKLLM_NATIVE.md)。
+
 ## 自动化测试
 
 对应可审查的测试文件（某些为共用测试文件；**不保证每个子功能都已覆盖**）：
