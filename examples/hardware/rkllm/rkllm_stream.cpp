@@ -95,7 +95,10 @@ void write_report(const Args&a,const Metrics&m,double init_ms,double run_ms,int 
   f<<std::fixed<<std::setprecision(3);
   f<<"{\n  \"backend\": \"RKLLM C API\",\n"
    <<"  \"model_file\": \""<<json_escape(a.model)<<"\",\n"
-   <<"  \"max_new_tokens\": "<<a.max_new<<",\n"\n   <<"  \"context_tokens\": "<<a.context<<",\n"\n   <<"  \"model_size_bytes\": "<<model_bytes<<",\n"\n   <<"  \"initialized_ms\": "<<init_ms<<",\n  \"run_wall_ms\": "<<run_ms
+   <<"  \"max_new_tokens\": "<<a.max_new<<",\n"
+   <<"  \"context_tokens\": "<<a.context<<",\n"
+   <<"  \"model_size_bytes\": "<<model_bytes<<",\n"
+   <<"  \"initialized_ms\": "<<init_ms<<",\n  \"run_wall_ms\": "<<run_ms
    <<",\n  \"first_text_chunk_ms\": ";
   if(m.got_text)f<<ms(m.first-m.started);else f<<"null";
   f<<",\n  \"text_chunks\": "<<m.chunks<<",\n  \"output_utf8_bytes\": "<<m.bytes
