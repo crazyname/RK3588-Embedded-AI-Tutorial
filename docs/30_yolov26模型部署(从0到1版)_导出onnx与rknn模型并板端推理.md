@@ -112,6 +112,50 @@ model.export(format='onnx', imgsz=640, dynamic=False)
 
 > 资料会随发布版本更新；请先阅读官方当前说明，不要对未经验证的模型或者量化格式直接保证板端兼容。
 
+## 源码精读：关键 API、张量与验收
+
+第 30 讲专题三需要分清三种成功：从 .pt 导出 ONNX 成功、RKNN build 成功、目标板检测后处理成功。仓库 lesson_32.py 覆盖前两段，第三段仍须模型专属验证。
+
+**数据路径：** `best.pt` → `ONNX export + checker` → `Toolkit2 build` → `兼容模型.rknn` → `正确检测头解码（另验收）`。
+
+### 1. Ultralytics 导出与 ONNX checker
+
+**输入：** 真实 .pt 权重、imgsz=640 和固定 export 版本。**输出：** ONNX 图 + input/output shape 与算子列表。
+
+ONNX checker 只能证明文件结构有效，不能保证其算子组合被 RKNN Toolkit2 支持。记录导出选项，不要在未验证情况下拼接通用后处理。
+
+```python
+exported = YOLO(str(weights)).export(format='onnx', imgsz=640, dynamic=False)
+model = onnx.load(str(exported))
+onnx.checker.check_model(model)
+```
+
+### 2. convert_onnx.py：构建 RKNN 的真实边界
+
+**输入：** ONNX 图、mean/std 和目标 rk3588。**输出：** SDK 认可时生成 .rknn 或在 build 记录失败。
+
+转换脚本内部依次执行 config、load_onnx、build、export；如果 build 失败，通常要定位导出图的算子与 shape，先不要刷板端驱动。
+
+```bash
+python3 examples/lesson_32.py --weights /path/to/best.pt \
+  --imgsz 640 --rknn build/lesson32/model.rknn
+```
+
+### 3. 板端后处理必须匹配 YOLO26 检测头
+
+**输入：** 真实 RKNN 输出 tensor 的数量、shape、dtype。**输出：** 按该模型适配的检测框与类别。
+
+不可以将 YOLOv8 Model Zoo 优化版的 64/80/1 输出结构强套给任意 YOLO26 ONNX。仓库该专题目前不包含通用的 YOLO26 C++ 检测头适配。
+
+```python
+# 必须先打印真实输出的数量、shape 和 dtype
+# 再根据模型导出协议实现正确 decode / NMS
+```
+
+**数据例题：** 模型能从 .pt 导出 ONNX 但 Toolkit2 报不支持算子：应首先收集 ONNX 节点、opset、错误日志和工具版本；ONNX Runtime 的预测对照属于 PC 阶段，不能替代 RKNN NPU 检测结果。
+
+**验收边界：** 至少提供实际 ONNX 检查与 RKNN 编译日志。没有兼容输出头及板端同图检测对照时，必须将最后一段标记“待验证”，不能写成 YOLO26 已部署。
+
 ## 配套可运行源码
 
 - [本讲独立操作手册（只含运行、参数与验收）](../examples/notes/lesson_32.md)
