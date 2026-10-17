@@ -155,7 +155,7 @@ python3 -c "import json; g=json.load(open('build/lesson12/graph.json')); print(g
 
 **验收边界：** 用同一真实 ONNX 模型生成 graph.json，能在 Netron 中指出图输入、至少一个算子和输出，且不把 checker 当成 NPU 支持认证。
 
-## 配套可运行源码（第 12 讲）
+## 配套可运行源码
 
 - [本讲独立 Python 实例](../examples/lesson_12.py) · [操作手册与参数说明](../examples/notes/lesson_12.md)
 - [通用依赖与课程代码说明](../examples/README.md)

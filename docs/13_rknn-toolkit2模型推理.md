@@ -160,7 +160,7 @@ np.savez('build/rknn_output.npz', **{'output_'+str(i):v for i,v in enumerate(out
 
 **验收边界：** 明确记录 target=simulator 还是板端 rk3588；只有真实板端运行并保存输入和输出才可计入 NPU 实验。
 
-## 配套可运行源码（第 13 讲）
+## 配套可运行源码
 
 - [本讲独立 Python 实例](../examples/lesson_13.py) · [操作手册与参数说明](../examples/notes/lesson_13.md)
 - [通用依赖与课程代码说明](../examples/README.md)

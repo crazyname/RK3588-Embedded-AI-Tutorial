@@ -150,7 +150,7 @@ python3 -c "import csv; print(next(csv.DictReader(open('build/lesson07/frequency
 
 **验收边界：** 提供真实 CSV，标出每个节点名称和单位；有开发板时可与同条件推理延迟对照，但本讲不要求修改频率或刷写系统。
 
-## 配套可运行源码（第 07 讲）
+## 配套可运行源码
 
 - [本讲独立 Python 实例](../examples/lesson_07.py) · [操作手册与参数说明](../examples/notes/lesson_07.md)
 - [通用依赖与课程代码说明](../examples/README.md)

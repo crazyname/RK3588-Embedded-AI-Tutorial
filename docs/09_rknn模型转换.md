@@ -161,7 +161,7 @@ python3 examples/lesson_09.py --onnx build/tiny.onnx \
 
 **验收边界：** 分别记录 ONNX 校验、真实 RKNN build 返回码和导出结果；未安装 Toolkit2 的 PC 只能完成前半段。
 
-## 配套可运行源码（第 09 讲）
+## 配套可运行源码
 
 - [本讲独立 Python 实例](../examples/lesson_09.py) · [操作手册与参数说明](../examples/notes/lesson_09.md)
 - [通用依赖与课程代码说明](../examples/README.md)

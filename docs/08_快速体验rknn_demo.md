@@ -153,7 +153,7 @@ print(result.returncode, result.stdout, result.stderr)
 
 **验收边界：** 在 ROCK 5B 获取匹配模型 Demo 的真实输出，并保存设备、Runtime 与驱动版本。PC 上执行 --help 不属于本实验成功。
 
-## 配套可运行源码（第 08 讲）
+## 配套可运行源码
 
 - [本讲独立 Python 实例](../examples/lesson_08.py) · [操作手册与参数说明](../examples/notes/lesson_08.md)
 - [通用依赖与课程代码说明](../examples/README.md)

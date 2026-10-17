@@ -152,7 +152,7 @@ python3 -c "import json; print(json.load(open('build/lesson11/manifest.json')))"
 
 **验收边界：** 在具备 Toolkit2 的真实主机上保存逐任务日志、输出模型及成功/失败清单；在无 Toolkit2 时先完成 JSON 配置理解。
 
-## 配套可运行源码（第 11 讲）
+## 配套可运行源码
 
 - [本讲独立 Python 实例](../examples/lesson_11.py) · [操作手册与参数说明](../examples/notes/lesson_11.md)
 - [通用依赖与课程代码说明](../examples/README.md)
