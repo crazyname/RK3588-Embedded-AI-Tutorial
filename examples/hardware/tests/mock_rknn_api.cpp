@@ -8,6 +8,7 @@
 struct State {
     std::vector<uint8_t> input;
     rknn_tensor_mem* bound=nullptr;
+    rknn_tensor_mem* bound_output=nullptr;
     float outputs[4]={};
 };
 static std::map<rknn_context,State> states;
@@ -64,10 +65,17 @@ int rknn_destroy_mem(rknn_context,rknn_tensor_mem* mem){
     if(!mem)return -1;
     std::free(mem->virt_addr);std::free(mem);return RKNN_SUCC;
 }
-int rknn_set_io_mem(rknn_context ctx,rknn_tensor_mem* mem,rknn_tensor_attr*){
-    if(!states.count(ctx)||!mem||mem->size!=48)return -1;
-    states[ctx].bound=mem;
-    return RKNN_SUCC;
+int rknn_set_io_mem(rknn_context ctx,rknn_tensor_mem* mem,rknn_tensor_attr* attr){
+    if(!states.count(ctx)||!mem||!attr)return -1;
+    if(attr->type==RKNN_TENSOR_FLOAT32 && mem->size==4*sizeof(float)){
+        states[ctx].bound_output=mem;
+        return RKNN_SUCC;
+    }
+    if(attr->type==RKNN_TENSOR_UINT8 && mem->size==48){
+        states[ctx].bound=mem;
+        return RKNN_SUCC;
+    }
+    return -1;
 }
 int rknn_run(rknn_context ctx,rknn_run_extend*){
     if(!states.count(ctx))return -1;
@@ -86,6 +94,8 @@ int rknn_run(rknn_context ctx,rknn_run_extend*){
     s.outputs[1]=min;
     s.outputs[2]=max;
     s.outputs[3]=s.input[0];
+    if(s.bound_output && s.bound_output->virt_addr && s.bound_output->size>=sizeof(s.outputs))
+        std::memcpy(s.bound_output->virt_addr,s.outputs,sizeof(s.outputs));
     return RKNN_SUCC;
 }
 int rknn_outputs_get(rknn_context ctx,uint32_t num,rknn_output outputs[],rknn_output_extend*){
