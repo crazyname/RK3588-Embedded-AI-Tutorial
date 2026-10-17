@@ -153,14 +153,18 @@ print(result.returncode, result.stdout, result.stderr)
 
 **验收边界：** 在 ROCK 5B 获取匹配模型 Demo 的真实输出，并保存设备、Runtime 与驱动版本。PC 上执行 --help 不属于本实验成功。
 
-## 配套可运行源码
+## 配套可运行源码（第 08 讲）
 
-- [本讲独立操作手册（只含运行、参数与验收）](../examples/notes/lesson_08.md)
+- [本讲独立 Python 实例](../examples/lesson_08.py) · [操作手册与参数说明](../examples/notes/lesson_08.md)
+- [通用依赖与课程代码说明](../examples/README.md)
 
-- [本节可运行 Python 实验](../examples/lesson_08.py)（实现于 [labs.py](../examples/labs.py)）
-- [代码环境、依赖、输入输出及使用说明](../examples/README.md)
+在仓库根目录运行：
 
-先从仓库根目录运行 `python3 examples/lesson_08.py --help`。需要 SDK 的程序只有在提供真实模型、匹配的 Toolkit2/ONNX Runtime 与正确输入后才能验证；不能把便携算法演示当作 NPU 性能实测。
+```bash
+python3 examples/lesson_08.py --program /path/to/real_demo --model /path/to/model.rknn --image /path/to/test.jpg
+```
+
+**如何验收：** 实际执行外部 RKNN Model Zoo Demo 并保存 stdout、stderr 与退出码；要求真实板端程序和输入。 路径包含 `/path/to/` 时必须换成实际文件，不能把 CLI `--help` 或 PC 模拟当成设备实测。
 
 ## 原始字幕（仅供核对）
 
