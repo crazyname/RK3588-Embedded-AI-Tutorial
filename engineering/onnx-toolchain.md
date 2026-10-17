@@ -42,6 +42,24 @@ python3 examples/hardware/convert_onnx.py \
 
 这里 `--mean/--std` 必须与生成 ONNX 时的实际输入协议一致；例子展示不量化的转换入口，量化需另备真实校准集与 `--quantize --dataset`。保存 `load_onnx/build/export_rknn` 的执行日志、输入 shape、导出文件；单纯 ONNX Runtime 运行不等于 RKNN 转换成功。
 
+## 从零生成模型到转换
+
+仓库内置 Tiny CNN，输入 NCHW float32 (1,3,4,4)，输出 (1,2)，是验证工具链的教学模型，不是 MobileNet。
+
+~~~bash
+mkdir -p build/tutorial-tiny
+python3 examples/hardware/create_tiny_onnx.py --onnx build/tutorial-tiny/tiny.onnx --input-npy build/tutorial-tiny/input.npy --input-raw build/tutorial-tiny/input.raw
+python3 examples/hardware/onnx_reference.py --onnx build/tutorial-tiny/tiny.onnx --input-npy build/tutorial-tiny/input.npy --output build/tutorial-tiny/reference.npz
+~~~
+
+第一步要求 PC 安装 numpy、onnx；第二步还需 onnxruntime。生成器定义的理论输出是 [[0.5, 0.25]]，需对照实际本机日志确认。之后在已安装兼容 RKNN Toolkit2 的 Linux x86_64 主机尝试转换：
+
+~~~bash
+python3 examples/hardware/convert_onnx.py --onnx build/tutorial-tiny/tiny.onnx --output build/tutorial-tiny/tiny.rknn --mean 0,0,0 --std 1,1,1
+~~~
+
+这里先不量化；mean/std 必须符合图的 float 输入协议，转换是否支持该图以真实 SDK 日志为准。INT8 需另外准备代表性数据集；ONNX Runtime 的成功不能证明 RKNN 推理成功。
+
 ## 自动化测试
 
 - [新增专项行为测试](../tools/tests/test_engineering_image_io.py)
