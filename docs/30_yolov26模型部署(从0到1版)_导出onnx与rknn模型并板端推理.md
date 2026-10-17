@@ -158,15 +158,12 @@ python3 examples/lesson_32.py --weights /path/to/best.pt \
 
 ## 配套可运行源码
 
-- [本讲独立操作手册（只含运行、参数与验收）](../examples/notes/lesson_32.md)
+- [第 32 个课程程序（源码编号）](../examples/lesson_32.py) · [对应操作手册](../examples/notes/lesson_32.md)
+- [本专题实际工程源码](../examples/hardware/convert_onnx.py) · [独立工程实验手册](../engineering/onnx-toolchain.md)
 
-- [本节可执行 Python 实验](../examples/lesson_32.py)（基础算法实现在 [labs.py](../examples/labs.py)）
-- [配套实际模型工具：export_yolo_onnx.py](../examples/hardware/export_yolo_onnx.py)
-- [配套实际模型工具：convert_onnx.py](../examples/hardware/convert_onnx.py)
-- [配套实际模型工具：onnx_reference.py](../examples/hardware/onnx_reference.py)
-- [完整运行说明和 SDK/模型前置条件](../examples/README.md)
+专题三的 `lesson_32.py` 已实现真实 checkpoint 导出 ONNX、ONNX checker 和可选 RKNN 编译调用，**尚未实现通用于所有 YOLO26 导出头的板端 C++ 检测后处理**。以此为兼容性教学，不伪称成功部署。
 
-先从仓库根目录运行 `python3 examples/lesson_32.py --help`。训练、ONNX 与 SDK 实例需要真实模型文件、数据和匹配环境。YOLO26 的 ONNX 导出不保证 RKNN 兼容；YOLOv5/v8 检测头和后处理应以同一版本官方 Model Zoo 为准。RKLLM 仍需使用官方匹配模型与板端运行 SDK，当前示例只实现真实内存估算，没有伪造的大模型部署结果。
+**验收边界：** PC/离线测试不等于 RK3588 实测。真正上板必须记录模型、SDK/Runtime 版本、实际输入、终端输出和结果解释。
 
 ## 原始字幕（仅供核对）
 
