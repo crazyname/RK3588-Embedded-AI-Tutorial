@@ -4,7 +4,7 @@
 
 ## 对应课程讲义与 HTML 课件
 
-- [Markdown：docs/31_yolov8模型部署(优化加速版).md](../docs/31_yolov8模型部署(优化加速版).md) · [HTML 连续滚动课件](../courseware/lessons/31_yolov8模型部署(优化加速版).html)
+- [Markdown：docs/31_yolov8模型部署%28优化加速版%29.md](../docs/31_yolov8模型部署%28优化加速版%29.md) · [HTML 连续滚动课件](../courseware/lessons/31_yolov8模型部署%28优化加速版%29.html)
 
 ## 源码清单
 
