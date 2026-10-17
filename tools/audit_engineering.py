@@ -76,7 +76,7 @@ def audit(root=ROOT, manifest_path=None):
                         failures.append(f"{pid}: invalid {key} lesson")
                     elif not (root / target).is_file():
                         failures.append(f"{pid}: missing {key} lesson {target}")
-                    elif doc.is_file() and f"../{target}" not in body:
+                    elif doc.is_file() and f"../{target}" not in body and f"../{target.replace(chr(40), '%28').replace(chr(41), '%29')}" not in body:
                         failures.append(f"{pid}: lesson not linked: {target}")
         for kind, paths in (("source", sources), ("test", tests)):
             for entry in paths:
