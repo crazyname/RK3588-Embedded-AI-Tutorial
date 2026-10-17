@@ -29,6 +29,8 @@ python3 examples/hardware/create_tiny_onnx.py --help
 
 ## 自动化测试
 
+- [新增专项行为测试](../tools/tests/test_engineering_image_io.py)
+
 对应可审查的测试文件（某些为共用测试文件；**不保证每个子功能都已覆盖**）：
 
 - [`examples/tests/test_lesson_27.py`](../examples/tests/test_lesson_27.py)
