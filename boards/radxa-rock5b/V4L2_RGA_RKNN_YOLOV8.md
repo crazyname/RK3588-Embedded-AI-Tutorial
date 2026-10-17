@@ -107,6 +107,10 @@ python3 boards/radxa-rock5b/tools/validate_cpp_yolo_stream.py \
 
 有明确业务性能目标时可以增加 `--max-inference-p95-ms 50` 或 `--min-detections 1`；这两个值是可选**验收阈值示例**，不是 RK3588 的性能承诺。结构检查**无法证明文件来源于真实硬件**，请同时保留包含设备/模型版本及 SDK 原始信息的日志。
 
+## 5.6 两次实验的配置锁定与性能对照
+
+完成单次 JSONL 验收后，可按 [可复现性能比较手册](BENCHMARK_COMPARISON.md) 为每次运行记录板型、系统、驱动/Runtime、模型 SHA256、摄像头与采样协议，使用 `tools/compare_cpp_yolo_runs.py` 验证日志哈希并比较推理+解码 p95。配置不同默认拒绝比较，不能把离线数值检查当作实际硬件鉴定。
+
 ## 6. 首轮验收建议
 
 先跑官方 Model Zoo 同一模型、同一张图片，再跑仓库现有的 [Python RKNNLite 摄像头检测](CAMERA_YOLOV8.md)。对照 RGB/BGR、640 黑边、输出顺序与类别映射。记录 Model Zoo commit、`.rknn` SHA256、板级版本、驱动/Runtime、librga.so 版本、原始 stdout/stderr、p50/p95、温度和实际帧率。
