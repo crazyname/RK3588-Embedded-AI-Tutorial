@@ -28,6 +28,64 @@ ONNX 图经过 RKNN-Toolkit2 编译时，算子集合、动态 shape、量化和
 
 **你应该能解释：** 一张部署对照表包含精度、耗时、输入 shape、导出参数、SDK 版本和前后处理实现。
 
+## 工程机理与知识深化
+
+### 检测或生成模型的接口协议
+
+从训练权重到 RKNN 至少跨三种不同条件：Ultralytics 导出能产生 ONNX，ONNX checker 验证图结构，Toolkit2 才能尝试将算子编译成面向 rk3588 的 `.rknn`。编译通过还需在 ROCK 5B 由真实 Runtime 运行，并采用与该 YOLO26 导出检测头严格对应的 decode/NMS。与 YOLOv8 Model Zoo 优化版不同，普通 YOLO26 不一定拥有 6/9 个 DFL 输出头。
+
+### 数学推导与现场案例
+
+`onnx.checker.check_model()` 成功只说明 ONNX protobuf/图合法；Toolkit2 仍可能因不支持的算子或动态 shape 在 load_onnx/build 阶段失败。若输出只有一个经过框架后处理的张量，强行将它拆成 `[1,64,H,W]` 的 DFL 分支属于协议错误。
+
+### 版本、实验边界与评估标准
+
+分别归档 .pt 权重来源、ONNX opset/输入输出、Toolkit2 build 日志、RKNN 文件哈希及板端实测。当前课程第 30 讲专题三以导出和兼容性验证为闭环，不把未完成的 YOLO26 C++ 后处理写成已部署成功。
+
+## 源码精读：关键 API、张量与验收
+
+第 30 讲专题三需要分清三种成功：从 .pt 导出 ONNX 成功、RKNN build 成功、目标板检测后处理成功。仓库 lesson_32.py 覆盖前两段，第三段仍须模型专属验证。
+
+**数据路径：** `best.pt` → `ONNX export + checker` → `Toolkit2 build` → `兼容模型.rknn` → `正确检测头解码（另验收）`。
+
+### 1. Ultralytics 导出与 ONNX checker
+
+**输入：** 真实 .pt 权重、imgsz=640 和固定 export 版本。**输出：** ONNX 图 + input/output shape 与算子列表。
+
+ONNX checker 只能证明文件结构有效，不能保证其算子组合被 RKNN Toolkit2 支持。记录导出选项，不要在未验证情况下拼接通用后处理。
+
+```python
+exported = YOLO(str(weights)).export(format='onnx', imgsz=640, dynamic=False)
+model = onnx.load(str(exported))
+onnx.checker.check_model(model)
+```
+
+### 2. convert_onnx.py：构建 RKNN 的真实边界
+
+**输入：** ONNX 图、mean/std 和目标 rk3588。**输出：** SDK 认可时生成 .rknn 或在 build 记录失败。
+
+转换脚本内部依次执行 config、load_onnx、build、export；如果 build 失败，通常要定位导出图的算子与 shape，先不要刷板端驱动。
+
+```bash
+python3 examples/lesson_32.py --weights /path/to/best.pt \
+  --imgsz 640 --rknn build/lesson32/model.rknn
+```
+
+### 3. 板端后处理必须匹配 YOLO26 检测头
+
+**输入：** 真实 RKNN 输出 tensor 的数量、shape、dtype。**输出：** 按该模型适配的检测框与类别。
+
+不可以将 YOLOv8 Model Zoo 优化版的 64/80/1 输出结构强套给任意 YOLO26 ONNX。仓库该专题目前不包含通用的 YOLO26 C++ 检测头适配。
+
+```python
+# 必须先打印真实输出的数量、shape 和 dtype
+# 再根据模型导出协议实现正确 decode / NMS
+```
+
+**数据例题：** 模型能从 .pt 导出 ONNX 但 Toolkit2 报不支持算子：应首先收集 ONNX 节点、opset、错误日志和工具版本；ONNX Runtime 的预测对照属于 PC 阶段，不能替代 RKNN NPU 检测结果。
+
+**验收边界：** 至少提供实际 ONNX 检查与 RKNN 编译日志。没有兼容输出头及板端同图检测对照时，必须将最后一段标记“待验证”，不能写成 YOLO26 已部署。
+
 ## 跟做实验与交付物
 
 ### 实验 1：导出并校验 ONNX
@@ -111,64 +169,6 @@ model.export(format='onnx', imgsz=640, dynamic=False)
 - [RKNN 官方 Model Zoo](https://github.com/airockchip/rknn_model_zoo)
 
 > 资料会随发布版本更新；请先阅读官方当前说明，不要对未经验证的模型或者量化格式直接保证板端兼容。
-
-## 工程机理与知识深化
-
-### 检测或生成模型的接口协议
-
-从训练权重到 RKNN 至少跨三种不同条件：Ultralytics 导出能产生 ONNX，ONNX checker 验证图结构，Toolkit2 才能尝试将算子编译成面向 rk3588 的 `.rknn`。编译通过还需在 ROCK 5B 由真实 Runtime 运行，并采用与该 YOLO26 导出检测头严格对应的 decode/NMS。与 YOLOv8 Model Zoo 优化版不同，普通 YOLO26 不一定拥有 6/9 个 DFL 输出头。
-
-### 数学推导与现场案例
-
-`onnx.checker.check_model()` 成功只说明 ONNX protobuf/图合法；Toolkit2 仍可能因不支持的算子或动态 shape 在 load_onnx/build 阶段失败。若输出只有一个经过框架后处理的张量，强行将它拆成 `[1,64,H,W]` 的 DFL 分支属于协议错误。
-
-### 版本、实验边界与评估标准
-
-分别归档 .pt 权重来源、ONNX opset/输入输出、Toolkit2 build 日志、RKNN 文件哈希及板端实测。当前课程第 30 讲专题三以导出和兼容性验证为闭环，不把未完成的 YOLO26 C++ 后处理写成已部署成功。
-
-## 源码精读：关键 API、张量与验收
-
-第 30 讲专题三需要分清三种成功：从 .pt 导出 ONNX 成功、RKNN build 成功、目标板检测后处理成功。仓库 lesson_32.py 覆盖前两段，第三段仍须模型专属验证。
-
-**数据路径：** `best.pt` → `ONNX export + checker` → `Toolkit2 build` → `兼容模型.rknn` → `正确检测头解码（另验收）`。
-
-### 1. Ultralytics 导出与 ONNX checker
-
-**输入：** 真实 .pt 权重、imgsz=640 和固定 export 版本。**输出：** ONNX 图 + input/output shape 与算子列表。
-
-ONNX checker 只能证明文件结构有效，不能保证其算子组合被 RKNN Toolkit2 支持。记录导出选项，不要在未验证情况下拼接通用后处理。
-
-```python
-exported = YOLO(str(weights)).export(format='onnx', imgsz=640, dynamic=False)
-model = onnx.load(str(exported))
-onnx.checker.check_model(model)
-```
-
-### 2. convert_onnx.py：构建 RKNN 的真实边界
-
-**输入：** ONNX 图、mean/std 和目标 rk3588。**输出：** SDK 认可时生成 .rknn 或在 build 记录失败。
-
-转换脚本内部依次执行 config、load_onnx、build、export；如果 build 失败，通常要定位导出图的算子与 shape，先不要刷板端驱动。
-
-```bash
-python3 examples/lesson_32.py --weights /path/to/best.pt \
-  --imgsz 640 --rknn build/lesson32/model.rknn
-```
-
-### 3. 板端后处理必须匹配 YOLO26 检测头
-
-**输入：** 真实 RKNN 输出 tensor 的数量、shape、dtype。**输出：** 按该模型适配的检测框与类别。
-
-不可以将 YOLOv8 Model Zoo 优化版的 64/80/1 输出结构强套给任意 YOLO26 ONNX。仓库该专题目前不包含通用的 YOLO26 C++ 检测头适配。
-
-```python
-# 必须先打印真实输出的数量、shape 和 dtype
-# 再根据模型导出协议实现正确 decode / NMS
-```
-
-**数据例题：** 模型能从 .pt 导出 ONNX 但 Toolkit2 报不支持算子：应首先收集 ONNX 节点、opset、错误日志和工具版本；ONNX Runtime 的预测对照属于 PC 阶段，不能替代 RKNN NPU 检测结果。
-
-**验收边界：** 至少提供实际 ONNX 检查与 RKNN 编译日志。没有兼容输出头及板端同图检测对照时，必须将最后一段标记“待验证”，不能写成 YOLO26 已部署。
 
 ## 配套可运行源码
 

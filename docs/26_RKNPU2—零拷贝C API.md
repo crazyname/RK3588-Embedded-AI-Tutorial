@@ -28,6 +28,65 @@ CPU 写入共享数据后，NPU 需要看到最新内容；NPU 写输出后，CP
 
 **理解检查：** 所有共享 buffer 必须有同步时序和唯一可判断的释放点。
 
+## 工程机理与知识深化
+
+### 数据契约与 SDK 工作机理
+
+SDK 内存绑定路径通过 `rknn_create_mem` 分配模型可访问缓冲，再用 `rknn_set_io_mem` 将输入/输出绑定到模型，执行 `rknn_run` 后从绑定的输出内存读取结果。它能控制内存生命周期，但并不自动消除 CPU 到 SDK 缓冲的复制；与 V4L2 DMA-BUF fd → RGA 共享图像缓冲属于不同层次。
+
+### 张量算例与完整数据路径
+
+一个宽为 224、每行 RGB888 紧密 672 字节的图像，在 NPU native attr 需要额外行对齐时，内存需按 `size_with_stride` 分配，RAW 字节也必须与该布局相符；单纯 W×H×3 可能不够。性能测试必须比较同模型、同输入、同精度结果，区分 CPU memcpy、rknn_run 和总调用时间。
+
+### 实验设计、取舍与判断
+
+本课程把“普通 SDK 输入”“SDK 张量内存绑定”“摄像头 DMA-BUF 共享”分别验收。不能把 SDK create_mem 视为全链路零拷贝，也不能假定所有 cache flush/同步都是自动的；应遵守所用 SDK release 的内存契约。
+
+## 源码精读：关键 API、张量与验收
+
+本讲先讲普通输入与 SDK 内存绑定的区别，不把 DMA-BUF fd 导出或 RGA 加速误称为完整零拷贝。代码 rknn_zero_copy.cpp 是 SDK buffer 绑定教学。
+
+**数据路径：** `CPU RAW 文件` → `rknn_create_mem` → `rknn_set_io_mem` → `rknn_run` → `读取绑定输出` → `rknn_destroy_mem`。
+
+### 1. 普通路径：rknn_inputs_set()
+
+**输入：** 普通用户内存中的 uint8 图像/RAW。**输出：** Runtime 接管或复制到适合 NPU 的缓冲路径。
+
+这种调用简单，能作为结果正确性的基线；并不意味着一次 API 必然对应一次固定物理 memcpy。
+
+```cpp
+rknn_inputs_set(ctx, 1, &input);
+rknn_run(ctx, nullptr);
+rknn_outputs_get(ctx, 1, &output, nullptr);
+```
+
+### 2. 绑定路径：create_mem + set_io_mem
+
+**输入：** native input attr / size_with_stride。**输出：** 与 Runtime 绑定的 rknn_tensor_mem。
+
+SDK 可能要求按行 stride 对齐。raw.size 必须等于该实验查询的 native size_with_stride，不能用普通 W×H×C 盲目填充。
+
+```cpp
+auto *input_mem = rknn_create_mem(ctx, native.size_with_stride);
+rknn_set_io_mem(ctx, input_mem, &input_attr);
+// 把符合布局的像素拷到 input_mem->virt_addr
+```
+
+### 3. DMA-BUF 是另一个层次
+
+**输入：** V4L2 导出 DMA-BUF fd。**输出：** RGA 可以导入 fd 作为图像源。
+
+本仓库视频链在 RGA 输出之后仍有 CPU letterbox 和 rknn_inputs_set；因此不能叫摄像头→NPU 全程零拷贝。
+
+```cpp
+V4L2 --EXPBUF--> DMA-BUF fd --import--> RGA
+RGA --CPU letterbox--> rknn_inputs_set --> NPU
+```
+
+**数据解释与练习：** 请画出普通路径、SDK 绑定路径、V4L2→RGA 的三种数据流，并分别圈出还存在 CPU 读写的地方；性能提升必须用相同模型/图片的真实测量判断。
+
+**验收边界：** 板端用同一个输入比较普通接口与 SDK 绑定的输出是否一致；没有实机测试时只可写“原理与源码已理解”。
+
 ## 动手实验
 
 ### 实验 1：测常规 API 基线
@@ -116,65 +175,6 @@ CPU 写入共享数据后，NPU 需要看到最新内容；NPU 写输出后，CP
 ### 进阶实验：C++ RGA 前处理和 SDK 输入内存绑定
 
 配套 [RKNPU2 两条输入路径比较](../examples/hardware/rknn_compare_input_io.cpp)、[librga RGB888 预处理](../examples/hardware/rga_letterbox_rgb888.cpp)、[OpenCV 同图误差校验](../tools/compare_rga_letterbox.py) 与 [完整实验说明](../boards/radxa-rock5b/CPP_RGA_IO_BENCHMARK.md)。目前有虚拟地址导入和 CPU 数据复制，非端到端 DMA-BUF 零拷贝。
-
-## 工程机理与知识深化
-
-### 数据契约与 SDK 工作机理
-
-SDK 内存绑定路径通过 `rknn_create_mem` 分配模型可访问缓冲，再用 `rknn_set_io_mem` 将输入/输出绑定到模型，执行 `rknn_run` 后从绑定的输出内存读取结果。它能控制内存生命周期，但并不自动消除 CPU 到 SDK 缓冲的复制；与 V4L2 DMA-BUF fd → RGA 共享图像缓冲属于不同层次。
-
-### 张量算例与完整数据路径
-
-一个宽为 224、每行 RGB888 紧密 672 字节的图像，在 NPU native attr 需要额外行对齐时，内存需按 `size_with_stride` 分配，RAW 字节也必须与该布局相符；单纯 W×H×3 可能不够。性能测试必须比较同模型、同输入、同精度结果，区分 CPU memcpy、rknn_run 和总调用时间。
-
-### 实验设计、取舍与判断
-
-本课程把“普通 SDK 输入”“SDK 张量内存绑定”“摄像头 DMA-BUF 共享”分别验收。不能把 SDK create_mem 视为全链路零拷贝，也不能假定所有 cache flush/同步都是自动的；应遵守所用 SDK release 的内存契约。
-
-## 源码精读：关键 API、张量与验收
-
-本讲先讲普通输入与 SDK 内存绑定的区别，不把 DMA-BUF fd 导出或 RGA 加速误称为完整零拷贝。代码 rknn_zero_copy.cpp 是 SDK buffer 绑定教学。
-
-**数据路径：** `CPU RAW 文件` → `rknn_create_mem` → `rknn_set_io_mem` → `rknn_run` → `读取绑定输出` → `rknn_destroy_mem`。
-
-### 1. 普通路径：rknn_inputs_set()
-
-**输入：** 普通用户内存中的 uint8 图像/RAW。**输出：** Runtime 接管或复制到适合 NPU 的缓冲路径。
-
-这种调用简单，能作为结果正确性的基线；并不意味着一次 API 必然对应一次固定物理 memcpy。
-
-```cpp
-rknn_inputs_set(ctx, 1, &input);
-rknn_run(ctx, nullptr);
-rknn_outputs_get(ctx, 1, &output, nullptr);
-```
-
-### 2. 绑定路径：create_mem + set_io_mem
-
-**输入：** native input attr / size_with_stride。**输出：** 与 Runtime 绑定的 rknn_tensor_mem。
-
-SDK 可能要求按行 stride 对齐。raw.size 必须等于该实验查询的 native size_with_stride，不能用普通 W×H×C 盲目填充。
-
-```cpp
-auto *input_mem = rknn_create_mem(ctx, native.size_with_stride);
-rknn_set_io_mem(ctx, input_mem, &input_attr);
-// 把符合布局的像素拷到 input_mem->virt_addr
-```
-
-### 3. DMA-BUF 是另一个层次
-
-**输入：** V4L2 导出 DMA-BUF fd。**输出：** RGA 可以导入 fd 作为图像源。
-
-本仓库视频链在 RGA 输出之后仍有 CPU letterbox 和 rknn_inputs_set；因此不能叫摄像头→NPU 全程零拷贝。
-
-```cpp
-V4L2 --EXPBUF--> DMA-BUF fd --import--> RGA
-RGA --CPU letterbox--> rknn_inputs_set --> NPU
-```
-
-**数据解释与练习：** 请画出普通路径、SDK 绑定路径、V4L2→RGA 的三种数据流，并分别圈出还存在 CPU 读写的地方；性能提升必须用相同模型/图片的真实测量判断。
-
-**验收边界：** 板端用同一个输入比较普通接口与 SDK 绑定的输出是否一致；没有实机测试时只可写“原理与源码已理解”。
 
 ## 配套可运行源码
 

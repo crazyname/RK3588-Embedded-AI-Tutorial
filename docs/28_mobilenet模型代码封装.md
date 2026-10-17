@@ -28,6 +28,64 @@
 
 **理解检查：** 能够不用启动 NPU 就验证大部分业务逻辑，缩小真实硬件调试范围。
 
+## 工程机理与知识深化
+
+### 数据契约与 SDK 工作机理
+
+代码封装的目标不是增加抽象层数量，而是为输入、计算、输出明确责任：Preprocessor 将图像变成模型需要的张量，InferenceBackend 管理模型加载与推理，Classifier 将一维类别分数与标签映射。预处理不应 import rknnlite；后处理不应该调用 rknn_run；这样同模型在 Python/板端 C++ 对照时故障容易定位。
+
+### 张量算例与完整数据路径
+
+模型要求 `(224,224,3)` uint8，若某次重构让预处理返回 `(1,3,224,224)` float32，SDK 类仍能创建对象却无法按旧协议运行。分别测试处理后的 shape/dtype 与 Top-K 函数，再联调真实 Runtime，比把全部处理塞到一段 main() 更便于发现错误。
+
+### 实验设计、取舍与判断
+
+接口只保留必要的三种数据契约：图片到 Tensor、Tensor 到 outputs、outputs 到语义结果。并非所有课程示例都实现同一个框架；第 28 讲的 ONNX 封装与第 25 讲 C++ SDK 分类属于可对照的不同层级。
+
+## 源码精读：关键 API、张量与验收
+
+第 28 讲重点不是引入复杂架构，而是把图片预处理、推理和后处理三个职责拆开，便于后续替换 MobileNet/YOLO。
+
+**数据路径：** `ImagePreprocess` → `InferenceBackend` → `TopKPostprocess` → `输出 JSON/标签`。
+
+### 1. 预处理模块：纯函数、可单独核对
+
+**输入：** 图片与统一的 model input contract。**输出：** shape/dtype/layout 明确的数组或 RAW。
+
+把 resize、BGR→RGB、归一化固定在一个位置；这样 Python/C++ 迁移时不必重复猜测模型输入。
+
+```python
+tensor = preprocess(image, width=224, height=224)
+assert tensor.shape == (224, 224, 3)
+assert tensor.dtype == np.uint8
+```
+
+### 2. 推理模块：只负责 SDK 与模型生命周期
+
+**输入：** 输入张量和 .rknn 模型。**输出：** 输出张量，不负责绘制标签。
+
+推理层要保证输入 shape/type 与 RKNN 查询一致，C++ 中关注 init/query/inputs_set/run/outputs_get；不要把每种模型的后处理塞进 SDK 类。
+
+```python
+scores = backend.infer(tensor)
+# 只返回张量，不在此函数硬编码标签名
+```
+
+### 3. 后处理模块：只负责排序及映射
+
+**输入：** scores ndarray 与 labels。**输出：** Top-5 id/score/label。
+
+分类后处理不是 YOLO 的 NMS。分数可排序，但未经 softmax 的模型分数不等于概率。
+
+```python
+ids = np.argsort(scores.reshape(-1))[::-1][:5]
+result = [(int(i), labels[i]) for i in ids]
+```
+
+**数据解释与练习：** 最小边界：预处理函数不 import rknnlite，SDK 层不读取摄像头，Top-K 函数不操作 rknn_context。此处是教学上的职责分离，不要求设计复杂插件系统。
+
+**验收边界：** 修改图片 resize 方式时，只需对比预处理数组和最终分类结果；保持一个统一的入口与同模型的输入契约。
+
 ## 动手实验
 
 ### 实验 1：设计 C++ 接口
@@ -114,64 +172,6 @@ private:
 - [C++ Core Guidelines](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines)
 
 > 未经板端测试的示例不代表可直接用于生产环境。
-
-## 工程机理与知识深化
-
-### 数据契约与 SDK 工作机理
-
-代码封装的目标不是增加抽象层数量，而是为输入、计算、输出明确责任：Preprocessor 将图像变成模型需要的张量，InferenceBackend 管理模型加载与推理，Classifier 将一维类别分数与标签映射。预处理不应 import rknnlite；后处理不应该调用 rknn_run；这样同模型在 Python/板端 C++ 对照时故障容易定位。
-
-### 张量算例与完整数据路径
-
-模型要求 `(224,224,3)` uint8，若某次重构让预处理返回 `(1,3,224,224)` float32，SDK 类仍能创建对象却无法按旧协议运行。分别测试处理后的 shape/dtype 与 Top-K 函数，再联调真实 Runtime，比把全部处理塞到一段 main() 更便于发现错误。
-
-### 实验设计、取舍与判断
-
-接口只保留必要的三种数据契约：图片到 Tensor、Tensor 到 outputs、outputs 到语义结果。并非所有课程示例都实现同一个框架；第 28 讲的 ONNX 封装与第 25 讲 C++ SDK 分类属于可对照的不同层级。
-
-## 源码精读：关键 API、张量与验收
-
-第 28 讲重点不是引入复杂架构，而是把图片预处理、推理和后处理三个职责拆开，便于后续替换 MobileNet/YOLO。
-
-**数据路径：** `ImagePreprocess` → `InferenceBackend` → `TopKPostprocess` → `输出 JSON/标签`。
-
-### 1. 预处理模块：纯函数、可单独核对
-
-**输入：** 图片与统一的 model input contract。**输出：** shape/dtype/layout 明确的数组或 RAW。
-
-把 resize、BGR→RGB、归一化固定在一个位置；这样 Python/C++ 迁移时不必重复猜测模型输入。
-
-```python
-tensor = preprocess(image, width=224, height=224)
-assert tensor.shape == (224, 224, 3)
-assert tensor.dtype == np.uint8
-```
-
-### 2. 推理模块：只负责 SDK 与模型生命周期
-
-**输入：** 输入张量和 .rknn 模型。**输出：** 输出张量，不负责绘制标签。
-
-推理层要保证输入 shape/type 与 RKNN 查询一致，C++ 中关注 init/query/inputs_set/run/outputs_get；不要把每种模型的后处理塞进 SDK 类。
-
-```python
-scores = backend.infer(tensor)
-# 只返回张量，不在此函数硬编码标签名
-```
-
-### 3. 后处理模块：只负责排序及映射
-
-**输入：** scores ndarray 与 labels。**输出：** Top-5 id/score/label。
-
-分类后处理不是 YOLO 的 NMS。分数可排序，但未经 softmax 的模型分数不等于概率。
-
-```python
-ids = np.argsort(scores.reshape(-1))[::-1][:5]
-result = [(int(i), labels[i]) for i in ids]
-```
-
-**数据解释与练习：** 最小边界：预处理函数不 import rknnlite，SDK 层不读取摄像头，Top-K 函数不操作 rknn_context。此处是教学上的职责分离，不要求设计复杂插件系统。
-
-**验收边界：** 修改图片 resize 方式时，只需对比预处理数组和最终分类结果；保持一个统一的入口与同模型的输入契约。
 
 ## 配套可运行源码
 

@@ -28,6 +28,65 @@ Model Zoo 的 benchmark 可能只统计特定条件下的推理时间，不能�
 
 **你应该能解释：** 对所有声称的‘加速倍率’给出基线、测量方法、持续时间和精度变化。
 
+## 工程机理与知识深化
+
+### 检测或生成模型的接口协议
+
+优化版 YOLOv8 RKNN 的检测头常含多尺度的框分布与类别分数，匹配的 Model Zoo 输出可能为六或九个张量。框分布的 64 个通道可表示四条边各 16 个 bins，经 DFL softmax 后求期望距离，再结合网格与 stride 转成输入图像空间的 xyxy；最后需要类别筛选、NMS、letterbox 逆变换。任何输出数量、shape 或 dtype 不符合协议时都应拒绝继续解码。
+
+### 数学推导与现场案例
+
+将原图 1280×720 letterbox 到 640×640，则 ratio=0.5，竖直补边 140。模型空间 xyxy=(160,190,480,390) 去掉 padding 后再除 ratio，得到原图 (320,100,960,500)。若先除 ratio 再减 pad，会造成垂直偏移错误。不同类别 NMS 与 IoU 阈值会改变最终框数。
+
+### 版本、实验边界与评估标准
+
+两条路线必须分清：源码 `lesson_33.py` 对比的是 PC Ultralytics 两个真实权重的时延；ROCK 5B 真正的摄像头 YOLOv8 用 `camera_yolov8_lite.py` 与独立后处理文件。板端验收记录一帧图、模型输出头 shape、DFL/NMS 框和分段耗时。
+
+## 源码精读：关键 API、张量与验收
+
+第 31 讲采用 Rockchip Model Zoo 优化版 YOLOv8 的六或九个输出头，在 RKNNLite 摄像头程序中通过 letterbox、DFL、NMS 还原真实物体的坐标。
+
+**数据路径：** `V4L2 BGR 帧` → `RGB+letterbox 640` → `RKNNLite 六/九输出` → `DFL 64→4 距离` → `NMS` → `原图 xyxy`。
+
+### 1. letterbox()：保留比例和补边偏移
+
+**输入：** 例如原图 1280×720、目标边长 640。**输出：** ratio=0.5、横向 pad=0、纵向 pad=140。
+
+算法要保存 ratio、pad 用于框的逆映射；普通拉伸和 letterbox 不是相同预处理。坐标例题：输入框左上 (160,190) 对应原图 (320,100)。
+
+```python
+rgb, meta = letterbox(frame, size=640)
+print(rgb.shape, meta)
+```
+
+### 2. DFL：从 64-channel logits 解出四个距离
+
+**输入：** 每个尺度的 [1,64,H,W]，按 4 组×16 bins。**输出：** 每格四个预期距离 [left,top,right,bottom]。
+
+对每组 16 个 logits 做 softmax，求 Σ(k×p_k)，再乘该尺度 stride。输出还需结合网格中心变成 xyxy。这个协议只属于匹配的优化版模型。
+
+```python
+logits = logits.reshape(1, 4, 16, H, W)
+prob = softmax(logits, axis=2)
+distance = (prob * np.arange(16).reshape(1, 1, 16, 1, 1)).sum(axis=2)
+```
+
+### 3. decode() 与 NMS：将分类分数映回原图
+
+**输入：** 类别分数、候选框、阈值、meta 中的缩放偏移。**输出：** 每帧 0～N 个 class_id、score、xyxy。
+
+先按阈值过滤、进行同类别 NMS，再做坐标逆变换与 clip。不能把输出 shape 错误的模型通过 reshape 强行适配，也不能将一个 FPS 数直接当 NPU 硬件耗时。
+
+```python
+outputs = sdk.inference(inputs=[rgb])
+detections = decode(outputs, meta, size=640,
+                    num_classes=80, conf=0.25, iou=0.45)
+```
+
+**数据例题：** 在 1280×720→640×640 的例子中，输入空间框 (160,190,480,390) 去掉 (0,140) padding，再除以 0.5 后应得到原图框 (320,100,960,500)。这一计算不依赖模型推理，适合手算验证。
+
+**验收边界：** 在 ROCK 5B 保存真实逐帧 JSONL 和一张同图对照；模型必须明确为优化版 YOLOv8 六/九输出，检查类别映射、框边界、DFL/NMS 与真实帧采集。
+
 ## 跟做实验与交付物
 
 ### 实验 1：复现官方 YOLOv8 baseline
@@ -110,65 +169,6 @@ Model Zoo 的 benchmark 可能只统计特定条件下的推理时间，不能�
 - [RKNN C++ YOLOv8 代码](https://github.com/airockchip/rknn_model_zoo/tree/main/examples/yolov8/cpp)
 
 > 资料会随发布版本更新；请先阅读官方当前说明，不要对未经验证的模型或者量化格式直接保证板端兼容。
-
-## 工程机理与知识深化
-
-### 检测或生成模型的接口协议
-
-优化版 YOLOv8 RKNN 的检测头常含多尺度的框分布与类别分数，匹配的 Model Zoo 输出可能为六或九个张量。框分布的 64 个通道可表示四条边各 16 个 bins，经 DFL softmax 后求期望距离，再结合网格与 stride 转成输入图像空间的 xyxy；最后需要类别筛选、NMS、letterbox 逆变换。任何输出数量、shape 或 dtype 不符合协议时都应拒绝继续解码。
-
-### 数学推导与现场案例
-
-将原图 1280×720 letterbox 到 640×640，则 ratio=0.5，竖直补边 140。模型空间 xyxy=(160,190,480,390) 去掉 padding 后再除 ratio，得到原图 (320,100,960,500)。若先除 ratio 再减 pad，会造成垂直偏移错误。不同类别 NMS 与 IoU 阈值会改变最终框数。
-
-### 版本、实验边界与评估标准
-
-两条路线必须分清：源码 `lesson_33.py` 对比的是 PC Ultralytics 两个真实权重的时延；ROCK 5B 真正的摄像头 YOLOv8 用 `camera_yolov8_lite.py` 与独立后处理文件。板端验收记录一帧图、模型输出头 shape、DFL/NMS 框和分段耗时。
-
-## 源码精读：关键 API、张量与验收
-
-第 31 讲采用 Rockchip Model Zoo 优化版 YOLOv8 的六或九个输出头，在 RKNNLite 摄像头程序中通过 letterbox、DFL、NMS 还原真实物体的坐标。
-
-**数据路径：** `V4L2 BGR 帧` → `RGB+letterbox 640` → `RKNNLite 六/九输出` → `DFL 64→4 距离` → `NMS` → `原图 xyxy`。
-
-### 1. letterbox()：保留比例和补边偏移
-
-**输入：** 例如原图 1280×720、目标边长 640。**输出：** ratio=0.5、横向 pad=0、纵向 pad=140。
-
-算法要保存 ratio、pad 用于框的逆映射；普通拉伸和 letterbox 不是相同预处理。坐标例题：输入框左上 (160,190) 对应原图 (320,100)。
-
-```python
-rgb, meta = letterbox(frame, size=640)
-print(rgb.shape, meta)
-```
-
-### 2. DFL：从 64-channel logits 解出四个距离
-
-**输入：** 每个尺度的 [1,64,H,W]，按 4 组×16 bins。**输出：** 每格四个预期距离 [left,top,right,bottom]。
-
-对每组 16 个 logits 做 softmax，求 Σ(k×p_k)，再乘该尺度 stride。输出还需结合网格中心变成 xyxy。这个协议只属于匹配的优化版模型。
-
-```python
-logits = logits.reshape(1, 4, 16, H, W)
-prob = softmax(logits, axis=2)
-distance = (prob * np.arange(16).reshape(1, 1, 16, 1, 1)).sum(axis=2)
-```
-
-### 3. decode() 与 NMS：将分类分数映回原图
-
-**输入：** 类别分数、候选框、阈值、meta 中的缩放偏移。**输出：** 每帧 0～N 个 class_id、score、xyxy。
-
-先按阈值过滤、进行同类别 NMS，再做坐标逆变换与 clip。不能把输出 shape 错误的模型通过 reshape 强行适配，也不能将一个 FPS 数直接当 NPU 硬件耗时。
-
-```python
-outputs = sdk.inference(inputs=[rgb])
-detections = decode(outputs, meta, size=640,
-                    num_classes=80, conf=0.25, iou=0.45)
-```
-
-**数据例题：** 在 1280×720→640×640 的例子中，输入空间框 (160,190,480,390) 去掉 (0,140) padding，再除以 0.5 后应得到原图框 (320,100,960,500)。这一计算不依赖模型推理，适合手算验证。
-
-**验收边界：** 在 ROCK 5B 保存真实逐帧 JSONL 和一张同图对照；模型必须明确为优化版 YOLOv8 六/九输出，检查类别映射、框边界、DFL/NMS 与真实帧采集。
 
 ## 配套可运行源码
 

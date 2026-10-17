@@ -28,6 +28,69 @@ Python 更适合算法与预处理验证、调试和教学。稳定后可把前�
 
 **必须理解：** 把 Python 结果保存为 C++ 版本回归测试的黄金样本。
 
+## 工程机理与知识深化
+
+### 数据契约与 SDK 工作机理
+
+RKNNLite2 在目标板 Python 环境中使用：`load_rknn` 读取编译后的模型，`init_runtime` 初始化 NPU 上下文，`inference(inputs=[...])` 提供真实输入并返回模型输出，最终 `release` 回收资源。它与开发机上的 RKNN Toolkit2 不同，不负责将 ONNX 编译成 `.rknn`。MobileNet 类模型通常要求明确的 RGB、224×224、UINT8、NHWC 输入，但必须以实际转换脚本和属性为准。
+
+### 张量算例与完整数据路径
+
+若模型要求 uint8 NHWC，输入 shape `(224,224,3)`，类型应是 `uint8`，而不是已在 Python 中归一化的 float32 NCHW。输出 `(1,1000)` 若为 logits，Top-K 排序有意义，但其中的 score 不能直接写成“99% 概率”；使用不同的 1000/1001 类标签会导致名字错位。
+
+### 实验设计、取舍与判断
+
+板端初次运行时分开保存模型哈希、输入图片、RGB/resize 规则、SDK/Runtime 版本、Top-5 类别及原始分数。`init_runtime()==0` 只是初始化成功，必须实际执行 `inference` 并解释输出才算闭环。
+
+## 源码精读：关键 API、张量与验收
+
+第 24 讲的板端入口是 mobilenet_image_lite.py；SDK 示例 lite_infer.py 只负责从 NPY 张量推理。两者不应被当成 ONNX→RKNN 转换器。
+
+**数据路径：** `JPEG (磁盘)` → `Pillow RGB uint8 (224,224,3)` → `RKNNLite.inference` → `分类输出 ndarray` → `Top-5 与标签`。
+
+### 1. make_input()：把图像变成模型规定的输入
+
+**输入：** JPG/PNG 路径与 224×224 尺寸。**输出：** 连续内存 RGB uint8，shape=(224,224,3)。
+
+OpenCV 通常读到 BGR，Pillow.convert('RGB') 输出 RGB；颜色顺序错会使分类结果错误。不能在 Python 中再除以 255，除非该 RKNN 真的要求浮点输入。
+
+```python
+input_tensor = make_input(image, (224, 224), 'stretch')
+print(input_tensor.shape, input_tensor.dtype)
+```
+
+### 2. RKNNLite：加载→初始化→推理→释放
+
+**输入：** 匹配 RK3588 的 .rknn 文件与 HWC 数组。**输出：** list[ndarray]，单输出分类模型的输出数应为 1。
+
+load_rknn != init_runtime；先检查各调用返回码，runtime 成功以后才能调用 inference。release 要与创建一一对应。
+
+```python
+sdk = RKNNLite()
+try:
+    assert sdk.load_rknn(str(model)) == 0
+    assert sdk.init_runtime() == 0
+    outputs = sdk.inference(inputs=[input_tensor])
+finally:
+    sdk.release()
+```
+
+### 3. topk_scores()：解释输出而不是只打印成功
+
+**输入：** 一维类别分数 ndarray 与 k=5。**输出：** 按分数排序的 (class_index, model_score) 列表。
+
+原始输出可能是 logits，不一定是概率；标签索引必须对应模型本身的 1000/1001 类定义，不应随意加减 1。
+
+```python
+top = np.argsort(scores.reshape(-1))[::-1][:5]
+for index in top:
+    print(int(index), float(scores.reshape(-1)[index]))
+```
+
+**数据解释与练习：** 形状示例是输入 RGB 224×224×3；输出若为 (1,1000)，表示 1000 个类别分数，不代表第 0 类就是背景。输出维度要按实际 .rknn 查询，不能直接复制示例数值。
+
+**验收边界：** 在 ROCK 5B 保存实际图片、模型/运行库版本及 Top-5；PC 环境的 --help 或假 SDK 返回不能作为 NPU 实测。
+
 ## 实验与预期结果
 
 ### 实验 1：核对 Lite2 环境
@@ -114,69 +177,6 @@ Toolkit-Lite2 主要做什么？
 - [模型与 Python 案例](https://github.com/airockchip/rknn_model_zoo)
 
 > 版本敏感功能请依赖当前 SDK 的官方文档；实际运行结果需要用户在目标板上验证。
-
-## 工程机理与知识深化
-
-### 数据契约与 SDK 工作机理
-
-RKNNLite2 在目标板 Python 环境中使用：`load_rknn` 读取编译后的模型，`init_runtime` 初始化 NPU 上下文，`inference(inputs=[...])` 提供真实输入并返回模型输出，最终 `release` 回收资源。它与开发机上的 RKNN Toolkit2 不同，不负责将 ONNX 编译成 `.rknn`。MobileNet 类模型通常要求明确的 RGB、224×224、UINT8、NHWC 输入，但必须以实际转换脚本和属性为准。
-
-### 张量算例与完整数据路径
-
-若模型要求 uint8 NHWC，输入 shape `(224,224,3)`，类型应是 `uint8`，而不是已在 Python 中归一化的 float32 NCHW。输出 `(1,1000)` 若为 logits，Top-K 排序有意义，但其中的 score 不能直接写成“99% 概率”；使用不同的 1000/1001 类标签会导致名字错位。
-
-### 实验设计、取舍与判断
-
-板端初次运行时分开保存模型哈希、输入图片、RGB/resize 规则、SDK/Runtime 版本、Top-5 类别及原始分数。`init_runtime()==0` 只是初始化成功，必须实际执行 `inference` 并解释输出才算闭环。
-
-## 源码精读：关键 API、张量与验收
-
-第 24 讲的板端入口是 mobilenet_image_lite.py；SDK 示例 lite_infer.py 只负责从 NPY 张量推理。两者不应被当成 ONNX→RKNN 转换器。
-
-**数据路径：** `JPEG (磁盘)` → `Pillow RGB uint8 (224,224,3)` → `RKNNLite.inference` → `分类输出 ndarray` → `Top-5 与标签`。
-
-### 1. make_input()：把图像变成模型规定的输入
-
-**输入：** JPG/PNG 路径与 224×224 尺寸。**输出：** 连续内存 RGB uint8，shape=(224,224,3)。
-
-OpenCV 通常读到 BGR，Pillow.convert('RGB') 输出 RGB；颜色顺序错会使分类结果错误。不能在 Python 中再除以 255，除非该 RKNN 真的要求浮点输入。
-
-```python
-input_tensor = make_input(image, (224, 224), 'stretch')
-print(input_tensor.shape, input_tensor.dtype)
-```
-
-### 2. RKNNLite：加载→初始化→推理→释放
-
-**输入：** 匹配 RK3588 的 .rknn 文件与 HWC 数组。**输出：** list[ndarray]，单输出分类模型的输出数应为 1。
-
-load_rknn != init_runtime；先检查各调用返回码，runtime 成功以后才能调用 inference。release 要与创建一一对应。
-
-```python
-sdk = RKNNLite()
-try:
-    assert sdk.load_rknn(str(model)) == 0
-    assert sdk.init_runtime() == 0
-    outputs = sdk.inference(inputs=[input_tensor])
-finally:
-    sdk.release()
-```
-
-### 3. topk_scores()：解释输出而不是只打印成功
-
-**输入：** 一维类别分数 ndarray 与 k=5。**输出：** 按分数排序的 (class_index, model_score) 列表。
-
-原始输出可能是 logits，不一定是概率；标签索引必须对应模型本身的 1000/1001 类定义，不应随意加减 1。
-
-```python
-top = np.argsort(scores.reshape(-1))[::-1][:5]
-for index in top:
-    print(int(index), float(scores.reshape(-1)[index]))
-```
-
-**数据解释与练习：** 形状示例是输入 RGB 224×224×3；输出若为 (1,1000)，表示 1000 个类别分数，不代表第 0 类就是背景。输出维度要按实际 .rknn 查询，不能直接复制示例数值。
-
-**验收边界：** 在 ROCK 5B 保存实际图片、模型/运行库版本及 Top-5；PC 环境的 --help 或假 SDK 返回不能作为 NPU 实测。
 
 ## 配套可运行源码
 

@@ -28,6 +28,68 @@ RK3588 上的语言模型推理通常走 RKLLM-Toolkit（主机模型转换与�
 
 **你应该能解释：** 测试报告包括模型来源、量化配置、TTFT、tokens/s、RAM、温度与固定提示词输出。
 
+## 工程机理与知识深化
+
+### 检测或生成模型的接口协议
+
+RKLLM 的模型格式、C API 与 CNN RKNN 不同。`rkllm_createDefaultParam` 填入路径和生成限制，`rkllm_init` 创建句柄，`rkllm_run` 传入 prompt 并触发回调；`RKLLM_RUN_NORMAL` 返回文本分片，`RKLLM_RUN_FINISH` 标识生成结束，出错状态应单独报告。字符串分片并非一定对应一个 tokenizer token，不能用回调次数计算 TPS。
+
+### 数学推导与现场案例
+
+理论权重下限：1.5B 参数×4bit/8≈0.75GB（十进制），但运行时还需量化元数据、KV cache、暂存激活与 OS 内存。单靠 `.rkllm` 文件大小不能推算设备峰值内存。生成速度只有当 SDK 返回真实 tokens 与生成时长时才能计算，首次文本块墙钟耗时不自动等于严格的 TTFT。
+
+### 版本、实验边界与评估标准
+
+先核对 SoC、BSP、RKLLM Toolkit/Runtime 版本与模型格式，再用短 prompt 建立真实流式输出记录；区分外部 Demo 启动器 `lesson_34.py` 和原生 C++ RKLLM 回调程序。保存生成文本、完成状态、耗时和硬件内存，而非展示假语言模型分数。
+
+## 源码精读：关键 API、张量与验收
+
+第 32 讲使用 RKLLM Runtime 的 C API 而非 CNN 的 RKNN API。重点是模型内存预算、C++ 回调数据、结束状态和文本分片不能当作 token 数。
+
+**数据路径：** `合法兼容 .rkllm` → `rkllm_init` → `输入提示词` → `rkllm_run` → `RUN_NORMAL 文字回调` → `RUN_FINISH / destroy`。
+
+### 1. rkllm_createDefaultParam 与 rkllm_init
+
+**输入：** 转换后的 .rkllm、上下文长度、max_new_tokens。**输出：** 有效 LLMHandle 和已初始化模型。
+
+参数及模型必须与 ARM64 runtime 版本匹配；大小和 KV cache 在运行时均消耗内存。参数初始化成功不表示已生成任何文本。
+
+```cpp
+RKLLMParam p = rkllm_createDefaultParam();
+p.model_path = model_path.c_str();
+p.max_new_tokens = 128;
+rkllm_init(&handle, &p, &callback);
+```
+
+### 2. rkllm_run 与回调状态
+
+**输入：** RKLLMInput(PROMPT) 与同步推理参数。**输出：** RUN_NORMAL 文本分片、RUN_FINISH 结束或 RUN_ERROR。
+
+RUN_NORMAL 返回的是字符串片段，不一定恰好一个 token；必须等到 RKLLM_RUN_FINISH 并检查 run 返回码，才算生成流程完整。
+
+```cpp
+int callback(RKLLMResult* r, void* ctx, LLMCallState state) {
+  if (state == RKLLM_RUN_NORMAL && r && r->text) std::cout << r->text;
+  if (state == RKLLM_RUN_FINISH) { /* mark finished */ }
+  return 0;
+}
+```
+
+### 3. performance report：不要用文本块数冒充 TPS
+
+**输入：** 第一次文本回调墙钟时延与可选 SDK perf 字段。**输出：** first_text_chunk_ms、sdk_generate_tokens / sdk_tokens_per_sec（如有）。
+
+若 SDK 不提供真实 generate_tokens 和 generate_time_ms，正确输出 null。TTFT 可能不等于首次文本回调；总墙钟时间包括不同阶段，需标清口径。
+
+```python
+// 仅当 SDK 有效提供两个数据才计算：
+// tokens_per_second = generate_tokens * 1000 / generate_time_ms
+```
+
+**数据例题：** 只算权重理论下限：1.5B 参数、4-bit ≈ 1.5×10^9×4/8 = 0.75GB（十进制）；真实内存还包括量化元数据、KV cache、工作区和操作系统，不能只按此数选板卡。
+
+**验收边界：** 在真实 ROCK 5B 记录模型/runtime 版本、提示词、完成回调与生成文本；没有板端日志只能验收 Fake SDK 下的调用流程，不可宣称大模型实测部署成功。
+
 ## 进一步实操：原生 RKLLM C API
 
 配套开发了 [板端 RKLLM C++ 工程](../examples/hardware/rkllm/rkllm_stream.cpp) 与 [ROCK 5B 实测手册](../boards/radxa-rock5b/RKLLM_NATIVE.md)。它直接注册 RKLLM 回调、统计首段输出、生成耗时，并在对应 SDK 的 `RKLLMResult.perf` 有效时记录 tokens/s；没有实际硬件时 CI 仅以 Fake Runtime 检查 API 调用。首段文本不是严格的首 token 时序，不应该据此伪造 TTFT。
@@ -114,68 +176,6 @@ print(f'1.5B 参数 4-bit 权重理论下界约 {weight_gb:.2f} GB')
 - [《Deep Learning》理论基础](https://www.deeplearningbook.org/)
 
 > 资料会随发布版本更新；请先阅读官方当前说明，不要对未经验证的模型或者量化格式直接保证板端兼容。
-
-## 工程机理与知识深化
-
-### 检测或生成模型的接口协议
-
-RKLLM 的模型格式、C API 与 CNN RKNN 不同。`rkllm_createDefaultParam` 填入路径和生成限制，`rkllm_init` 创建句柄，`rkllm_run` 传入 prompt 并触发回调；`RKLLM_RUN_NORMAL` 返回文本分片，`RKLLM_RUN_FINISH` 标识生成结束，出错状态应单独报告。字符串分片并非一定对应一个 tokenizer token，不能用回调次数计算 TPS。
-
-### 数学推导与现场案例
-
-理论权重下限：1.5B 参数×4bit/8≈0.75GB（十进制），但运行时还需量化元数据、KV cache、暂存激活与 OS 内存。单靠 `.rkllm` 文件大小不能推算设备峰值内存。生成速度只有当 SDK 返回真实 tokens 与生成时长时才能计算，首次文本块墙钟耗时不自动等于严格的 TTFT。
-
-### 版本、实验边界与评估标准
-
-先核对 SoC、BSP、RKLLM Toolkit/Runtime 版本与模型格式，再用短 prompt 建立真实流式输出记录；区分外部 Demo 启动器 `lesson_34.py` 和原生 C++ RKLLM 回调程序。保存生成文本、完成状态、耗时和硬件内存，而非展示假语言模型分数。
-
-## 源码精读：关键 API、张量与验收
-
-第 32 讲使用 RKLLM Runtime 的 C API 而非 CNN 的 RKNN API。重点是模型内存预算、C++ 回调数据、结束状态和文本分片不能当作 token 数。
-
-**数据路径：** `合法兼容 .rkllm` → `rkllm_init` → `输入提示词` → `rkllm_run` → `RUN_NORMAL 文字回调` → `RUN_FINISH / destroy`。
-
-### 1. rkllm_createDefaultParam 与 rkllm_init
-
-**输入：** 转换后的 .rkllm、上下文长度、max_new_tokens。**输出：** 有效 LLMHandle 和已初始化模型。
-
-参数及模型必须与 ARM64 runtime 版本匹配；大小和 KV cache 在运行时均消耗内存。参数初始化成功不表示已生成任何文本。
-
-```cpp
-RKLLMParam p = rkllm_createDefaultParam();
-p.model_path = model_path.c_str();
-p.max_new_tokens = 128;
-rkllm_init(&handle, &p, &callback);
-```
-
-### 2. rkllm_run 与回调状态
-
-**输入：** RKLLMInput(PROMPT) 与同步推理参数。**输出：** RUN_NORMAL 文本分片、RUN_FINISH 结束或 RUN_ERROR。
-
-RUN_NORMAL 返回的是字符串片段，不一定恰好一个 token；必须等到 RKLLM_RUN_FINISH 并检查 run 返回码，才算生成流程完整。
-
-```cpp
-int callback(RKLLMResult* r, void* ctx, LLMCallState state) {
-  if (state == RKLLM_RUN_NORMAL && r && r->text) std::cout << r->text;
-  if (state == RKLLM_RUN_FINISH) { /* mark finished */ }
-  return 0;
-}
-```
-
-### 3. performance report：不要用文本块数冒充 TPS
-
-**输入：** 第一次文本回调墙钟时延与可选 SDK perf 字段。**输出：** first_text_chunk_ms、sdk_generate_tokens / sdk_tokens_per_sec（如有）。
-
-若 SDK 不提供真实 generate_tokens 和 generate_time_ms，正确输出 null。TTFT 可能不等于首次文本回调；总墙钟时间包括不同阶段，需标清口径。
-
-```python
-// 仅当 SDK 有效提供两个数据才计算：
-// tokens_per_second = generate_tokens * 1000 / generate_time_ms
-```
-
-**数据例题：** 只算权重理论下限：1.5B 参数、4-bit ≈ 1.5×10^9×4/8 = 0.75GB（十进制）；真实内存还包括量化元数据、KV cache、工作区和操作系统，不能只按此数选板卡。
-
-**验收边界：** 在真实 ROCK 5B 记录模型/runtime 版本、提示词、完成回调与生成文本；没有板端日志只能验收 Fake SDK 下的调用流程，不可宣称大模型实测部署成功。
 
 ## 配套可运行源码
 

@@ -28,6 +28,66 @@ MobileNet 系列面向移动端与嵌入式设备，其中 Depthwise Separable C
 
 **理解检查：** 确保输入图像原始文件和预处理后 tensor 可复用到后续封装课程。
 
+## 工程机理与知识深化
+
+### 数据契约与 SDK 工作机理
+
+MobileNet 分类的端到端路径是磁盘图像→RGB 解码/缩放→归一化/布局→模型推理→输出分数→Top-K 类名。`examples/lesson_27.py` 提供实际 ONNX Runtime 与 RKNNLite 两条路径，但 ONNX 端常为 float32 NCHW，RKNN 端可能把 mean/std 编入模型而接收 uint8 NHWC；要比较的是同一张图片的语义输入，而不只是 NumPy 数组值完全相同。
+
+### 张量算例与完整数据路径
+
+对同一 bell.jpg，先记录 ONNX 和 RKNN 的模型哈希、resize 模式、color/layout/normalize、标签 offset 和 raw score。若 Top-1 类别不一致，先查看首像素与归一化范围；将 logits 重复做 softmax 或额外偏移 1 会改变分数解释或标签映射。
+
+### 实验设计、取舍与判断
+
+先在 PC 跑 ONNX 建立参考分类，然后使用目标板兼容 RKNN 同图运行、保存原始输出 NPZ，并判断 Top-5 索引/分数误差。没有真实模型、图片或板端运行时，只能完成代码阅读或参数验证。
+
+## 源码精读：关键 API、张量与验收
+
+本讲的真实模型主线在 examples/lesson_27.py：同一张图片分别交给 ONNX Runtime（PC）和 RKNNLite（ROCK 5B），不是用随机分数假装 MobileNet。
+
+**数据路径：** `真实图片` → `颜色/裁剪/归一化/layout` → `ONNX 或 RKNN` → `类别 logits` → `Top-5 + 标签`。
+
+### 1. prepare_image()：模型前处理协议
+
+**输入：** PIL 图片、resize、RGB/BGR、NCHW/NHWC、normalize。**输出：** 模型预期的 batch 张量。
+
+ONNX 版可能需要 float32 NCHW/ImageNet 归一化；RKNN 版常把 mean/std 编入模型，接收 uint8 HWC。这两个输入协议不能直接混用。
+
+```python
+x = prepare_image(path, 224, 224, 'squash', 'RGB',
+                  'NCHW', 'imagenet', 'onnx')
+print(x.shape, x.dtype)
+```
+
+### 2. run_model()：区分后端
+
+**输入：** model.onnx 或 model.rknn + 对应输入。**输出：** 真实输出张量（可保存 NPZ）。
+
+ONNX Runtime CPU 输出是 PC 参考；RKNNLite 需 ROCK 5B Runtime。比较输出之前先保证两者输入像素含义一致。
+
+```python
+python3 examples/lesson_27.py --backend onnx \
+  --model /path/to/model.onnx --image /path/to/test.jpg \
+  --width 224 --height 224 --topk 5
+```
+
+### 3. probabilities()：区分 logits 与概率
+
+**输入：** 一维输出分数及 --scores 约定。**输出：** 必要时 softmax 后的归一化概率。
+
+若输出已经是概率，再进行 softmax 会改变分布；类别索引映射也必须使用对应 labels 文件和正确 offset。
+
+```python
+p = np.exp(logits - logits.max())
+p = p / p.sum()
+# 只在输出为 logits 时执行 softmax
+```
+
+**数据解释与练习：** 典型 ImageNet 预处理示例：单个 RGB 红通道值 128，若 x/255 再减均值 0.485、除标准差 0.229，结果约为 0.074；但模型若自带归一化则不要重复。
+
+**验收边界：** 提供实际单图 Top-5 和标签、图像缩放/归一化选择，并把 PC 与 ROCK 5B 结果标成不同后端，不能拿两个随机输入比差异。
+
 ## 动手实验
 
 ### 实验 1：获取官方样例
@@ -118,66 +178,6 @@ print([(int(i),float(scores[i])) for i in idx])
 - [摄像头与 NPU 联合运行、实测和排障手册](../boards/radxa-rock5b/CAMERA_MOBILENET.md)
 
 程序从 USB UVC 摄像头持续取帧，按模型协议执行 BGR→RGB 和缩放/裁切，使用真实 RKNNLite 推理；可以导出每帧 Top-K、采集/预处理/SDK 调用耗时及 p95 统计。**它是分类应用，不是 YOLO 检测；CI 使用模拟摄像头与 SDK 校验控制流程，硬件性能仍需 ROCK 5B 实测。**
-
-## 工程机理与知识深化
-
-### 数据契约与 SDK 工作机理
-
-MobileNet 分类的端到端路径是磁盘图像→RGB 解码/缩放→归一化/布局→模型推理→输出分数→Top-K 类名。`examples/lesson_27.py` 提供实际 ONNX Runtime 与 RKNNLite 两条路径，但 ONNX 端常为 float32 NCHW，RKNN 端可能把 mean/std 编入模型而接收 uint8 NHWC；要比较的是同一张图片的语义输入，而不只是 NumPy 数组值完全相同。
-
-### 张量算例与完整数据路径
-
-对同一 bell.jpg，先记录 ONNX 和 RKNN 的模型哈希、resize 模式、color/layout/normalize、标签 offset 和 raw score。若 Top-1 类别不一致，先查看首像素与归一化范围；将 logits 重复做 softmax 或额外偏移 1 会改变分数解释或标签映射。
-
-### 实验设计、取舍与判断
-
-先在 PC 跑 ONNX 建立参考分类，然后使用目标板兼容 RKNN 同图运行、保存原始输出 NPZ，并判断 Top-5 索引/分数误差。没有真实模型、图片或板端运行时，只能完成代码阅读或参数验证。
-
-## 源码精读：关键 API、张量与验收
-
-本讲的真实模型主线在 examples/lesson_27.py：同一张图片分别交给 ONNX Runtime（PC）和 RKNNLite（ROCK 5B），不是用随机分数假装 MobileNet。
-
-**数据路径：** `真实图片` → `颜色/裁剪/归一化/layout` → `ONNX 或 RKNN` → `类别 logits` → `Top-5 + 标签`。
-
-### 1. prepare_image()：模型前处理协议
-
-**输入：** PIL 图片、resize、RGB/BGR、NCHW/NHWC、normalize。**输出：** 模型预期的 batch 张量。
-
-ONNX 版可能需要 float32 NCHW/ImageNet 归一化；RKNN 版常把 mean/std 编入模型，接收 uint8 HWC。这两个输入协议不能直接混用。
-
-```python
-x = prepare_image(path, 224, 224, 'squash', 'RGB',
-                  'NCHW', 'imagenet', 'onnx')
-print(x.shape, x.dtype)
-```
-
-### 2. run_model()：区分后端
-
-**输入：** model.onnx 或 model.rknn + 对应输入。**输出：** 真实输出张量（可保存 NPZ）。
-
-ONNX Runtime CPU 输出是 PC 参考；RKNNLite 需 ROCK 5B Runtime。比较输出之前先保证两者输入像素含义一致。
-
-```python
-python3 examples/lesson_27.py --backend onnx \
-  --model /path/to/model.onnx --image /path/to/test.jpg \
-  --width 224 --height 224 --topk 5
-```
-
-### 3. probabilities()：区分 logits 与概率
-
-**输入：** 一维输出分数及 --scores 约定。**输出：** 必要时 softmax 后的归一化概率。
-
-若输出已经是概率，再进行 softmax 会改变分布；类别索引映射也必须使用对应 labels 文件和正确 offset。
-
-```python
-p = np.exp(logits - logits.max())
-p = p / p.sum()
-# 只在输出为 logits 时执行 softmax
-```
-
-**数据解释与练习：** 典型 ImageNet 预处理示例：单个 RGB 红通道值 128，若 x/255 再减均值 0.485、除标准差 0.229，结果约为 0.074；但模型若自带归一化则不要重复。
-
-**验收边界：** 提供实际单图 Top-5 和标签、图像缩放/归一化选择，并把 PC 与 ROCK 5B 结果标成不同后端，不能拿两个随机输入比差异。
 
 ## 配套可运行源码
 

@@ -28,6 +28,75 @@
 
 **理解检查：** 对模型不存在、初始化失败、推理失败三种分支证明不会泄漏内存。
 
+## 工程机理与知识深化
+
+### 数据契约与 SDK 工作机理
+
+RKNPU2 C API 使用 `rknn_context` 代表模型实例。典型生命周期为 `rknn_init → rknn_query → rknn_inputs_set → rknn_run → rknn_outputs_get → rknn_outputs_release → rknn_destroy`；每一调用返回码都需要检查。`rknn_query` 报告模型输入 output tensor 的 `dims、size、type、fmt`，通用 C++ 分类器读取的是预处理 RAW 字节而非 JPG 图片。
+
+### 张量算例与完整数据路径
+
+224×224×3 的紧密 uint8 RGB RAW 理论占 150528 字节，但该值不保证等于带 stride 的 native SDK 布局或 FP16 模型的输入大小。设置输入时 `buf、size、type、fmt` 应与实际模型接口一致；输出使用 `want_float=1` 可请求便于 CPU 处理的浮点张量，score 是否经过 softmax 仍取决于网络。
+
+### 实验设计、取舍与判断
+
+先让 C++ 路径与 Python RKNNLite 同图同模型对照 Top-K，记录模型哈希和各输入 attr；编译通过只能证明头文件与链接基础正确，不能推出板端预测精度。所有获取的 SDK 输出内存都必须按接口释放。
+
+## 源码精读：关键 API、张量与验收
+
+C++ 示例 rknn_classify.cpp 读取预处理好的 RAW 张量，而非 JPEG；它直接调用 rknn_api.h，并要求单输入、单输出的分类模型。
+
+**数据路径：** `.rknn + input.raw` → `rknn_init / rknn_query` → `rknn_inputs_set` → `rknn_run` → `rknn_outputs_get/release` → `Top-5`。
+
+### 1. rknn_query()：从模型读取张量契约
+
+**输入：** rknn_context 和 RKNN_QUERY_INPUT_ATTR。**输出：** 输入字节数 size、dtype(type)、layout(fmt)、dims。
+
+C++ 输入必须与模型真实属性相符。例子拒绝 RAW 文件大小不等于 query 的 size；一张 JPEG 文件并不是等价的 RAW 张量。
+
+```cpp
+rknn_tensor_attr input{};
+input.index = 0;
+rknn_query(ctx, RKNN_QUERY_INPUT_ATTR, &input, sizeof(input));
+// 输入字节数必须与 input.size 对齐
+```
+
+### 2. rknn_inputs_set() 与 rknn_run()
+
+**输入：** RAW 数据指针、size、type 和 fmt。**输出：** 完成一次 NPU 执行（不包含类别名称）。
+
+inputs_set 负责提供模型输入；run 才触发执行。两者的返回码都必须检查，且输入数组需保持有效到相关调用完成。
+
+```cpp
+rknn_input value{};
+value.index = 0;
+value.buf = raw.data();
+value.size = raw.size();
+value.type = input.type;
+value.fmt = input.fmt;
+rknn_inputs_set(ctx, 1, &value);
+rknn_run(ctx, nullptr);
+```
+
+### 3. rknn_outputs_get/release()：读回可解释的数据
+
+**输入：** 输出张量 attr 与 want_float=1。**输出：** CPU 可读取的 float 数组，随后排序输出前 5 个。
+
+want_float 让 Runtime 按接口返回 float 值；使用完必须 outputs_release，最后 destroy context。输出 score 不一定已经 softmax。
+
+```cpp
+rknn_output result{};
+result.index = 0;
+result.want_float = 1;
+rknn_outputs_get(ctx, 1, &result, nullptr);
+// 处理 result.buf
+rknn_outputs_release(ctx, 1, &result);
+```
+
+**数据解释与练习：** 224×224 RGB uint8 紧密排列 RAW 通常是 224×224×3=150528 字节；这只是示例，真实模型若有 stride、FP16 或 NCHW 布局，不能直接套用此数。
+
+**验收边界：** 用同图同模型比较 Python Lite2 与 C++ 的 Top-5 索引与分数；CMake 构建成功不等于板端已经推理成功。
+
 ## 动手实验
 
 ### 实验 1：阅读官方代码
@@ -119,75 +188,6 @@ rknn_context ctx = 0;
 ### 进阶实验：RKNPU2 C++ 输入路径对照
 
 本讲配套 [同模型标准输入/绑定输入比较源码](../examples/hardware/rknn_compare_input_io.cpp) 与 [ROCK 5B 实测和编译手册](../boards/radxa-rock5b/CPP_RGA_IO_BENCHMARK.md)。需真实 ARM64 runtime、单输入单输出分类模型和完整输入，不能把 CPU mock 成功视为板端数据。
-
-## 工程机理与知识深化
-
-### 数据契约与 SDK 工作机理
-
-RKNPU2 C API 使用 `rknn_context` 代表模型实例。典型生命周期为 `rknn_init → rknn_query → rknn_inputs_set → rknn_run → rknn_outputs_get → rknn_outputs_release → rknn_destroy`；每一调用返回码都需要检查。`rknn_query` 报告模型输入 output tensor 的 `dims、size、type、fmt`，通用 C++ 分类器读取的是预处理 RAW 字节而非 JPG 图片。
-
-### 张量算例与完整数据路径
-
-224×224×3 的紧密 uint8 RGB RAW 理论占 150528 字节，但该值不保证等于带 stride 的 native SDK 布局或 FP16 模型的输入大小。设置输入时 `buf、size、type、fmt` 应与实际模型接口一致；输出使用 `want_float=1` 可请求便于 CPU 处理的浮点张量，score 是否经过 softmax 仍取决于网络。
-
-### 实验设计、取舍与判断
-
-先让 C++ 路径与 Python RKNNLite 同图同模型对照 Top-K，记录模型哈希和各输入 attr；编译通过只能证明头文件与链接基础正确，不能推出板端预测精度。所有获取的 SDK 输出内存都必须按接口释放。
-
-## 源码精读：关键 API、张量与验收
-
-C++ 示例 rknn_classify.cpp 读取预处理好的 RAW 张量，而非 JPEG；它直接调用 rknn_api.h，并要求单输入、单输出的分类模型。
-
-**数据路径：** `.rknn + input.raw` → `rknn_init / rknn_query` → `rknn_inputs_set` → `rknn_run` → `rknn_outputs_get/release` → `Top-5`。
-
-### 1. rknn_query()：从模型读取张量契约
-
-**输入：** rknn_context 和 RKNN_QUERY_INPUT_ATTR。**输出：** 输入字节数 size、dtype(type)、layout(fmt)、dims。
-
-C++ 输入必须与模型真实属性相符。例子拒绝 RAW 文件大小不等于 query 的 size；一张 JPEG 文件并不是等价的 RAW 张量。
-
-```cpp
-rknn_tensor_attr input{};
-input.index = 0;
-rknn_query(ctx, RKNN_QUERY_INPUT_ATTR, &input, sizeof(input));
-// 输入字节数必须与 input.size 对齐
-```
-
-### 2. rknn_inputs_set() 与 rknn_run()
-
-**输入：** RAW 数据指针、size、type 和 fmt。**输出：** 完成一次 NPU 执行（不包含类别名称）。
-
-inputs_set 负责提供模型输入；run 才触发执行。两者的返回码都必须检查，且输入数组需保持有效到相关调用完成。
-
-```cpp
-rknn_input value{};
-value.index = 0;
-value.buf = raw.data();
-value.size = raw.size();
-value.type = input.type;
-value.fmt = input.fmt;
-rknn_inputs_set(ctx, 1, &value);
-rknn_run(ctx, nullptr);
-```
-
-### 3. rknn_outputs_get/release()：读回可解释的数据
-
-**输入：** 输出张量 attr 与 want_float=1。**输出：** CPU 可读取的 float 数组，随后排序输出前 5 个。
-
-want_float 让 Runtime 按接口返回 float 值；使用完必须 outputs_release，最后 destroy context。输出 score 不一定已经 softmax。
-
-```cpp
-rknn_output result{};
-result.index = 0;
-result.want_float = 1;
-rknn_outputs_get(ctx, 1, &result, nullptr);
-// 处理 result.buf
-rknn_outputs_release(ctx, 1, &result);
-```
-
-**数据解释与练习：** 224×224 RGB uint8 紧密排列 RAW 通常是 224×224×3=150528 字节；这只是示例，真实模型若有 stride、FP16 或 NCHW 布局，不能直接套用此数。
-
-**验收边界：** 用同图同模型比较 Python Lite2 与 C++ 的 Top-5 索引与分数；CMake 构建成功不等于板端已经推理成功。
 
 ## 配套可运行源码
 
