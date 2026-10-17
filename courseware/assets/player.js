@@ -121,26 +121,66 @@ add("SUMMARY","本节总结",cards(['<h3>三件需要记住的事</h3>'+list(dat
 const prev=db[data.id-1],next=db[data.id+1];
 const sectionId=i=>"lesson-section-"+(i+1);
 function lessonLink(x,label){return x?'<a class="btn ghost" href="'+encodeURIComponent(x.slug).replaceAll("(","%28").replaceAll(")","%29")+'.html">'+label+'</a>':"";}
-// Teaching P0: show a direct, verified repository experiment entry for core deployment lessons.
-const handsOn={
-  24:["Python RKNNLite 图片分类","mobilenet-image","boards/radxa-rock5b/apps/mobilenet_image_lite.py"],
-  25:["RKNPU2 C++ 分类","cpp-rknn-classify","examples/hardware/rknn_classify.cpp"],
-  26:["V4L2、RGA 与 RKNN 数据链","v4l2-rga-rknn","examples/hardware/v4l2_rga_rknn_yolov8.cpp"],
-  27:["MobileNet 图片分类","mobilenet-image","boards/radxa-rock5b/apps/mobilenet_image_lite.py"],
-  28:["MobileNet 与 C++ 对照","cpp-rknn-classify","examples/hardware/rknn_classify.cpp"],
-  29:["YOLO 官方模型与导出","official-yolo-and-export","boards/radxa-rock5b/tools/run_official_yolov8.py"],
-  31:["YOLOv8 摄像头检测","yolov8-camera","boards/radxa-rock5b/apps/camera_yolov8_lite.py"],
-  32:["RKLLM 流式文本生成","rkllm-native","examples/hardware/rkllm/rkllm_stream.cpp"]
+// The catalog id (0-34) is the source/example index, NOT the video lesson number
+// after the three part lesson 30. Always use data.id for an example path.
+const sourceIndex=String(data.id).padStart(2,"0");
+const notePath=data.id===27?"examples/LESSON_27.md":"examples/notes/lesson_"+sourceIndex+".md";
+const practical={
+  6:{name:"ROCK 5B 驱动与板端初检",manual:"board-inspection",source:"boards/radxa-rock5b/tools/board_probe.py",
+     command:"python3 boards/radxa-rock5b/tools/board_probe.py --help",
+     explain:"在真实板端运行初检，记录内核、架构、NPU 驱动与实际设备信息；--help 只是接口检查。"},
+  9:{name:"生成 Tiny ONNX 并尝试 RKNN 转换",manual:"onnx-toolchain",source:"examples/hardware/convert_onnx.py",
+     command:"python3 examples/hardware/create_tiny_onnx.py --onnx build/tiny.onnx --input-npy build/input.npy\npython3 examples/hardware/onnx_reference.py --onnx build/tiny.onnx --input-npy build/input.npy --output build/reference.npz\npython3 examples/hardware/convert_onnx.py --onnx build/tiny.onnx --output build/tiny.rknn --mean 0,0,0 --std 1,1,1",
+     explain:"前两条可在安装 ONNX/ONNX Runtime 的 PC 上运行；第三条需兼容 Toolkit2 的 x86_64 Linux 主机。输入 NCHW float32，输出 [1,2]；转换成功不等于实机推理。"},
+  24:{name:"RKNNLite 图片分类",manual:"mobilenet-image",source:"boards/radxa-rock5b/apps/mobilenet_image_lite.py",
+     command:"python3 boards/radxa-rock5b/apps/mobilenet_image_lite.py --model /path/to/mobilenet.rknn --image /path/to/test.jpg --labels /path/to/labels.txt --width 224 --height 224 --runs 1 --warmup 0 --confirm-rgb-uint8-nhwc",
+     explain:"需真实 ROCK 5B、Lite2、图片与匹配的 RKNN 模型。先核对模型是否确实接受 RGB uint8 NHWC 输入，再执行；检查输出 Top-K 类别与分数。"},
+  25:{name:"C++ 通用 RKNPU2 分类",manual:"cpp-rknn-classify",source:"examples/hardware/rknn_classify.cpp",
+     command:"cmake -S examples/hardware -B build/native-rknn -DRKNN_INCLUDE_DIR=/sdk/rknn/include -DRKNN_LIB=/sdk/arm64/librknnrt.so\ncmake --build build/native-rknn -j2\n./build/native-rknn/rknn_classifier /path/to/model.rknn /path/to/preprocessed.raw",
+     explain:"必须用真实 SDK 路径。输入是已按模型属性预处理的 RAW 张量，不是 JPEG。查询输入 size/dtype/layout，然后读取输出 index/score。"},
+  26:{name:"SDK 内存绑定与零拷贝边界",manual:"cpp-zero-copy",source:"examples/hardware/rknn_zero_copy.cpp",
+     command:"./build/native-rknn/rknn_zero_copy /path/to/model.rknn /path/to/padded_uint8_nhwc.raw 1",
+     explain:"先按上一讲构建；RAW 文件需要匹配 SDK 查询的 stride 和 shape。该例说明 SDK 内存绑定，不宣称摄像头→RGA→NPU 完整 DMA-BUF 零拷贝。"},
+  27:{name:"MobileNet 静态图片分类",manual:"mobilenet-image",source:"boards/radxa-rock5b/apps/mobilenet_image_lite.py",
+     command:"python3 boards/radxa-rock5b/apps/mobilenet_image_lite.py --model /path/to/mobilenet.rknn --image /path/to/test.jpg --topk 5 --runs 1 --warmup 0 --confirm-rgb-uint8-nhwc",
+     explain:"真实图片 + 真实模型，查看 Top-5 与模型标签映射；第 27 讲另有可在 PC 使用 ONNX Runtime 的专用示例。"},
+  28:{name:"摄像头 MobileNet 封装",manual:"mobilenet-camera",source:"boards/radxa-rock5b/apps/camera_mobilenet_lite.py",
+     command:"python3 boards/radxa-rock5b/apps/camera_mobilenet_lite.py --model /path/to/mobilenet.rknn --source /dev/video0 --frames 10 --warmup 0 --confirm-rgb-uint8-nhwc",
+     explain:"保留真实输入协议和分类后处理，摄像头正常读帧并产生类别/分数才算通过；板端图片读取和推理失败需分开定位。"},
+  29:{name:"YOLOv5 真实图片目标检测",manual:"official-yolo-and-export",source:"examples/lesson_29.py",
+     command:"python3 examples/lesson_29.py --engine ultralytics --model /path/to/yolov5.pt --image /path/to/test.jpg",
+     explain:"这是 PC 上的框架预测，输出框坐标/类别/置信度，不等于 RK3588 YOLOv5 NPU 上板成功。"},
+  30:{name:"第 30 讲专题 1 · YOLO26 框架预测",source:"examples/lesson_30.py",
+     command:"python3 examples/lesson_30.py --weights /path/to/best.pt --image /path/to/test.jpg --imgsz 640",
+     explain:"需真实 YOLO26 兼容权重及相应 Ultralytics 版本；验证 PC 预测，记录模型版本和框信息。此专题不使用 YOLOv8 的 RKNN 输出头。"},
+  31:{name:"第 30 讲专题 2 · YOLO26 数据集验收与训练",source:"examples/lesson_31.py",
+     command:"python3 examples/lesson_31.py --labels /path/to/dataset/labels/train --report build/dataset_audit.json",
+     explain:"PC 先检查归一化框和数据标注；确有真实 data.yaml、权重和训练环境时才添加 --train。"},
+  32:{name:"第 30 讲专题 3 · YOLO26 导出与 RKNN 兼容",source:"examples/lesson_32.py",
+     command:"python3 examples/lesson_32.py --weights /path/to/best.pt --imgsz 640 --report build/lesson32/conversion.json",
+     explain:"先完成 ONNX checker 和导出协议检查；需要对应 Linux 主机的 RKNN Toolkit2 才能添加 --rknn。未通过算子适配时不能用 YOLOv8 的后处理冒充成功。"},
+  33:{name:"第 31 讲 · YOLOv8 摄像头主线",manual:"yolov8-camera",source:"boards/radxa-rock5b/apps/camera_yolov8_lite.py",
+     command:"python3 boards/radxa-rock5b/apps/camera_yolov8_lite.py --model /path/to/optimized-yolov8n.rknn --source /dev/video0 --size 640 --frames 30 --warmup 0 --labels boards/radxa-rock5b/assets/coco80.txt --confirm-optimized-yolov8",
+     explain:"只接受相容的 Model Zoo 优化版 YOLOv8 多输出头。逐项理解 letterbox、DFL、NMS 和原图坐标还原；输出框需实机核对。"},
+  34:{name:"第 32 讲 · RKLLM C++ 文本生成",manual:"rkllm-native",source:"examples/hardware/rkllm/rkllm_stream.cpp",
+     command:"cmake -S examples/hardware/rkllm -B build/rkllm-native -DRKLLM_INCLUDE_DIR=/sdk/rkllm/include -DRKLLM_LIB=/sdk/rkllm/aarch64/librkllmrt.so\ncmake --build build/rkllm-native -j2\n./build/rkllm-native/rkllm_stream --model /path/to/model.rkllm --prompt-file /path/to/prompt.txt --max-new 128",
+     explain:"须匹配板端模型与 runtime；区分流式文本块、真实 token 数和结束回调，模拟回调测试不算 ROCK 5B 文本生成。"}
 };
-if(handsOn[data.id]){
- const [label,doc,source]=handsOn[data.id];
- add("P0 LAB","本讲真实工程入口与上板验收",
- '<div class="panel good"><h3>'+esc(label)+'</h3><p>课程页解释原理；独立工程手册提供所需模型、实际执行命令、输出和验收要求。先阅读实验手册，再执行源码。</p>'+
- '<p><a href="../../engineering/'+encodeURIComponent(doc)+'.md">打开完整工程实验手册 ↗</a></p>'+
- '<p><a href="../../'+source+'">查看本讲核心源码 ↗</a></p></div>'+
- '<div class="panel soft"><h3>完成的证据</h3><p>写明模型及输入协议、板端 SDK/驱动版本、运行命令和实际输出。PC 模拟或仅运行 --help 不能算 NPU 实测。</p></div>',
- "依据源码的实际参数运行；不把假 SDK 或构建成功当成 ROCK 5B 功能验收。");
+const lab=practical[data.id];
+let lessonActions='<div class="panel good"><h3>本讲配套的第 '+sourceIndex+' 个源码实例</h3>'+
+ '<p><a href="../../examples/lesson_'+sourceIndex+'.py">Python 实验入口 ↗</a> · '+
+ '<a href="../../'+notePath+'">独立操作手册 ↗</a></p>'+
+ '<div class="code-wrap"><button type="button" class="copy-code">复制片段</button><pre><code>'+esc('python3 examples/lesson_'+sourceIndex+'.py --help')+'</code></pre></div>'+
+ '<p>该命令只用于核对接口。按操作手册提供的真实输入运行，才能证明功能；实例编号不等于视频讲次（第 30 讲含 3 个专题）。</p></div>';
+if(lab){
+ lessonActions+='<div class="panel"><h3>'+esc(lab.name)+'</h3>'+
+ (lab.manual?'<p><a href="../../engineering/'+lab.manual+'.md">完整工程实验手册 ↗</a></p>':'')+
+ '<p><a href="../../'+lab.source+'">相关核心源码 ↗</a></p>'+
+ '<div class="code-wrap"><button type="button" class="copy-code">复制片段</button><pre><code>'+esc(lab.command)+'</code></pre></div>'+
+ '<p>'+esc(lab.explain)+'</p></div>';
 }
+add("P0 LAB","真实源码、执行命令与验收入口",lessonActions,
+ "先确认模型/输入协议与 SDK 版本。PC 结果、上板结果和待验证必须明确区分。");
 const toc=slides.map((s,i)=>'<a class="outline-item" href="#'+sectionId(i)+'" data-section="'+i+'"><span>'+String(i+1).padStart(2,"0")+'</span>'+esc(s.title)+'</a>').join("");
 const content=slides.map((s,i)=>'<section id="'+sectionId(i)+'" class="slide lesson-section" aria-labelledby="section-heading-'+i+'"><div class="kicker">'+esc(s.cat)+' / '+String(i+1).padStart(2,"0")+'</div><h2 id="section-heading-'+i+'">'+esc(s.title)+'</h2>'+s.body+'<div class="teacher-note"><strong>讲师提示：</strong> '+fmt(s.note)+'</div></section>').join("");
 document.body.classList.add("continuous");
