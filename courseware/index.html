@@ -18,7 +18,7 @@ filters.innerHTML=["全部"].concat(units).map(u=>'<button type="button" class="
 filters.querySelectorAll("button").forEach(b=>b.onclick=()=>{active=b.dataset.unit;render();});
 const q=search.value.trim().toLowerCase();
 const filtered=data.filter(x=>(active==="全部"||x.unit===active)&&((x.title+" "+x.unit+" "+x.num).toLowerCase().includes(q)));
-box.innerHTML=units.map(u=>{const items=filtered.filter(x=>x.unit===u);if(!items.length)return"";return'<div class="unit"><h2>'+escape(u)+'</h2><p class="lead">'+items.length+' 讲</p><div class="lesson-grid">'+items.map(x=>{const e=(window.COURSE_EXTRA||{})[x.id]||{},s=e.scene||"按照教学目标逐步实践与验证";return '<a class="lesson-card" href="'+x.href+'"><span class="number">编号 '+String(x.id).padStart(2,"0")+'</span><h3>'+escape(x.title)+'</h3><p>'+escape(s)+'</p><div class="meta"><span>'+escape(x.unit)+'</span><span>'+x.duration+' MIN　→</span></div></a>';}).join("")+'</div></div>';}).join("")||'<div class="panel"><h3>没有找到匹配的课件</h3><p>可尝试搜索 RKNN、YOLO、性能或 C API。</p></div>';
+box.innerHTML=units.map(u=>{const items=filtered.filter(x=>x.unit===u);if(!items.length)return"";return'<div class="unit"><h2>'+escape(u)+'</h2><p class="lead">'+items.length+' 讲</p><div class="lesson-grid">'+items.map(x=>{const e=(window.COURSE_EXTRA||{})[x.id]||{},s=e.scene||"按照教学目标逐步实践与验证";return '<a class="lesson-card" href="'+x.href+'"><span class="number">第'+String(x.num).padStart(2,"0")+'讲'+(x.num===30?' · 专题'+(x.id-29):'')+'</span><h3>'+escape(x.title)+'</h3><p>'+escape(s)+'</p><div class="meta"><span>'+escape(x.unit)+'</span><span>'+x.duration+' MIN　→</span></div></a>';}).join("")+'</div></div>';}).join("")||'<div class="panel"><h3>没有找到匹配的课件</h3><p>可尝试搜索 RKNN、YOLO、性能或 C API。</p></div>';
 }
 search.oninput=render;render();
 })();
