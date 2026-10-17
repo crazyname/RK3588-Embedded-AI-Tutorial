@@ -38,7 +38,8 @@
       ],
       "experiment": "engineering/camera-probe.md",
       "tests": [
-        "boards/radxa-rock5b/tests/test_board_tools.py"
+        "boards/radxa-rock5b/tests/test_board_tools.py",
+        "boards/radxa-rock5b/tests/test_dedicated_capture_launcher.py"
       ],
       "acceptance_heading": "## 验收标准",
       "test_heading": "## 自动化测试",
@@ -212,7 +213,8 @@
       ],
       "experiment": "engineering/v4l2-dmabuf.md",
       "tests": [
-        "boards/radxa-rock5b/tests/test_board_tools.py"
+        "boards/radxa-rock5b/tests/test_board_tools.py",
+        "boards/radxa-rock5b/tests/test_v4l2_dmabuf_native.py"
       ],
       "acceptance_heading": "## 验收标准",
       "test_heading": "## 自动化测试",
@@ -364,7 +366,8 @@
       ],
       "experiment": "engineering/onnx-toolchain.md",
       "tests": [
-        "examples/tests/test_lesson_27.py"
+        "examples/tests/test_lesson_27.py",
+        "tools/tests/test_engineering_image_io.py"
       ],
       "acceptance_heading": "## 验收标准",
       "test_heading": "## 自动化测试",
@@ -400,7 +403,8 @@
       "experiment": "engineering/official-yolo-and-export.md",
       "tests": [
         "boards/radxa-rock5b/tests/test_board_tools.py",
-        "tools/tests/test_export_yolov8_fp32.py"
+        "tools/tests/test_export_yolov8_fp32.py",
+        "boards/radxa-rock5b/tests/test_dedicated_capture_launcher.py"
       ],
       "acceptance_heading": "## 验收标准",
       "test_heading": "## 自动化测试",
@@ -430,7 +434,8 @@
       ],
       "experiment": "engineering/cpp-rknn-classify.md",
       "tests": [
-        "tools/tests/test_resource_tools.py"
+        "tools/tests/test_resource_tools.py",
+        "tools/tests/test_engineering_image_io.py"
       ],
       "acceptance_heading": "## 验收标准",
       "test_heading": "## 自动化测试",
