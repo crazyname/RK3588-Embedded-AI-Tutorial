@@ -15,6 +15,7 @@ class RKLLMReportTests(unittest.TestCase):
         self.path = Path(self.tmp.name) / "run.json"
         self.sample = {
             "backend": "RKLLM C API", "model_file": "/models/a.rkllm",
+            "max_new_tokens": 128, "context_tokens": 2048, "model_size_bytes": 10240,
             "initialized_ms": 150, "run_wall_ms": 500,
             "first_text_chunk_ms": 55, "text_chunks": 4, "output_utf8_bytes": 64,
             "finished_callback": True, "run_status": 0, "callback_error": False,
@@ -71,6 +72,18 @@ class RKLLMReportTests(unittest.TestCase):
         other.write_text(json.dumps({**self.sample, "model_file": "/models/b.rkllm"}))
         with self.assertRaisesRegex(ValueError, "different model"):
             summarize([self.path, other])
+
+    def test_reject_different_context(self):
+        second = self.path.parent / "other.json"
+        second.write_text(json.dumps({**self.sample, "context_tokens": 4096}))
+        with self.assertRaisesRegex(ValueError, "inconsistent context_tokens"):
+            summarize([self.path, second])
+
+    def test_reject_invalid_config(self):
+        self.sample["max_new_tokens"] = True
+        self.save()
+        with self.assertRaisesRegex(ValueError, "max_new_tokens"):
+            load(self.path)
 
     def test_reject_duplicate_keys(self):
         self.path.write_text('{"backend":"RKLLM C API","backend":"fake"}')
