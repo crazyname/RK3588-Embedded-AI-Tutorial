@@ -155,15 +155,18 @@ python3 -c "import json; g=json.load(open('build/lesson12/graph.json')); print(g
 
 **验收边界：** 用同一真实 ONNX 模型生成 graph.json，能在 Netron 中指出图输入、至少一个算子和输出，且不把 checker 当成 NPU 支持认证。
 
-## 配套可运行源码
+## 配套可运行源码（第 12 讲）
 
-- [本讲独立操作手册（只含运行、参数与验收）](../examples/notes/lesson_12.md)
+- [本讲独立 Python 实例](../examples/lesson_12.py) · [操作手册与参数说明](../examples/notes/lesson_12.md)
+- [通用依赖与课程代码说明](../examples/README.md)
 
-- [本节可运行 Python 实验](../examples/lesson_12.py)（实现于 [labs.py](../examples/labs.py)）
-- [真实 SDK / 模型程序：onnx_reference.py](../examples/hardware/onnx_reference.py)
-- [代码环境、依赖、输入输出及使用说明](../examples/README.md)
+在仓库根目录运行：
 
-先从仓库根目录运行 `python3 examples/lesson_12.py --help`。需要 SDK 的程序只有在提供真实模型、匹配的 Toolkit2/ONNX Runtime 与正确输入后才能验证；不能把便携算法演示当作 NPU 性能实测。
+```bash
+python3 examples/lesson_12.py --onnx /path/to/model.onnx --output build/lesson12/graph.json
+```
+
+**如何验收：** 使用 ONNX checker 与 shape_inference 生成真实模型算子/张量信息，与 Netron 比对。 命令中的示例路径需换成真实输入；需要 Rockchip 设备时不得把 PC 输出当成实机结果。
 
 ## 原始字幕（仅供核对）
 
