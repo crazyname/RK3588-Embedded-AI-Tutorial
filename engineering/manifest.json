@@ -435,7 +435,8 @@
       "experiment": "engineering/cpp-rknn-classify.md",
       "tests": [
         "tools/tests/test_resource_tools.py",
-        "tools/tests/test_engineering_image_io.py"
+        "tools/tests/test_engineering_image_io.py",
+        "examples/hardware/tests/test_native_classification.py"
       ],
       "acceptance_heading": "## 验收标准",
       "test_heading": "## 自动化测试",
@@ -463,7 +464,8 @@
       ],
       "experiment": "engineering/cpp-zero-copy.md",
       "tests": [
-        "boards/radxa-rock5b/tests/test_board_tools.py"
+        "boards/radxa-rock5b/tests/test_board_tools.py",
+        "examples/hardware/tests/test_native_classification.py"
       ],
       "acceptance_heading": "## 验收标准",
       "test_heading": "## 自动化测试",
