@@ -110,6 +110,48 @@ for h,w in ((320,320),(640,640)):
 
 > 版本敏感功能请依赖当前 SDK 的官方文档；实际运行结果需要用户在目标板上验证。
 
+## 源码精读：关键 API、张量与验收
+
+动态 shape 指图的某些轴可以在运行时变化。lesson_21.py 在 ONNX Runtime 下用同一模型和多个实际 NPY 进行不同形状的推理，并保留每次 shape/耗时/输出形状；它不证明 RKNN 支持相同动态范围。
+
+**数据路径：** `具有动态维度的 ONNX` → `输入 A 的 NPY` → `输入 B 的 NPY` → `相同 session.run` → `shapes.csv`。
+
+### 1. 从 ONNX 检查符号维度
+
+**输入：** session.get_inputs()[0].shape。**输出：** 含固定整数和动态符号的 shape 列表。
+
+ONNX 的 dim_param 可能是 height/width 等符号，具体允许什么范围取决于模型算子和框架。不能仅仅将固定尺寸模型喂新尺寸称为动态。
+
+```python
+session = ort.InferenceSession('/path/to/dynamic.onnx')
+print(session.get_inputs()[0].shape)
+```
+
+### 2. 对同一模型运行两个真实输入形状
+
+**输入：** 两个与图 rank/dtype 匹配的 .npy 输入。**输出：** 每个 shape 的实际输出张量。
+
+脚本依次调用 session.run，把一次 Python API 墙钟时间记到 CSV；这些毫秒含 Runtime 开销，并非 NPU 专用延迟。
+
+```bash
+python3 examples/lesson_21.py --onnx /path/to/dynamic.onnx --inputs /path/to/x320.npy /path/to/x640.npy --csv build/lesson21/shapes.csv
+```
+
+### 3. RKNN 是否支持动态输入要另行验证
+
+**输入：** Toolkit2 版本、允许输入形状集合与目标板 Runtime。**输出：** SDK 认可的配置，或失败节点/不支持原因。
+
+ONNX 模型声明动态维度不等于 RKNN 编译允许任意 shape；实际 RKNN 动态形状可能受版本、形状列表与内存约束。
+
+```python
+# 首先用 ONNX Runtime 核对每个输入尺寸的输出
+# 再查当前 RKNN-Toolkit2 release 的动态 shape 限制
+```
+
+**数据例题：** ONNX 同一模型接受 (1,3,320,320) 与 (1,3,640,640) 时，CSV 应包含两行不同 input_shape；若模型为固定 640×640，传 320 应报错而不是静默 resize。
+
+**验收边界：** 提交真实动态 ONNX、至少两份合法形状的输入和 shapes.csv；不将 ONNX 成功等同于 RKNN 动态 shape 上板能力。
+
 ## 配套可运行源码
 
 - [本讲独立操作手册（只含运行、参数与验收）](../examples/notes/lesson_21.md)
