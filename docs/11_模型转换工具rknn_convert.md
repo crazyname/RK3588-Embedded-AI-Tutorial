@@ -110,6 +110,48 @@ rknn_convert 命令参数最可信的来源是？
 
 > 以当前官方 SDK 的文档和模型兼容矩阵为准；教学示例并非用户开发板的实际运行认证。
 
+## 源码精读：关键 API、张量与验收
+
+第 11 讲的 lesson_11.py 是一个小型批量转换器：从 JSON jobs 依次调用同一个 convert_onnx.py，保存每个模型的实际转换日志。它不是替代 RKNN-Toolkit2 的魔法转换格式。
+
+**数据路径：** `jobs.json` → `单项 ONNX + mean/std` → `convert_onnx.py` → `task_XX.log` → `manifest.json`。
+
+### 1. jobs.json：每个转换任务的输入协议
+
+**输入：** 数组内每项包含 onnx、output、mean、std。**输出：** 明确文件名与可选 quantize/dataset 的任务表。
+
+model.onnx 需要真实存在；mean/std 要根据该图的训练输入规定填写，不能把所有模型统一写成 0/1。
+
+```json
+[
+  {"onnx":"build/tiny.onnx","output":"build/tiny.rknn","mean":"0,0,0","std":"1,1,1"}
+]
+```
+
+### 2. subprocess.run：逐项执行官方 Toolkit2 API 封装
+
+**输入：** 转换任务 cmd 数组。**输出：** 真实 exit_code 与 stdout/stderr 合并日志。
+
+转换器实际调用 config/load_onnx/build/export_rknn，失败会记入日志并导致脚本退出非零。日志成功不一定表明 RK3588 能跑。
+
+```bash
+python3 examples/lesson_11.py --jobs /path/to/jobs.json --log-dir build/lesson11
+```
+
+### 3. manifest.json：分清成功和失败
+
+**输入：** 每项返回码、模型输出路径和日志路径。**输出：** 每个任务的运行摘要；不能反推出真实量化精度。
+
+转换通过后还要跑后续模拟/板端推理，并用相同输入做数值或任务指标对照。INT8 必须有代表性校准数据。
+
+```bash
+python3 -c "import json; print(json.load(open('build/lesson11/manifest.json')))"
+```
+
+**数据例题：** 同一项目 2 个模型：A 转换成功、B 因不支持算子失败。manifest 必须保留两项不同 exit_code，不得只保留成功的 A 再声称全部模型可部署。
+
+**验收边界：** 在具备 Toolkit2 的真实主机上保存逐任务日志、输出模型及成功/失败清单；在无 Toolkit2 时先完成 JSON 配置理解。
+
 ## 配套可运行源码
 
 - [本讲独立操作手册（只含运行、参数与验收）](../examples/notes/lesson_11.md)
