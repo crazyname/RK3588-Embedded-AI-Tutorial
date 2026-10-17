@@ -79,9 +79,9 @@ def audit():
         if not isinstance(depth.get("case"),dict):
             errors.append(f"{n:02d}: missing applied case")
 
-        # Required teaching walkthroughs: P0 toolkit/inference/metrics and core deployment lessons.
-        # This protects teaching alignment without adding hardware mocks or regression machinery.
-        if n in (5, 8, 9, 13, 14, 15, 16) or 24 <= n <= 34:
+        # All 35 continuously scrolling lessons must match their Markdown code walkthroughs.
+        # Static content checks never claim ROCK 5B or RKNN runtime was exercised.
+        if 0 <= n < 35:
             walk=depth.get("walkthrough")
             md_path=ROOT/"docs"/(item["slug"]+".md")
             if not isinstance(walk,dict) or len(walk.get("steps",[]))<3:
@@ -96,6 +96,15 @@ def audit():
                     api=step.get("api","")
                     if not api or api not in markdown:
                         errors.append(f"{n:02d}: API explanation not synced: {api}")
+                    if not all(isinstance(step.get(k),str) and step[k].strip() for k in ("input","output","why","code")):
+                        errors.append(f"{n:02d}: incomplete input/output/explanation/code for {api}")
+                if not isinstance(walk.get("flow"),list) or len(walk["flow"])<3:
+                    errors.append(f"{n:02d}: missing learning data flow")
+                if not walk.get("acceptance"):
+                    errors.append(f"{n:02d}: missing practical acceptance boundary")
+                example=f"../examples/lesson_{n:02d}.py"
+                if example not in markdown:
+                    errors.append(f"{n:02d}: Markdown missing executable lesson source link")
     if len(catalog)!=35:
         errors.append(f"Expected 35 lessons, found {len(catalog)}")
     print(f"HTML lessons checked={len(catalog)}, problems={len(errors)}")
