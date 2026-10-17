@@ -123,6 +123,25 @@ def audit():
                             errors.append(f"{n:02d}: missing actual demonstration/check command for phase {i}")
                     if phases[1].get("command","").strip().endswith(" --help"):
                         errors.append(f"{n:02d}: demonstration must run the lesson, not only --help")
+    # The pages share one renderer and one stylesheet: guard the compact
+    # handbook layout and the controls learners rely on across all lessons.
+    renderer=(ROOT/"courseware/assets/player.js").read_text(encoding="utf8")
+    stylesheet=(ROOT/"courseware/assets/style.css").read_text(encoding="utf8")
+    index=(ROOT/"courseware/index.html").read_text(encoding="utf8")
+    for feature in ('guide-observe','guide-diagnose','api-contract',
+                    'diagnostic-row','copy-code','checkQuiz','data-check',
+                    'localStorage','outline-item'):
+        if feature not in renderer:
+            errors.append(f"Shared HTML renderer missing {feature}")
+    for feature in ('/* Compact MkDocs handbook','body.continuous',
+                    '.continuous .lesson-section{','.continuous .code-wrap',
+                    '.continuous .slide-outline','.catalog-handbook .lesson-card'):
+        if feature not in stylesheet:
+            errors.append(f"Compact handbook CSS missing {feature}")
+    if 'class="catalog-handbook"' not in index:
+        errors.append("Course index must use compact handbook layout")
+    if 'panel good' in renderer or '课堂安排' in renderer:
+        errors.append("Course renderer still contains obsolete large-card/filler layout")
     if len(catalog)!=35:
         errors.append(f"Expected 35 lessons, found {len(catalog)}")
     print(f"HTML lessons checked={len(catalog)}, problems={len(errors)}")
