@@ -160,15 +160,19 @@ np.savez('build/rknn_output.npz', **{'output_'+str(i):v for i,v in enumerate(out
 
 **验收边界：** 明确记录 target=simulator 还是板端 rk3588；只有真实板端运行并保存输入和输出才可计入 NPU 实验。
 
-## 配套可运行源码
+## 配套可运行源码（第 13 讲）
 
-- [本讲独立操作手册（只含运行、参数与验收）](../examples/notes/lesson_13.md)
+- [本讲独立 Python 实例](../examples/lesson_13.py) · [操作手册与参数说明](../examples/notes/lesson_13.md)
+- [通用依赖与课程代码说明](../examples/README.md)
+- [关联工程实验手册](../engineering/onnx-toolchain.md)
 
-- [本节可运行 Python 实验](../examples/lesson_13.py)（实现于 [labs.py](../examples/labs.py)）
-- [真实 SDK / 模型程序：onnx_reference.py](../examples/hardware/onnx_reference.py)
-- [代码环境、依赖、输入输出及使用说明](../examples/README.md)
+在仓库根目录运行：
 
-先从仓库根目录运行 `python3 examples/lesson_13.py --help`。需要 SDK 的程序只有在提供真实模型、匹配的 Toolkit2/ONNX Runtime 与正确输入后才能验证；不能把便携算法演示当作 NPU 性能实测。
+```bash
+python3 examples/lesson_13.py --rknn /path/to/model.rknn --input-npy /path/to/input.npy --target simulator --runs 3
+```
+
+**如何验收：** Toolkit2 真实运行 RKNN 模拟推理、保存张量；simulator 不代表 RK3588 硬件 FPS。 命令中的示例路径需换成真实输入；需要 Rockchip 设备时不得把 PC 输出当成实机结果。
 
 ## 原始字幕（仅供核对）
 
