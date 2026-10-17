@@ -20,6 +20,19 @@ cmake -S examples/hardware -B build/native-rknn -DRKNN_INCLUDE_DIR=/actual/rknn/
 
 板端编译与执行必须结合 [ROCK 5B 手册](../boards/radxa-rock5b/README.md) 和 [C++ RGA 输入对照](../boards/radxa-rock5b/CPP_RGA_IO_BENCHMARK.md)。构建前替换 SDK include/lib 为实际 ARM64 文件；保留 stdout、stderr、输入图、模型哈希及错误日志。
 
+## 最短 C++ 实操顺序
+
+先用第 24/27 讲的同一张图片和同一个 RKNN 模型跑通 Python Lite2，记录输入协议和 Top-K；再在 ROCK 5B 用匹配的 RKNPU2 ARM64 头文件、`librknnrt.so` 完成 CMake 构建。
+
+```bash
+cmake -S examples/hardware -B build/native-rknn \
+  -DRKNN_INCLUDE_DIR=/actual/rknn/include \
+  -DRKNN_LIB=/actual/arm64/librknnrt.so
+cmake --build build/native-rknn -j2
+```
+
+用 `cmake --build` 输出确认生成的分类程序路径，按 [板端 C++ 教程](../boards/radxa-rock5b/CPP_RGA_IO_BENCHMARK.md) 提供的参数运行。理解 `rknn_init`→输入张量属性查询→`rknn_inputs_set`→`rknn_run`→`rknn_outputs_get/release`→`rknn_destroy`。比较相同输入的 Python/C++ 结果，输出 dtype/shape、预处理协议或类别不一致则先排查，不做虚构性能对比。
+
 ## 自动化测试
 
 - [原生 C++ 分类/内存绑定假 SDK 行为测试](../examples/hardware/tests/test_native_classification.py)：编译真实 C++ 主程序，在显式 FAKE SDK 上运行成功和错误输入路径；不代表实机 NPU
