@@ -141,8 +141,8 @@
       ],
       "lesson_pages": [
         {
-          "md": "docs/30_yolov26模型部署(从0到1版)_数据集构建与模型训练.md",
-          "html": "courseware/lessons/30_yolov26模型部署(从0到1版)_数据集构建与模型训练.html"
+          "md": "docs/31_yolov8模型部署(优化加速版).md",
+          "html": "courseware/lessons/31_yolov8模型部署(优化加速版).html"
         }
       ]
     },
@@ -171,8 +171,8 @@
           "html": "courseware/lessons/25_RKNPU2—通用C API.html"
         },
         {
-          "md": "docs/30_yolov26模型部署(从0到1版)_数据集构建与模型训练.md",
-          "html": "courseware/lessons/30_yolov26模型部署(从0到1版)_数据集构建与模型训练.html"
+          "md": "docs/31_yolov8模型部署(优化加速版).md",
+          "html": "courseware/lessons/31_yolov8模型部署(优化加速版).html"
         }
       ]
     },
@@ -200,8 +200,8 @@
           "html": "courseware/lessons/26_RKNPU2—零拷贝C API.html"
         },
         {
-          "md": "docs/30_yolov26模型部署(从0到1版)_数据集构建与模型训练.md",
-          "html": "courseware/lessons/30_yolov26模型部署(从0到1版)_数据集构建与模型训练.html"
+          "md": "docs/31_yolov8模型部署(优化加速版).md",
+          "html": "courseware/lessons/31_yolov8模型部署(优化加速版).html"
         }
       ]
     },
@@ -254,8 +254,8 @@
           "html": "courseware/lessons/26_RKNPU2—零拷贝C API.html"
         },
         {
-          "md": "docs/30_yolov26模型部署(从0到1版)_数据集构建与模型训练.md",
-          "html": "courseware/lessons/30_yolov26模型部署(从0到1版)_数据集构建与模型训练.html"
+          "md": "docs/31_yolov8模型部署(优化加速版).md",
+          "html": "courseware/lessons/31_yolov8模型部署(优化加速版).html"
         }
       ]
     },
@@ -282,8 +282,8 @@
           "html": "courseware/lessons/15_模型性能评估.html"
         },
         {
-          "md": "docs/30_yolov26模型部署(从0到1版)_数据集构建与模型训练.md",
-          "html": "courseware/lessons/30_yolov26模型部署(从0到1版)_数据集构建与模型训练.html"
+          "md": "docs/31_yolov8模型部署(优化加速版).md",
+          "html": "courseware/lessons/31_yolov8模型部署(优化加速版).html"
         }
       ]
     },
@@ -301,7 +301,7 @@
       "test_heading": "## 自动化测试",
       "hardware_heading": "## 验证边界",
       "lesson_ids": [
-        34
+        32
       ],
       "lesson_pages": [
         {
@@ -324,7 +324,7 @@
       "test_heading": "## 自动化测试",
       "hardware_heading": "## 验证边界",
       "lesson_ids": [
-        34
+        32
       ],
       "lesson_pages": [
         {
@@ -347,7 +347,7 @@
       "test_heading": "## 自动化测试",
       "hardware_heading": "## 验证边界",
       "lesson_ids": [
-        34
+        32
       ],
       "lesson_pages": [
         {
@@ -420,8 +420,8 @@
           "html": "courseware/lessons/29_yolov5模型部署实战.html"
         },
         {
-          "md": "docs/30_yolov26模型部署(从0到1版)_数据集构建与模型训练.md",
-          "html": "courseware/lessons/30_yolov26模型部署(从0到1版)_数据集构建与模型训练.html"
+          "md": "docs/31_yolov8模型部署(优化加速版).md",
+          "html": "courseware/lessons/31_yolov8模型部署(优化加速版).html"
         }
       ]
     },
