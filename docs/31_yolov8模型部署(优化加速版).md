@@ -111,6 +111,20 @@ Model Zoo 的 benchmark 可能只统计特定条件下的推理时间，不能�
 
 > 资料会随发布版本更新；请先阅读官方当前说明，不要对未经验证的模型或者量化格式直接保证板端兼容。
 
+## 工程机理与知识深化
+
+### 检测或生成模型的接口协议
+
+优化版 YOLOv8 RKNN 的检测头常含多尺度的框分布与类别分数，匹配的 Model Zoo 输出可能为六或九个张量。框分布的 64 个通道可表示四条边各 16 个 bins，经 DFL softmax 后求期望距离，再结合网格与 stride 转成输入图像空间的 xyxy；最后需要类别筛选、NMS、letterbox 逆变换。任何输出数量、shape 或 dtype 不符合协议时都应拒绝继续解码。
+
+### 数学推导与现场案例
+
+将原图 1280×720 letterbox 到 640×640，则 ratio=0.5，竖直补边 140。模型空间 xyxy=(160,190,480,390) 去掉 padding 后再除 ratio，得到原图 (320,100,960,500)。若先除 ratio 再减 pad，会造成垂直偏移错误。不同类别 NMS 与 IoU 阈值会改变最终框数。
+
+### 版本、实验边界与评估标准
+
+两条路线必须分清：源码 `lesson_33.py` 对比的是 PC Ultralytics 两个真实权重的时延；ROCK 5B 真正的摄像头 YOLOv8 用 `camera_yolov8_lite.py` 与独立后处理文件。板端验收记录一帧图、模型输出头 shape、DFL/NMS 框和分段耗时。
+
 ## 源码精读：关键 API、张量与验收
 
 第 31 讲采用 Rockchip Model Zoo 优化版 YOLOv8 的六或九个输出头，在 RKNNLite 摄像头程序中通过 letterbox、DFL、NMS 还原真实物体的坐标。

@@ -112,6 +112,20 @@ model.export(format='onnx', imgsz=640, dynamic=False)
 
 > 资料会随发布版本更新；请先阅读官方当前说明，不要对未经验证的模型或者量化格式直接保证板端兼容。
 
+## 工程机理与知识深化
+
+### 检测或生成模型的接口协议
+
+从训练权重到 RKNN 至少跨三种不同条件：Ultralytics 导出能产生 ONNX，ONNX checker 验证图结构，Toolkit2 才能尝试将算子编译成面向 rk3588 的 `.rknn`。编译通过还需在 ROCK 5B 由真实 Runtime 运行，并采用与该 YOLO26 导出检测头严格对应的 decode/NMS。与 YOLOv8 Model Zoo 优化版不同，普通 YOLO26 不一定拥有 6/9 个 DFL 输出头。
+
+### 数学推导与现场案例
+
+`onnx.checker.check_model()` 成功只说明 ONNX protobuf/图合法；Toolkit2 仍可能因不支持的算子或动态 shape 在 load_onnx/build 阶段失败。若输出只有一个经过框架后处理的张量，强行将它拆成 `[1,64,H,W]` 的 DFL 分支属于协议错误。
+
+### 版本、实验边界与评估标准
+
+分别归档 .pt 权重来源、ONNX opset/输入输出、Toolkit2 build 日志、RKNN 文件哈希及板端实测。当前课程第 30 讲专题三以导出和兼容性验证为闭环，不把未完成的 YOLO26 C++ 后处理写成已部署成功。
+
 ## 源码精读：关键 API、张量与验收
 
 第 30 讲专题三需要分清三种成功：从 .pt 导出 ONNX 成功、RKNN build 成功、目标板检测后处理成功。仓库 lesson_32.py 覆盖前两段，第三段仍须模型专属验证。

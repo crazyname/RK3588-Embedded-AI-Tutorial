@@ -115,6 +115,20 @@ print(f'1.5B 参数 4-bit 权重理论下界约 {weight_gb:.2f} GB')
 
 > 资料会随发布版本更新；请先阅读官方当前说明，不要对未经验证的模型或者量化格式直接保证板端兼容。
 
+## 工程机理与知识深化
+
+### 检测或生成模型的接口协议
+
+RKLLM 的模型格式、C API 与 CNN RKNN 不同。`rkllm_createDefaultParam` 填入路径和生成限制，`rkllm_init` 创建句柄，`rkllm_run` 传入 prompt 并触发回调；`RKLLM_RUN_NORMAL` 返回文本分片，`RKLLM_RUN_FINISH` 标识生成结束，出错状态应单独报告。字符串分片并非一定对应一个 tokenizer token，不能用回调次数计算 TPS。
+
+### 数学推导与现场案例
+
+理论权重下限：1.5B 参数×4bit/8≈0.75GB（十进制），但运行时还需量化元数据、KV cache、暂存激活与 OS 内存。单靠 `.rkllm` 文件大小不能推算设备峰值内存。生成速度只有当 SDK 返回真实 tokens 与生成时长时才能计算，首次文本块墙钟耗时不自动等于严格的 TTFT。
+
+### 版本、实验边界与评估标准
+
+先核对 SoC、BSP、RKLLM Toolkit/Runtime 版本与模型格式，再用短 prompt 建立真实流式输出记录；区分外部 Demo 启动器 `lesson_34.py` 和原生 C++ RKLLM 回调程序。保存生成文本、完成状态、耗时和硬件内存，而非展示假语言模型分数。
+
 ## 源码精读：关键 API、张量与验收
 
 第 32 讲使用 RKLLM Runtime 的 C API 而非 CNN 的 RKNN API。重点是模型内存预算、C++ 回调数据、结束状态和文本分片不能当作 token 数。
