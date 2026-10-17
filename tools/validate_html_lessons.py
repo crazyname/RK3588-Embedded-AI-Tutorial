@@ -105,6 +105,24 @@ def audit():
                 example=f"../examples/lesson_{n:02d}.py"
                 if example not in markdown:
                     errors.append(f"{n:02d}: Markdown missing executable lesson source link")
+                if "## 工程机理与知识深化" not in markdown:
+                    errors.append(f"{n:02d}: book chapter lacks detailed engineering derivation")
+                guidance=depth.get("guidance")
+                phases=guidance.get("phases",[]) if isinstance(guidance,dict) else []
+                if len(phases)!=3:
+                    errors.append(f"{n:02d}: instructor guide must contain preparation, demonstration and verification")
+                else:
+                    for i,phase in enumerate(phases):
+                        if not isinstance(phase,dict):
+                            errors.append(f"{n:02d}: malformed instructor phase {i}")
+                            continue
+                        required=("title","action","observe","diagnose")
+                        if any(not isinstance(phase.get(k),str) or len(phase[k].strip())<8 for k in required):
+                            errors.append(f"{n:02d}: vague instructor instructions for phase {i}")
+                        if i>0 and (not isinstance(phase.get("command"),str) or not phase["command"].strip()):
+                            errors.append(f"{n:02d}: missing actual demonstration/check command for phase {i}")
+                    if phases[1].get("command","").strip().endswith(" --help"):
+                        errors.append(f"{n:02d}: demonstration must run the lesson, not only --help")
     if len(catalog)!=35:
         errors.append(f"Expected 35 lessons, found {len(catalog)}")
     print(f"HTML lessons checked={len(catalog)}, problems={len(errors)}")
