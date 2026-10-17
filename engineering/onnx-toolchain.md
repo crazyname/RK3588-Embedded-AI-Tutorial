@@ -27,6 +27,21 @@ python3 examples/hardware/create_tiny_onnx.py --help
 
 正式板端调用参数和外部模型文件以源码的 `--help`、板级手册及 SDK 对应 release 为准；构建命令只能证明编译步骤，不自动证明硬件运行。留存 stdout、stderr、运行时间和版本信息，不要向公开仓库推送隐私图片或提示词。
 
+## 可执行转换路径
+
+使用仓库自己的 Tiny CNN 做**工具链通路教学**（不是 MobileNet 准确率演示）。普通 PC 安装 `onnx`、`onnxruntime` 与 NumPy；RKNN 转换需额外在兼容 Linux x86_64 环境安装对应 Toolkit2。先查看各脚本参数，再执行实际转换：
+
+```bash
+python3 examples/hardware/create_tiny_onnx.py --help
+python3 examples/hardware/onnx_reference.py --help
+python3 examples/hardware/convert_onnx.py --help
+python3 examples/hardware/convert_onnx.py \
+  --onnx /path/to/tiny.onnx --output /path/to/tiny.rknn \
+  --mean 0,0,0 --std 1,1,1
+```
+
+这里 `--mean/--std` 必须与生成 ONNX 时的实际输入协议一致；例子展示不量化的转换入口，量化需另备真实校准集与 `--quantize --dataset`。保存 `load_onnx/build/export_rknn` 的执行日志、输入 shape、导出文件；单纯 ONNX Runtime 运行不等于 RKNN 转换成功。
+
 ## 自动化测试
 
 - [新增专项行为测试](../tools/tests/test_engineering_image_io.py)
