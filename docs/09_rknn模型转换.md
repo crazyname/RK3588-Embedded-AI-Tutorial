@@ -116,6 +116,51 @@ finally:
 
 > 以具体 release 的官方文档为准；本教程中的设备结果尚未在你的硬件环境实测。
 
+## 源码精读：关键 API、张量与验收
+
+第 09 讲以仓库生成的 Tiny CNN 为固定输入，演示 ONNX checker、RKNN config/load_onnx/build/export 四个阶段；先不量化，以减少变量。
+
+**数据路径：** `Tiny CNN ONNX` → `onnx.checker` → `RKNN config/load_onnx` → `build(non-INT8)` → `export .rknn`。
+
+### 1. 生成最小真实 ONNX 与固定 NCHW 输入
+
+**输入：** create_tiny_onnx.py 输出路径。**输出：** tiny.onnx + input.npy，shape=(1,3,4,4)。
+
+固定模型只是验证工具链，并不是 ImageNet 分类器。ONNX Runtime 按图计算的预期值是 [0.5,0.25]，需用真实运行验证。
+
+```bash
+python3 examples/hardware/create_tiny_onnx.py \
+  --onnx build/tiny.onnx --input-npy build/input.npy
+```
+
+### 2. 转换器 API 四步的含义
+
+**输入：** onnx model、target_platform='rk3588'、mean/std。**输出：** 成功时编译并导出 .rknn。
+
+config 约束目标平台和预处理，load_onnx 解析图，build 编译/可选量化，export 序列化模型；某一步返回非零不可跳过。
+
+```python
+r.config(target_platform='rk3588', mean_values=[[0,0,0]], std_values=[[1,1,1]])
+r.load_onnx(model='build/tiny.onnx')
+r.build(do_quantization=False)
+r.export_rknn('build/tiny.rknn')
+```
+
+### 3. 区分编译与设备运行
+
+**输入：** 真实 .rknn 文件与 Toolkit2 版本。**输出：** 编译日志和导出模型路径。
+
+ONNX checker 成功不意味着 RKNN build 成功；RKNN 导出成功也不意味着 ROCK 5B 的 NPU 已执行。
+
+```bash
+python3 examples/lesson_09.py --onnx build/tiny.onnx \
+  --output build/tiny.rknn --mean 0,0,0 --std 1,1,1
+```
+
+**数据例题：** 如果 RKNN build 失败：先保存错误算子、opset、输入 layout、Toolkit2 release，而不是刷板端驱动。mean/std 设置必须与模型输入的 float 值约定一致。
+
+**验收边界：** 分别记录 ONNX 校验、真实 RKNN build 返回码和导出结果；未安装 Toolkit2 的 PC 只能完成前半段。
+
 ## 配套可运行源码
 
 - [本讲独立操作手册（只含运行、参数与验收）](../examples/notes/lesson_09.md)
