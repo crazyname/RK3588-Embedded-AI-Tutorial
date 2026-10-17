@@ -2,6 +2,10 @@
 
 > 工程编号：`rkllm-native`。本页面向实际操作，与课程 `docs/` 中的概念讲解区分；所有设备测试须由使用者在真实 ROCK 5B 上执行。
 
+## 对应课程讲义与 HTML 课件
+
+- [Markdown：docs/32_Deepseek_Qwen大模型部署.md](../docs/32_Deepseek_Qwen大模型部署.md) · [HTML 连续滚动课件](../courseware/lessons/32_Deepseek_Qwen大模型部署.html)
+
 ## 源码清单
 
 - [`examples/hardware/rkllm/rkllm_stream.cpp`](../examples/hardware/rkllm/rkllm_stream.cpp)
