@@ -31,6 +31,8 @@ python3 -m unittest discover -s tools/tests -p test_cpp_yolo_stream.py -v
 
 ## 自动化测试
 
+- [C++ 视频主程序 Fake SDK 原生可执行测试](../examples/hardware/tests/test_native_video_pipeline.py)：编译后执行 `--help`、不存在的模型和摄像头等失败路径；没有伪造成功采集。
+
 对应可审查的测试文件（某些为共用测试文件；**不保证每个子功能都已覆盖**）：
 
 - [`tools/tests/test_cpp_yolo_stream.py`](../tools/tests/test_cpp_yolo_stream.py)
