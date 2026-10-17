@@ -66,10 +66,16 @@ def audit(root=ROOT, manifest_path=None):
         if not isinstance(lesson_pages, list) or not lesson_pages or not isinstance(lesson_ids, list) or len(lesson_ids) != len(lesson_pages):
             failures.append(f"{pid}: missing or inconsistent lesson mapping")
         else:
-            for page in lesson_pages:
+            for lesson_id, page in zip(lesson_ids, lesson_pages):
                 if not isinstance(page, dict):
                     failures.append(f"{pid}: malformed lesson mapping")
                     continue
+                # lesson_ids name the VIDEO lesson, not the 0-34 source/catalog index.
+                # In particular: three lesson-30 pages, lesson-31 YOLOv8, lesson-32 RKLLM.
+                if not isinstance(lesson_id, int) or not 0 <= lesson_id <= 32:
+                    failures.append(f"{pid}: invalid video lesson number {lesson_id}")
+                elif any(not isinstance(page.get(k), str) or not Path(page[k]).name.startswith(f"{lesson_id:02d}_") for k in ("md", "html")):
+                    failures.append(f"{pid}: mismatched lesson number {lesson_id} vs page name")
                 for key, prefix, suffix in (("md", "docs/", ".md"), ("html", "courseware/lessons/", ".html")):
                     target = page.get(key)
                     if not isinstance(target, str) or not target.startswith(prefix) or not target.endswith(suffix) or ".." in Path(target).parts:
