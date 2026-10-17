@@ -171,6 +171,8 @@ jobs:
           assert bad.returncode!=0,bad.stdout
           print('C++ control flow verified using mock SDK, NOT a real NPU run')
           PY
+      - name: Dedicated native classifier and memory-binding control-flow tests (FAKE SDK)
+        run: python -m unittest discover -s examples/hardware/tests -p 'test_native_classification.py' -v
       - name: Syntax-check RGA preprocessing against official librga headers
         run: |
           git clone --quiet --depth 1 --filter=blob:none --sparse https://github.com/airockchip/librga.git build/librga
