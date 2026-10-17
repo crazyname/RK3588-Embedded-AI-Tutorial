@@ -13,6 +13,14 @@
 
 PC 可先生成仓库自带的真实 ONNX Tiny CNN 并运行 ONNX Runtime。RKNPU 和 RKLLM 仍需要匹配的开发板、SDK 与模型。
 
+## 课程与源码工程同步总览（17 项工程）
+
+- [连续滚动的 17 项工程 HTML 实验索引](engineering/index.html)
+- [工程映射清单：源码、专门实验 MD、测试与验收入口](engineering/manifest.json)
+- [自动检测新增工程是否遗漏文档或测试链接](tools/audit_engineering.py)
+
+在仓库根目录执行 `python3 tools/audit_engineering.py --strict`。GitHub Actions 将同步检查这一映射，以免新增 `boards/radxa-rock5b/apps|tools` 或 `examples/hardware` 工程时忘记建立实验手册。**注意：机器审计只检查文件映射与必要章节，不检查测试是否真的运行了 NPU，也不证明已有工程完全具备行为覆盖。** 有些历史 C++ 工程仍缺专属功能测试，已在对应实验手册中明确说明。
+
 ## ROCK 5B 16GB：官方手册驱动的板级实战（新增）
 
 课程选定 **Radxa ROCK 5B（原版，非 5B+）16GB** 作为参考目标板，并依据 Radxa 官方中文文档、系统镜像、电源要求、RKNN 安装和 YOLOv8/MobileNet 部署教程编写了板级实践。
