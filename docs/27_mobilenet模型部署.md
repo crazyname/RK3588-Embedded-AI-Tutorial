@@ -167,35 +167,12 @@ p = p / p.sum()
 
 ## 配套可运行源码
 
-- [本讲独立操作手册（只含运行、参数与验收）](../examples/LESSON_27.md)
+- [本讲 Python 课程实例](../examples/lesson_27.py) · [独立操作说明](../examples/LESSON_27.md)
+- [核心 SDK / 板端源码](../examples/lesson_27.py) · [完整工程实验手册](../engineering/mobilenet-image.md)
 
-**第 27 讲已重写为实际分类推理工程**，不再是原来的 `from labs import main` 包装脚本。程序直接读取 JPG/PNG，完成明确的颜色、缩放、归一化、布局处理，用 ONNX Runtime（PC）或 RKNNLite（RK3588）执行真实模型，最后输出 Top-5 与 JSON/NPZ。
+`lesson_27.py` 可使用 ONNX Runtime 进行 PC 真实模型推理，也可在匹配的 ROCK 5B 环境下使用 RKNNLite；预处理与标签协议以真实模型为准。
 
-- [第 27 讲完整 MobileNet 推理源码（支持 ONNX 和 RKNN）](../examples/lesson_27.py)
-- [第 27 讲专项使用说明及可重复验证步骤](../examples/LESSON_27.md)
-
-在开发机使用官方示例的 `mobilenetv2-12.onnx` 与 `synset.txt`：
-
-```bash
-python3 examples/lesson_27.py --backend onnx \
-  --model mobilenetv2-12.onnx --image bell.jpg --labels synset.txt \
-  --width 224 --height 224 --topk 5
-```
-
-在 RK3588 上使用配套转换的 `mobilenetv2-12.rknn`：
-
-```bash
-python3 examples/lesson_27.py --backend rknn \
-  --model mobilenetv2-12.rknn --image bell.jpg --labels synset.txt \
-  --width 224 --height 224 --topk 5
-```
-
-两条命令要求模型与图片文件确实存在，且模型、预处理、标签与 SDK 版本配套。RKNN 默认使用 uint8 NHWC，前提是模型转换时已配置相应 mean/std；实际板端结果尚未验证。
-- [真实 SDK / 板端代码：lite_infer.py](../examples/hardware/lite_infer.py)
-- [真实 SDK / 板端代码：prepare_image.py](../examples/hardware/prepare_image.py)
-- [环境准备、运行命令及限制](../examples/README.md)
-
-从根目录执行 `python3 examples/lesson_27.py --help`。RKNPU2 C/C++、Lite2 与零拷贝相关环节需要实际 RK3588 SDK/模型/驱动；当前仅提供完整单输入分类 C API 程序，零拷贝专用 API 还应对照官方同版本示例，不把一般 C API 误称为零拷贝实现。
+**教学与实测分界：** 先理解本讲“源码精读”中各步骤的张量与返回值，再按实验手册执行。没有真实模型、匹配 SDK、ROCK 5B 和实际输出日志时，不标记 NPU 实测通过。
 
 ## 原始字幕附录（仅供核对）
 
