@@ -4,7 +4,7 @@
 
 ## 对应课程讲义与 HTML 课件
 
-- [Markdown：docs/30_yolov26模型部署%28从0到1版%29_数据集构建与模型训练.md](../docs/30_yolov26模型部署%28从0到1版%29_数据集构建与模型训练.md) · [HTML 连续滚动课件](../courseware/lessons/30_yolov26模型部署%28从0到1版%29_数据集构建与模型训练.html)
+- [Markdown：docs/31_yolov8模型部署(优化加速版).md](../docs/31_yolov8模型部署(优化加速版).md) · [HTML 连续滚动课件](../courseware/lessons/31_yolov8模型部署(优化加速版).html)
 
 ## 源码清单
 
@@ -22,6 +22,21 @@ python3 boards/radxa-rock5b/apps/camera_yolov8_lite.py --help
 ```
 
 正式板端调用参数和外部模型文件以源码的 `--help`、板级手册及 SDK 对应 release 为准；构建命令只能证明编译步骤，不自动证明硬件运行。留存 stdout、stderr、运行时间和版本信息，不要向公开仓库推送隐私图片或提示词。
+
+## 最小完整板端实验
+
+使用 [YOLOv8 优化版模型](../boards/radxa-rock5b/CAMERA_YOLOV8.md) 的约定输出头，不可直接替换成 YOLO26 或普通 Ultralytics 导出的任意 RKNN。USB 摄像头应可读取 `/dev/video0`，模型输入为 640。
+
+```bash
+python3 boards/radxa-rock5b/tools/usb_camera_check.py --help
+python3 boards/radxa-rock5b/apps/camera_yolov8_lite.py \
+  --model /path/to/optimized-yolov8n.rknn \
+  --source /dev/video0 --size 640 --frames 30 --warmup 0 \
+  --labels boards/radxa-rock5b/assets/coco80.txt \
+  --jsonl /tmp/yolov8-frames.jsonl --confirm-optimized-yolov8
+```
+
+数据链：V4L2 捕获 BGR 帧→RGB/letterbox（保留缩放和 padding）→RKNN 推理→对应输出头 DFL 解码→阈值/NMS→按 padding 与缩放还原原图像素坐标。验收至少检查一帧类别索引在 0–79 内、框未越界，并保留真实 JSONL。若没有检测目标，可仅判定采集与推理链路正常，不能编造检出框。
 
 ## 自动化测试
 
