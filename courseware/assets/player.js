@@ -17,10 +17,7 @@ const name=data.title||m.title,intro=data.intro||"把理论、转换与运行验
 add("OPENING","本讲课程介绍",'<div class="eyebrow">'+esc(m.unit)+'</div><h1>'+esc(name)+'</h1><p class="big">'+fmt(intro)+'</p><div class="stats"><div><strong>'+m.duration+'<small> 分钟</small></strong><small>建议课堂时间</small></div><div><strong>'+data.goals.length+'</strong><small>目标数量</small></div><div><strong>'+data.steps.length+'</strong><small>实践步骤</small></div></div><p class="footnote">上下滚动阅读 · N 切换讲师提示 · P 打印</p>',"问学生：本节课最想解决的一个实际工程问题是什么？");
 add("SCENARIO","从一个工程问题出发",'<div class="panel good"><span class="pill">课堂情境</span><h2>'+fmt(extra.scene||intro)+'</h2></div>'+cards(['<h3>学前预测</h3><p>如果跳过本讲，后续模型部署最可能在什么环节失败？</p>','<h3>如何证明成功</h3><p>除了程序退出码，还应保留输入、输出、版本及过程日志。</p>']),"用思维实验引导学生讨论，需要可观察结果而非猜测。");
 add("GOALS","学习目标与验收方向",'<div class="panel">'+list(data.goals)+'</div><p class="footnote">每个目标对应可被检查的解释、操作、图示或运行证据。</p>',"把目标转为三个问题：知道什么、能够做什么、如何验证。");
-add("CLASS","课堂安排",'<div class="three-cols">'+[["10%","问题引导","从工程场景切入"],["30%","原理与架构","术语、机制和限制"],["40%","教师演示 / 学生实操","对照步骤逐一验证"],["10%","排障与提问","反事实推理"],["10%","验收与作业","保留证据并迁移"]].map(x=>'<div class="panel soft"><span class="pill">'+x[0]+'</span><h3 style="margin-top:12px">'+x[1]+'</h3><p>'+x[2]+'</p></div>').join("")+'</div>',"原则：先验证一个基线，再改变一个变量，不要多项同时修改。");
 if(extra.terms&&extra.terms.length)add("KEYWORDS","术语与接口",'<div class="three-cols">'+extra.terms.map(x=>'<div class="panel"><div class="eyebrow">KEY TERM</div><h3>'+esc(x[0])+'</h3><p>'+fmt(x[1])+'</p></div>').join("")+'</div>',"逐一说明术语对应哪个软件层、数据或硬件资源。");
-const flow=extra.flow&&extra.flow.length?extra.flow:data.steps.slice(0,5).map(s=>s.slice(0,18));
-add("FLOW","核心技术路线",'<div class="flow">'+flow.map((s,i)=>(i?'<div class="arrow">→</div>':"")+'<div class="flow-box"><span class="count">STEP '+(i+1)+'</span><span>'+fmt(s)+'</span></div>').join("")+'</div><div class="panel soft"><h3>沿数据路径检查</h3><p>每个节点的输入是什么、输出是什么、失败时可以检查哪些证据？</p></div>',"请学生指出哪些步骤发生在主机、哪些发生在目标板上。");
 const core=(data.core||"").trim(),ss=core.match(/[^。！？；]+[。！？；]?/g)||[core],half=Math.max(1,Math.ceil(ss.length/2));
 const p1=ss.slice(0,half).join(""),p2=ss.slice(half).join("")||core;
 if(!Array.isArray(depth.concepts)||!depth.concepts.length){
@@ -37,23 +34,20 @@ depth.concepts.forEach((c,i)=>{
 }
 
 }
-const mid=Math.ceil(data.steps.length/2);
-add("LAB","实践 01 · 准备与运行",'<p>先核对运行环境、输入文件和所需依赖，再按照下面的步骤开始实验。</p>'+stepList(data.steps.slice(0,mid),0),"先有稳定的最小可运行路径；涉及刷机或设备写操作要有回退方案。");
-add("LAB","实践 02 · 运行与检查",'<p>继续完成实验，对照预期结果逐项核验，并记录失败的真实现象。</p>'+stepList(data.steps.slice(mid),mid),"每一步让学生说明：运行了什么、看到了什么、凭什么认为成功。");
-if(data.code)add("EXAMPLE","参考命令或代码",'<div class="code-wrap"><button type="button" class="copy-code">复制片段</button><pre><code>'+esc(data.code)+'</code></pre></div><p class="footnote">代码取自对应教学讲义，只作参考；实际运行前核对 SDK 版本、资源路径与模型格式。</p>',"对关键参数、返回值和资源释放逐行讲解。");
-else add("DEMO","示范操作 · 观察清单",cards(['<h3>演示前</h3>'+list(["确认型号、SDK 与板端驱动版本",data.steps[0]||"准备测试输入","确定预期输出和日志位置"]),'<h3>演示后</h3>'+list([data.steps[data.steps.length-1]||"核对程序结果","保存输入、输出与截图","列出未通过的验证项"])]),"缺少完整官方实验工程时用可复现的官方示例或概念演示，不编造运行证据。");
 
-if(Array.isArray(depth.lab)&&depth.lab.length){
- add("LAB PLUS","细化实验 · 操作与预期",
-  '<div class="three-cols">'+depth.lab.map((s,i)=>'<div class="panel"><span class="eyebrow">TASK 0'+(i+1)+'</span><h3>'+fmt(s.title)+'</h3><p>'+fmt(s.action)+'</p><div class="panel good" style="margin-top:12px"><strong>验证证据</strong><p>'+fmt(s.verify)+'</p></div></div>').join("")+'</div>',
-  "每组保留实际观察值；未运行的示例写“未验证”，不要填写虚构截图。");
+const teach=depth.guidance;
+if(teach&&Array.isArray(teach.phases)){
+ teach.phases.forEach((phase,i)=>{
+  const command=phase.command?'<div class="code-wrap"><button type="button" class="copy-code">复制命令</button><pre><code>'+esc(phase.command)+'</code></pre></div>':'';
+  add("GUIDED LAB",["准备：明确实验条件","演示：运行真实程序","验收：解释实际结果"][i]||phase.title,
+    '<div class="panel good"><h3>'+fmt(phase.title)+'</h3><p>'+fmt(phase.action)+'</p></div>'+command+
+    '<div class="panel"><strong>观察与判断</strong><p>'+fmt(phase.observe)+'</p></div>'+
+    '<div class="panel soft"><strong>未达到时排查</strong><p>'+fmt(phase.diagnose)+'</p></div>',
+    phase.teach||"让学生展示输出并解释原因后进入下一步。");
+ });
+}else{
+ add("GUIDED LAB","本节动手实践",stepList(data.steps,0));
 }
-if(depth.snippet){
- add("LAB PLUS","补充实验片段与解释",'<div class="code-wrap"><button type="button" class="copy-code">复制片段</button><pre><code>'+esc(depth.snippet)+'</code></pre></div><p class="footnote">实验片段为教学示例。核对路径、Python/SDK/驱动和模型属性后再使用；不要在未知硬件上执行写入或更新系统的命令。</p>',
- "这一片段主要用于辅助理解；清楚说明依赖、可观察输出和修改范围。");
-}
-
-
 // Source-code guided explanation shared with the corresponding MD theory chapter.
 // No external fetch: all detailed lesson data is embedded in the individual HTML file.
 if(depth.walkthrough){
@@ -74,14 +68,8 @@ if(depth.walkthrough){
       (step.code?'<div class="code-wrap"><button type="button" class="copy-code">复制片段</button><pre><code>'+esc(step.code)+'</code></pre></div>':''),
       "把代码中的变量对应到模型输入、API 的返回值、缓冲区或坐标单位；片段用于理解，完整运行入口见工程手册。");
  });
- add("CODE CHECK","对照本讲源码的验收",
-  '<div class="panel good"><h3>什么才算通过</h3><p>'+fmt(w.acceptance)+'</p></div>'+
-  '<p class="footnote">注意：教材公式和举例数据并不等于实际在 ROCK 5B 上测出的结果。</p>',
-  "没有真实输入、输出、SDK 与硬件版本时不勾选实机推理验收。");
+ 
 }
-
-add("RECORD","实验报告需要记录什么？",'<div class="three-cols"><div class="panel"><div class="eyebrow">INPUT</div><h3>条件</h3><p>模型、硬件、版本、输入张量、启动参数。</p></div><div class="panel"><div class="eyebrow">PROCESS</div><h3>过程</h3><p>执行动作、返回码、输出日志与阶段耗时。</p></div><div class="panel"><div class="eyebrow">RESULT</div><h3>结论</h3><p>实际现象、与基线差异、待解决的问题。</p></div></div>',"请学生保存可共享的结果，而非仅回答“成功了”。");
-add("DEBUG","常见问题与错误诊断",'<div class="three-cols">'+data.pitfalls.slice(0,3).map((s,i)=>'<div class="panel warn"><div class="eyebrow">RISK 0'+(i+1)+'</div><h3>典型误区</h3><p>'+fmt(s)+'</p><small class="muted">复现 → 缩小范围 → 单变量修改 → 重新验证</small></div>').join("")+'</div>',"每个误区尝试列出最小复现步骤和一个可检查的证据。");
 
 if(Array.isArray(depth.diagnosis)&&depth.diagnosis.length){
  add("DIAGNOSTIC","具体报错与定位路径",
@@ -113,10 +101,6 @@ add("ACCEPT","本节验收标准",'<p>以下勾选仅用于辅助复习，实际
 
 // One concise source reference; the actual commands and runbooks are shown below.
 const codeFile="lesson_"+String(data.id).padStart(2,"0")+".py";
-add("TRANSFER","课后练习与知识迁移",'<div class="panel">'+list(data.homework)+'</div><div class="panel soft"><h3>提交建议</h3><p>提交版本说明、数据与模型来源、关键步骤、结果截图、问题记录和复盘。涉及代码时提供可运行的最小示例。</p></div>',"下节课尽可能沿用本节的模型、日志和环境记录。");
-const nx=db[data.id+1];
-add("SUMMARY","本节总结",cards(['<h3>三件需要记住的事</h3>'+list(data.goals),'<h3>下一步学习</h3><p>'+(nx?"下一讲："+esc(nx.title):"本系列课程已经完成，请整理项目成果。")+'</p><p>在下一次实验前，请确认本讲的完成标准。</p>']),"闭环复盘：输入是什么、发生了什么、有什么证据。");
-
 const prev=db[data.id-1],next=db[data.id+1];
 const sectionId=i=>"lesson-section-"+(i+1);
 function lessonLink(x,label){return x?'<a class="btn ghost" href="'+encodeURIComponent(x.slug).replaceAll("(","%28").replaceAll(")","%29")+'.html">'+label+'</a>':"";}
@@ -124,90 +108,13 @@ function lessonLink(x,label){return x?'<a class="btn ghost" href="'+encodeURICom
 // after the three part lesson 30. Always use data.id for an example path.
 const sourceIndex=String(data.id).padStart(2,"0");
 const notePath=data.id===27?"examples/LESSON_27.md":"examples/notes/lesson_"+sourceIndex+".md";
-const practical={
-  6:{name:"ROCK 5B 驱动与板端初检",manual:"board-inspection",source:"boards/radxa-rock5b/tools/board_probe.py",
-     command:"python3 boards/radxa-rock5b/tools/board_probe.py --help",
-     explain:"在真实板端运行初检，记录内核、架构、NPU 驱动与实际设备信息；--help 只是接口检查。"},
-  9:{name:"生成 Tiny ONNX 并尝试 RKNN 转换",manual:"onnx-toolchain",source:"examples/hardware/convert_onnx.py",
-     command:"python3 examples/hardware/create_tiny_onnx.py --onnx build/tiny.onnx --input-npy build/input.npy\npython3 examples/hardware/onnx_reference.py --onnx build/tiny.onnx --input-npy build/input.npy --output build/reference.npz\npython3 examples/hardware/convert_onnx.py --onnx build/tiny.onnx --output build/tiny.rknn --mean 0,0,0 --std 1,1,1",
-     explain:"前两条可在安装 ONNX/ONNX Runtime 的 PC 上运行；第三条需兼容 Toolkit2 的 x86_64 Linux 主机。输入 NCHW float32，输出 [1,2]；转换成功不等于实机推理。"},
-  24:{name:"RKNNLite 图片分类",manual:"mobilenet-image",source:"boards/radxa-rock5b/apps/mobilenet_image_lite.py",
-     command:"python3 boards/radxa-rock5b/apps/mobilenet_image_lite.py --model /path/to/mobilenet.rknn --image /path/to/test.jpg --labels /path/to/labels.txt --width 224 --height 224 --runs 1 --warmup 0 --confirm-rgb-uint8-nhwc",
-     explain:"需真实 ROCK 5B、Lite2、图片与匹配的 RKNN 模型。先核对模型是否确实接受 RGB uint8 NHWC 输入，再执行；检查输出 Top-K 类别与分数。"},
-  25:{name:"C++ 通用 RKNPU2 分类",manual:"cpp-rknn-classify",source:"examples/hardware/rknn_classify.cpp",
-     command:"cmake -S examples/hardware -B build/native-rknn -DRKNN_INCLUDE_DIR=/sdk/rknn/include -DRKNN_LIB=/sdk/arm64/librknnrt.so\ncmake --build build/native-rknn -j2\n./build/native-rknn/rknn_classifier /path/to/model.rknn /path/to/preprocessed.raw",
-     explain:"必须用真实 SDK 路径。输入是已按模型属性预处理的 RAW 张量，不是 JPEG。查询输入 size/dtype/layout，然后读取输出 index/score。"},
-  26:{name:"SDK 内存绑定与零拷贝边界",manual:"cpp-zero-copy",source:"examples/hardware/rknn_zero_copy.cpp",
-     command:"./build/native-rknn/rknn_zero_copy /path/to/model.rknn /path/to/padded_uint8_nhwc.raw 1",
-     explain:"先按上一讲构建；RAW 文件需要匹配 SDK 查询的 stride 和 shape。该例说明 SDK 内存绑定，不宣称摄像头→RGA→NPU 完整 DMA-BUF 零拷贝。"},
-  27:{name:"MobileNet 静态图片分类",manual:"mobilenet-image",source:"boards/radxa-rock5b/apps/mobilenet_image_lite.py",
-     command:"python3 boards/radxa-rock5b/apps/mobilenet_image_lite.py --model /path/to/mobilenet.rknn --image /path/to/test.jpg --topk 5 --runs 1 --warmup 0 --confirm-rgb-uint8-nhwc",
-     explain:"真实图片 + 真实模型，查看 Top-5 与模型标签映射；第 27 讲另有可在 PC 使用 ONNX Runtime 的专用示例。"},
-  28:{name:"摄像头 MobileNet 封装",manual:"mobilenet-camera",source:"boards/radxa-rock5b/apps/camera_mobilenet_lite.py",
-     command:"python3 boards/radxa-rock5b/apps/camera_mobilenet_lite.py --model /path/to/mobilenet.rknn --source /dev/video0 --frames 10 --warmup 0 --confirm-rgb-uint8-nhwc",
-     explain:"保留真实输入协议和分类后处理，摄像头正常读帧并产生类别/分数才算通过；板端图片读取和推理失败需分开定位。"},
-  29:{name:"YOLOv5 真实图片目标检测",manual:"official-yolo-and-export",source:"examples/lesson_29.py",
-     command:"python3 examples/lesson_29.py --engine ultralytics --model /path/to/yolov5.pt --image /path/to/test.jpg",
-     explain:"这是 PC 上的框架预测，输出框坐标/类别/置信度，不等于 RK3588 YOLOv5 NPU 上板成功。"},
-  30:{name:"第 30 讲专题 1 · YOLO26 框架预测",source:"examples/lesson_30.py",
-     command:"python3 examples/lesson_30.py --weights /path/to/best.pt --image /path/to/test.jpg --imgsz 640",
-     explain:"需真实 YOLO26 兼容权重及相应 Ultralytics 版本；验证 PC 预测，记录模型版本和框信息。此专题不使用 YOLOv8 的 RKNN 输出头。"},
-  31:{name:"第 30 讲专题 2 · YOLO26 数据集验收与训练",source:"examples/lesson_31.py",
-     command:"python3 examples/lesson_31.py --labels /path/to/dataset/labels/train --report build/dataset_audit.json",
-     explain:"PC 先检查归一化框和数据标注；确有真实 data.yaml、权重和训练环境时才添加 --train。"},
-  32:{name:"第 30 讲专题 3 · YOLO26 导出与 RKNN 兼容",source:"examples/lesson_32.py",
-     command:"python3 examples/lesson_32.py --weights /path/to/best.pt --imgsz 640 --report build/lesson32/conversion.json",
-     explain:"先完成 ONNX checker 和导出协议检查；需要对应 Linux 主机的 RKNN Toolkit2 才能添加 --rknn。未通过算子适配时不能用 YOLOv8 的后处理冒充成功。"},
-  33:{name:"第 31 讲 · YOLOv8 摄像头主线",manual:"yolov8-camera",source:"boards/radxa-rock5b/apps/camera_yolov8_lite.py",
-     command:"python3 boards/radxa-rock5b/apps/camera_yolov8_lite.py --model /path/to/optimized-yolov8n.rknn --source /dev/video0 --size 640 --frames 30 --warmup 0 --labels boards/radxa-rock5b/assets/coco80.txt --confirm-optimized-yolov8",
-     explain:"只接受相容的 Model Zoo 优化版 YOLOv8 多输出头。逐项理解 letterbox、DFL、NMS 和原图坐标还原；输出框需实机核对。"},
-  34:{name:"第 32 讲 · RKLLM C++ 文本生成",manual:"rkllm-native",source:"examples/hardware/rkllm/rkllm_stream.cpp",
-     command:"cmake -S examples/hardware/rkllm -B build/rkllm-native -DRKLLM_INCLUDE_DIR=/sdk/rkllm/include -DRKLLM_LIB=/sdk/rkllm/aarch64/librkllmrt.so\ncmake --build build/rkllm-native -j2\n./build/rkllm-native/rkllm_stream --model /path/to/model.rkllm --prompt-file /path/to/prompt.txt --max-new 128",
-     explain:"须匹配板端模型与 runtime；区分流式文本块、真实 token 数和结束回调，模拟回调测试不算 ROCK 5B 文本生成。"}
-};
-// These commands are the concrete first experiment from each matching examples/notes manual.
-// Paths such as image.jpg, model.onnx and /path/to/ are learner-supplied inputs, not bundled assets.
-const standaloneCommands={
-  0:"python3 examples/lesson_00.py --output build/lesson00/environment.json",
-  1:"python3 examples/lesson_01.py --output build/lesson01/board.json",
-  2:"python3 examples/lesson_02.py --height 224 --width 224 --in-channels 32 --out-channels 64",
-  3:"python3 examples/lesson_03.py --dot build/lesson03/pipeline.dot",
-  4:"python3 examples/lesson_04.py --repo toolkit2 --ref HEAD --output build/upstream.json",
-  5:"python3 examples/lesson_05.py --output build/toolkit_env.json",
-  6:"python3 examples/lesson_06.py --runtime /path/to/librknnrt.so",
-  7:"python3 examples/lesson_07.py --samples 10 --interval 1",
-  8:"python3 examples/lesson_08.py --program ./rknn_mobilenet_demo --model /path/to/model.rknn --image /path/to/test.jpg",
-  9:"python3 examples/lesson_09.py --onnx /path/to/model.onnx --output build/lesson09/model.rknn --mean 0,0,0 --std 1,1,1",
-  10:"python3 examples/lesson_10.py --image /path/to/test.jpg --output build/lesson10/image.npy",
-  11:"python3 examples/lesson_11.py --jobs jobs.json --log-dir build/lesson11",
-  12:"python3 examples/lesson_12.py --onnx /path/to/model.onnx --output build/lesson12/graph.json",
-  13:"python3 examples/lesson_13.py --rknn /path/to/model.rknn --input-npy /path/to/input.npy --target simulator",
-  14:"python3 examples/lesson_14.py --float /path/to/fp.npz --quantized /path/to/int8.npz --max-mae 0.1",
-  15:"python3 examples/lesson_15.py --runs 30 --warmup 3 -- ./rknn_demo /path/to/model.rknn /path/to/test.jpg",
-  16:"python3 examples/lesson_16.py --pid 1234 --samples 10 --interval 1",
-  17:"python3 examples/lesson_17.py --keep-ratio 0.75 --output build/lesson17/pruned.npz",
-  18:"python3 examples/lesson_18.py generate-key --key-file build/test.key",
-  19:"python3 examples/lesson_19.py --images /path/to/a.jpg /path/to/b.jpg --batch 2",
-  20:"python3 examples/lesson_20.py --onnx /path/to/multi.onnx --inputs /path/to/inputs.json",
-  21:"python3 examples/lesson_21.py --onnx /path/to/dynamic.onnx --inputs /path/to/x320.npy /path/to/x640.npy",
-  22:"python3 examples/lesson_22.py --onnx /path/to/src.onnx --output build/stripped.onnx --input-npy /path/to/input.npy",
-  23:"python3 examples/lesson_23.py --onnx /path/to/model.onnx --compile"
-};
-const lab=practical[data.id];
-let lessonActions='<div class="panel good"><h3>本讲配套的第 '+sourceIndex+' 个源码实例</h3>'+
- '<p><a href="../../examples/lesson_'+sourceIndex+'.py">Python 实验入口 ↗</a> · '+
- '<a href="../../'+notePath+'">独立操作手册 ↗</a></p>'+
- '<div class="code-wrap"><button type="button" class="copy-code">复制片段</button><pre><code>'+esc(standaloneCommands[data.id]||('python3 examples/lesson_'+sourceIndex+'.py --help'))+'</code></pre></div>'+
- '<p>PC 课程可先运行上述示例；带 /path/to/ 等占位符时必须先准备真实输入。具体环境、参数和验收见操作手册。仅 --help 不能证明功能；实例编号不等于视频讲次（第 30 讲含 3 个专题）。</p></div>';
-if(lab){
- lessonActions+='<div class="panel"><h3>'+esc(lab.name)+'</h3>'+
- (lab.manual?'<p><a href="../../engineering/'+lab.manual+'.md">完整工程实验手册 ↗</a></p>':'')+
- '<p><a href="../../'+lab.source+'">相关核心源码 ↗</a></p>'+
- '<div class="code-wrap"><button type="button" class="copy-code">复制片段</button><pre><code>'+esc(lab.command)+'</code></pre></div>'+
- '<p>'+esc(lab.explain)+'</p></div>';
-}
-add("P0 LAB","真实源码、执行命令与验收入口",lessonActions,
- "先确认模型/输入协议与 SDK 版本。PC 结果、上板结果和待验证必须明确区分。");
+const manualById={6:"board-inspection",9:"onnx-toolchain",24:"mobilenet-image",25:"cpp-rknn-classify",26:"cpp-zero-copy",27:"mobilenet-image",28:"mobilenet-camera",29:"official-yolo-and-export",32:"onnx-toolchain",33:"yolov8-camera",34:"rkllm-native"};
+const manual=manualById[data.id];
+add("SOURCE","源码与工程实验说明",
+ '<div class="panel"><p><a href="../../examples/lesson_'+sourceIndex+'.py">Python 课程源码 ↗</a> · '+
+ '<a href="../../'+notePath+'">独立实验手册 ↗</a>'+
+ (manual?' · <a href="../../engineering/'+manual+'.md">板端工程指南 ↗</a>':'')+
+ '</p><p>先完成前面的准备、演示和验收，再阅读完整源码；需要第三方模型、图片或 SDK 的项目须准备真实文件。</p></div>');
 const toc=slides.map((s,i)=>'<a class="outline-item" href="#'+sectionId(i)+'" data-section="'+i+'"><span>'+String(i+1).padStart(2,"0")+'</span>'+esc(s.title)+'</a>').join("");
 const content=slides.map((s,i)=>'<section id="'+sectionId(i)+'" class="slide lesson-section" aria-labelledby="section-heading-'+i+'"><div class="kicker">'+esc(s.cat)+' / '+String(i+1).padStart(2,"0")+'</div><h2 id="section-heading-'+i+'">'+esc(s.title)+'</h2>'+s.body+'<div class="teacher-note"><strong>讲师提示：</strong> '+fmt(s.note)+'</div></section>').join("");
 document.body.classList.add("continuous");
