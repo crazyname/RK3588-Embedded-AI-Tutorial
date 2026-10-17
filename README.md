@@ -2,6 +2,13 @@
 
 本仓库是一套围绕 **Rockchip RK3588 / RKNPU** 的中文嵌入式 AI 教学资料，从基础理论、RKNN 工具链到目标检测部署与边缘大模型实践。
 
+## 课程完工状态与最短学习主线
+
+- [课程完工清单（P0/P1/P2、六条实验链路与板端验收）](COURSE_COMPLETION_CHECKLIST.md)
+- 建议路径：先读 [环境准备](SETUP.md) → [ONNX 工具链](engineering/onnx-toolchain.md) → [Python 图片分类](engineering/mobilenet-image.md) → [C++ 分类](engineering/cpp-rknn-classify.md) → [YOLOv8 摄像头](engineering/yolov8-camera.md) → [RKLLM 文本生成](engineering/rkllm-native.md)。RGA 视频链路作为检测后的进阶实验。
+- 当前课程文件为 **00–32 共 35 份**（30 讲拆分为三份）；`examples/lesson_00.py` 至 `lesson_34.py` 是源码顺序编号。不要将“第 34 个源码入口”误当“第 34 讲”。
+- GitHub CI 的 PC 检查不代表 ROCK 5B 已上板验收；详见完工清单的证据标准。
+
 ## 零基础复现实验：环境、模型和质量检查
 
 - [Windows / Ubuntu 环境准备与安全安装](SETUP.md)
