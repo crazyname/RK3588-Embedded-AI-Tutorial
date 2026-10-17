@@ -149,7 +149,7 @@ python3 -c "import numpy as np,json; a=np.load('build/lesson19/batch.npy'); prin
 
 **验收边界：** 使用两张真实图片生成 NPY 与 JSON，能从 batch 索引定位原图；仅证明组 Batch 正确，是否可由 RK3588 NPU 接收需要同协议模型上板验收。
 
-## 配套可运行源码（第 19 讲）
+## 配套可运行源码
 
 - [本讲独立 Python 实例](../examples/lesson_19.py) · [操作手册与参数说明](../examples/notes/lesson_19.md)
 - [通用依赖与课程代码说明](../examples/README.md)
