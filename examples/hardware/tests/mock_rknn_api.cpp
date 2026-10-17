@@ -2,6 +2,8 @@
 // Must NEVER be installed on RK3588 or described as real NPU execution.
 #include "rknn_api.h"
 #include <cstdlib>
+// Failure injection is controlled only by test environment variables.
+static bool fail(const char* key){const char* v=std::getenv(key);return v && std::strcmp(v,"1")==0;}
 #include <cstring>
 #include <map>
 #include <vector>
@@ -53,7 +55,7 @@ int rknn_inputs_set(rknn_context ctx,uint32_t num,rknn_input inputs[]){
     return RKNN_SUCC;
 }
 rknn_tensor_mem* rknn_create_mem(rknn_context ctx,uint32_t bytes){
-    if(!states.count(ctx)||!bytes)return nullptr;
+    if(!states.count(ctx)||!bytes||fail("RKNN_FAKE_FAIL_ALLOC"))return nullptr;
     auto* obj=static_cast<rknn_tensor_mem*>(std::calloc(1,sizeof(rknn_tensor_mem)));
     if(!obj)return nullptr;
     obj->virt_addr=std::calloc(bytes,1);
@@ -78,7 +80,7 @@ int rknn_set_io_mem(rknn_context ctx,rknn_tensor_mem* mem,rknn_tensor_attr* attr
     return -1;
 }
 int rknn_run(rknn_context ctx,rknn_run_extend*){
-    if(!states.count(ctx))return -1;
+    if(!states.count(ctx)||fail("RKNN_FAKE_FAIL_RUN"))return -1;
     auto& s=states[ctx];
     if(s.bound){
         auto* bytes=static_cast<uint8_t*>(s.bound->virt_addr);
@@ -99,7 +101,7 @@ int rknn_run(rknn_context ctx,rknn_run_extend*){
     return RKNN_SUCC;
 }
 int rknn_outputs_get(rknn_context ctx,uint32_t num,rknn_output outputs[],rknn_output_extend*){
-    if(!states.count(ctx)||num!=1||!outputs)return -1;
+    if(!states.count(ctx)||num!=1||!outputs||fail("RKNN_FAKE_FAIL_OUTPUTS"))return -1;
     outputs[0].size=4*sizeof(float);
     outputs[0].buf=std::malloc(outputs[0].size);
     if(!outputs[0].buf)return -1;
