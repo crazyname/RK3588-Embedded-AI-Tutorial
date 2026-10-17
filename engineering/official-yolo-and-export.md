@@ -20,6 +20,17 @@ python3 boards/radxa-rock5b/tools/run_official_yolov8.py --help
 
 板端编译与执行必须结合 [ROCK 5B 手册](../boards/radxa-rock5b/README.md) 和 [C++ RGA 输入对照](../boards/radxa-rock5b/CPP_RGA_IO_BENCHMARK.md)。构建前替换 SDK include/lib 为实际 ARM64 文件；保留 stdout、stderr、输入图、模型哈希及错误日志。
 
+## 可执行 PC 导出与官方板端基线
+
+~~~bash
+# PC：需已安装 ultralytics、onnx 和真实权重
+python3 examples/hardware/export_yolo_onnx.py --weights /path/to/yolov8n.pt --imgsz 640
+# ROCK 5B：需已安装与镜像匹配的 Radxa RKNN Model Zoo 包
+python3 boards/radxa-rock5b/tools/run_official_yolov8.py --images /path/to/test-image-directory
+~~~
+
+PC 导出之后做 ONNX checker，并不证明 RKNN 编译和上板成功；板端工具调用真实已安装的官方 YOLOv8 推理程序。先得到官方结果，再按 [摄像头 YOLOv8 主线](yolov8-camera.md)验收。YOLOv5（第 29 讲）、YOLO26（第 30 讲）与 YOLOv8（第 31 讲）不能共用假定相同的检测头后处理。
+
 ## 自动化测试
 
 - [新增专项行为测试](../boards/radxa-rock5b/tests/test_dedicated_capture_launcher.py)
