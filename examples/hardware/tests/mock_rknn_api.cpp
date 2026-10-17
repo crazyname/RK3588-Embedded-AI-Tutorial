@@ -2,6 +2,7 @@
 // Must NEVER be installed on RK3588 or described as real NPU execution.
 #include "rknn_api.h"
 #include <cstdlib>
+#include <cstring>
 // Failure injection is controlled only by test environment variables.
 static bool fail(const char* key){const char* v=std::getenv(key);return v && std::strcmp(v,"1")==0;}
 #include <cstring>
