@@ -113,6 +113,48 @@ Netron 能直接证明什么？
 
 > 以当前官方 SDK 的文档和模型兼容矩阵为准；教学示例并非用户开发板的实际运行认证。
 
+## 源码精读：关键 API、张量与验收
+
+Netron 是图结构可视化工具，不能取代 ONNX checker、shape inference 和 RKNN Toolkit2 的编译验证。lesson_12.py 读取真实 ONNX protobuf，输出算子数量、输入/输出张量以及潜在 layout 相关节点，和 Netron 交叉核对。
+
+**数据路径：** `真实 .onnx` → `onnx.checker` → `onnx.shape_inference` → `操作符/输入输出解析` → `graph.json + Netron 可视化`。
+
+### 1. onnx.load 与 checker：确认 ONNX 基础结构
+
+**输入：** 真实模型文件 .onnx。**输出：** 可解析的 ModelProto 或明确错误。
+
+checker 通过不证明算子满足 RKNN NPU 支持表。先锁定 opset、输入输出节点和是否具有动态维度。
+
+```bash
+python3 examples/lesson_12.py --onnx /path/to/model.onnx --output build/lesson12/graph.json
+```
+
+### 2. shape_inference 与 shape()：提取张量契约
+
+**输入：** 每个图 input/output 的 elem_type 与维度。**输出：** 输入/输出名称、ONNX dtype 编号、维度列表。
+
+动态维度可能以符号字符串或 ? 出现，不能未经验证就替换成具体数值。是否 NCHW/NHWC 要结合模型训练约定，单纯看 shape 不一定足够。
+
+```python
+model = onnx.shape_inference.infer_shapes(model)
+for value in model.graph.input:
+    print(value.name, value.type.tensor_type.shape)
+```
+
+### 3. 算子统计与布局敏感节点
+
+**输入：** graph.node 的 op_type、Transpose/Reshape/Concat 等。**输出：** operators 次数表及 layout_sensitive_nodes。
+
+Netron 上看到节点很多不等于性能瓶颈就在该层；需要与 RKNN build 日志和运行时 profiler 一起判断。
+
+```bash
+python3 -c "import json; g=json.load(open('build/lesson12/graph.json')); print(g['inputs'], g['outputs'], g['operators'])"
+```
+
+**数据例题：** TensorProto.FLOAT 在 ONNX 中的 dtype 编号是 1，而不是运行时 NumPy float32 对象；动态图的 '?' 也不是 0 维。打开 Netron 时应将名字、shape、dtype 和算子与 JSON 核对。
+
+**验收边界：** 用同一真实 ONNX 模型生成 graph.json，能在 Netron 中指出图输入、至少一个算子和输出，且不把 checker 当成 NPU 支持认证。
+
 ## 配套可运行源码
 
 - [本讲独立操作手册（只含运行、参数与验收）](../examples/notes/lesson_12.md)
