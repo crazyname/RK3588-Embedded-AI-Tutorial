@@ -6,6 +6,10 @@
 
 - [Markdown：docs/26_RKNPU2—零拷贝C API.md](../docs/26_RKNPU2—零拷贝C API.md) · [HTML 连续滚动课件](../courseware/lessons/26_RKNPU2—零拷贝C API.html)
 
+## 对应课程讲义与 HTML 课件
+
+- [Markdown：docs/26_RKNPU2—零拷贝C API.md](../docs/26_RKNPU2—零拷贝C API.md) · [HTML 连续滚动课件](../courseware/lessons/26_RKNPU2—零拷贝C API.html)
+
 ## 源码清单
 
 - [`boards/radxa-rock5b/tools/v4l2_dmabuf_export_probe.cpp`](../boards/radxa-rock5b/tools/v4l2_dmabuf_export_probe.cpp)
