@@ -119,6 +119,52 @@ print([(int(i),float(scores[i])) for i in idx])
 
 程序从 USB UVC 摄像头持续取帧，按模型协议执行 BGR→RGB 和缩放/裁切，使用真实 RKNNLite 推理；可以导出每帧 Top-K、采集/预处理/SDK 调用耗时及 p95 统计。**它是分类应用，不是 YOLO 检测；CI 使用模拟摄像头与 SDK 校验控制流程，硬件性能仍需 ROCK 5B 实测。**
 
+## 源码精读：关键 API、张量与验收
+
+本讲的真实模型主线在 examples/lesson_27.py：同一张图片分别交给 ONNX Runtime（PC）和 RKNNLite（ROCK 5B），不是用随机分数假装 MobileNet。
+
+**数据路径：** `真实图片` → `颜色/裁剪/归一化/layout` → `ONNX 或 RKNN` → `类别 logits` → `Top-5 + 标签`。
+
+### 1. prepare_image()：模型前处理协议
+
+**输入：** PIL 图片、resize、RGB/BGR、NCHW/NHWC、normalize。**输出：** 模型预期的 batch 张量。
+
+ONNX 版可能需要 float32 NCHW/ImageNet 归一化；RKNN 版常把 mean/std 编入模型，接收 uint8 HWC。这两个输入协议不能直接混用。
+
+```python
+x = prepare_image(path, 224, 224, 'squash', 'RGB',
+                  'NCHW', 'imagenet', 'onnx')
+print(x.shape, x.dtype)
+```
+
+### 2. run_model()：区分后端
+
+**输入：** model.onnx 或 model.rknn + 对应输入。**输出：** 真实输出张量（可保存 NPZ）。
+
+ONNX Runtime CPU 输出是 PC 参考；RKNNLite 需 ROCK 5B Runtime。比较输出之前先保证两者输入像素含义一致。
+
+```python
+python3 examples/lesson_27.py --backend onnx \
+  --model /path/to/model.onnx --image /path/to/test.jpg \
+  --width 224 --height 224 --topk 5
+```
+
+### 3. probabilities()：区分 logits 与概率
+
+**输入：** 一维输出分数及 --scores 约定。**输出：** 必要时 softmax 后的归一化概率。
+
+若输出已经是概率，再进行 softmax 会改变分布；类别索引映射也必须使用对应 labels 文件和正确 offset。
+
+```python
+p = np.exp(logits - logits.max())
+p = p / p.sum()
+# 只在输出为 logits 时执行 softmax
+```
+
+**数据解释与练习：** 典型 ImageNet 预处理示例：单个 RGB 红通道值 128，若 x/255 再减均值 0.485、除标准差 0.229，结果约为 0.074；但模型若自带归一化则不要重复。
+
+**验收边界：** 提供实际单图 Top-5 和标签、图像缩放/归一化选择，并把 PC 与 ROCK 5B 结果标成不同后端，不能拿两个随机输入比差异。
+
 ## 配套可运行源码
 
 - [本讲独立操作手册（只含运行、参数与验收）](../examples/LESSON_27.md)
