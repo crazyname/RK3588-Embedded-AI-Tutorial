@@ -10,7 +10,8 @@ import sys
 REQUIRED = ("initialized_ms", "run_wall_ms", "text_chunks", "output_utf8_bytes")
 OPTIONAL = ("first_text_chunk_ms", "sdk_generate_tokens", "sdk_generate_time_ms",
             "sdk_tokens_per_sec", "sdk_prefill_time_ms", "sdk_peak_memory_mb")
-INTEGER = ("text_chunks", "output_utf8_bytes", "sdk_generate_tokens")
+INTEGER = ("text_chunks", "output_utf8_bytes", "sdk_generate_tokens", "max_new_tokens", "context_tokens", "model_size_bytes")
+CONFIG = ("max_new_tokens", "context_tokens", "model_size_bytes")
 
 def positive(value, name, allow_zero=False, integer=False):
     if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
@@ -41,6 +42,9 @@ def load(path):
         raise ValueError(f"{path}: incomplete or failed callback")
     if not isinstance(report.get("model_file"), str) or not report["model_file"]:
         raise ValueError(f"{path}: missing model file metadata")
+    for key in CONFIG:
+        if key in report:
+            positive(report[key], key, integer=True)
     for key in REQUIRED:
         positive(report.get(key), key, allow_zero=key in ("initialized_ms", "text_chunks", "output_utf8_bytes"),
                  integer=key in INTEGER)
@@ -84,10 +88,14 @@ def summarize(paths, require_sdk_tokens=False, allow_text=False):
     model_paths = {r["model_file"] for r in reports}
     if len(model_paths) != 1:
         raise ValueError("different model_file paths; compare only identical model/config")
+    for key in CONFIG:
+        values = [r.get(key) for r in reports]
+        if len({str(v) for v in values}) != 1:
+            raise ValueError(f"inconsistent {key} across runs")
     columns = ("initialized_ms", "run_wall_ms", "first_text_chunk_ms",
                "sdk_generate_tokens", "sdk_generate_time_ms",
                "sdk_tokens_per_sec", "sdk_prefill_time_ms", "sdk_peak_memory_mb")
-    return {"runs": len(reports), "sdk_token_runs": sum(r.get("sdk_tokens_per_sec") is not None for r in reports),
+    return {"runs": len(reports), "configuration": {k: reports[0].get(k) for k in CONFIG}, "sdk_token_runs": sum(r.get("sdk_tokens_per_sec") is not None for r in reports),
             "statistics": {key: stats([r[key] for r in reports if r.get(key) is not None]) for key in columns},
             "hardware_verified": False,
             "note": ("Statistical validation does not prove hardware provenance; first_text_chunk_ms "
