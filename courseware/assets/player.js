@@ -14,27 +14,21 @@ const stepList=(a,start)=>'<ol class="steps-list">'+a.map((s,i)=>'<li><span clas
 const slides=[];
 function add(cat,title,body,note){slides.push({cat,title,body,note:note||"根据实际设备和软件版本判断，不要用未经验证的结果替代课堂证据。"});}
 const name=data.title||m.title,intro=data.intro||"把理论、转换与运行验证连接成可重复的学习闭环。";
-add("OPENING","本讲课程介绍",'<div class="eyebrow">'+esc(m.unit)+'</div><h1>'+esc(name)+'</h1><p class="big">'+fmt(intro)+'</p><div class="stats"><div><strong>'+m.duration+'<small> 分钟</small></strong><small>建议课堂时间</small></div><div><strong>'+data.goals.length+'</strong><small>目标数量</small></div><div><strong>'+data.steps.length+'</strong><small>实践步骤</small></div></div><p class="footnote">上下滚动阅读 · N 切换讲师提示 · P 打印</p>',"问学生：本节课最想解决的一个实际工程问题是什么？");
-add("SCENARIO","从一个工程问题出发",'<div class="panel good"><span class="pill">课堂情境</span><h2>'+fmt(extra.scene||intro)+'</h2></div>'+cards(['<h3>学前预测</h3><p>如果跳过本讲，后续模型部署最可能在什么环节失败？</p>','<h3>如何证明成功</h3><p>除了程序退出码，还应保留输入、输出、版本及过程日志。</p>']),"用思维实验引导学生讨论，需要可观察结果而非猜测。");
+add("OPENING","本讲课程介绍",'<div class="eyebrow">'+esc(m.unit)+'</div><h1>'+esc(name)+'</h1><p class="big">'+fmt(intro)+'</p><p class="footnote">上下滚动阅读 · N 切换讲师提示 · P 打印</p>',"问学生：本节课最想解决的一个实际工程问题是什么？");
+add("SCENARIO","工程问题",'<div class="panel good"><h3>'+fmt(extra.scene||intro)+'</h3></div>',"先让学习者说出输入、预期结果和失败现象。");
 add("GOALS","学习目标与验收方向",'<div class="panel">'+list(data.goals)+'</div><p class="footnote">每个目标对应可被检查的解释、操作、图示或运行证据。</p>',"把目标转为三个问题：知道什么、能够做什么、如何验证。");
 if(extra.terms&&extra.terms.length)add("KEYWORDS","术语与接口",'<div class="three-cols">'+extra.terms.map(x=>'<div class="panel"><div class="eyebrow">KEY TERM</div><h3>'+esc(x[0])+'</h3><p>'+fmt(x[1])+'</p></div>').join("")+'</div>',"逐一说明术语对应哪个软件层、数据或硬件资源。");
-const core=(data.core||"").trim(),ss=core.match(/[^。！？；]+[。！？；]?/g)||[core],half=Math.max(1,Math.ceil(ss.length/2));
-const p1=ss.slice(0,half).join(""),p2=ss.slice(half).join("")||core;
-if(!Array.isArray(depth.concepts)||!depth.concepts.length){
-add("THEORY","核心原理 · 机制",'<div class="panel"><h3>技术解释</h3><p class="big">'+fmt(p1)+'</p></div>'+cards(['<h3>输入侧要核对</h3><p>来源、类型、格式、尺寸和版本。</p>','<h3>输出侧要核对</h3><p>结果是否能解释、能量化、能复现。</p>']),"引导学生把术语说成可观察的接口行为。");
-add("THEORY","核心原理 · 工程约束",'<div class="panel"><p class="big">'+fmt(p2)+'</p></div>'+cards(['<h3>先建立基线</h3><p>在明确测试条件下保存一个正确结果。</p>','<h3>再判断取舍</h3><p>根据精度、时间、资源与兼容性评估方案。</p>']),"不能把模型转换成功、速度变快与业务精度合格混为一谈。");
 
-if(Array.isArray(depth.concepts)){
-depth.concepts.forEach((c,i)=>{
- add("DEEP DIVE","专题精讲 "+(i+1)+" · "+c.title,
-   '<div class="panel good"><h3>'+fmt(c.title)+'</h3><p class="big">'+fmt(c.explain)+'</p></div>'+
-   '<div class="panel soft"><h3>理解要点 / 判断标准</h3><p>'+fmt(c.takeaway)+'</p></div>',
-   "引导学生说明概念如何影响真实工程中的输入、输出或资源使用；鼓励举反例。");
-});
+if(Array.isArray(depth.concepts)&&depth.concepts.length){
+ depth.concepts.forEach((c,i)=>{
+  add("THEORY","讲透原理 "+(i+1)+" · "+c.title,
+    '<div class="panel"><h3>'+fmt(c.title)+'</h3><p>'+fmt(c.explain)+'</p></div>'+
+    '<div class="panel soft"><strong>检查理解</strong><p>'+fmt(c.takeaway)+'</p></div>',
+    "请学生画出输入与输出关系，再用真实张量或一个数值例子验证。");
+ });
+}else{
+ add("THEORY","原理与工程约束",'<div class="panel"><p>'+fmt(data.core||"请阅读对应 Markdown 讲义。")+'</p></div>');
 }
-
-}
-
 const teach=depth.guidance;
 if(teach&&Array.isArray(teach.phases)){
  teach.phases.forEach((phase,i)=>{
@@ -118,7 +112,7 @@ add("SOURCE","源码与工程实验说明",
 const toc=slides.map((s,i)=>'<a class="outline-item" href="#'+sectionId(i)+'" data-section="'+i+'"><span>'+String(i+1).padStart(2,"0")+'</span>'+esc(s.title)+'</a>').join("");
 const content=slides.map((s,i)=>'<section id="'+sectionId(i)+'" class="slide lesson-section" aria-labelledby="section-heading-'+i+'"><div class="kicker">'+esc(s.cat)+' / '+String(i+1).padStart(2,"0")+'</div><h2 id="section-heading-'+i+'">'+esc(s.title)+'</h2>'+s.body+'<div class="teacher-note"><strong>讲师提示：</strong> '+fmt(s.note)+'</div></section>').join("");
 document.body.classList.add("continuous");
-host.innerHTML='<header class="player-header"><div class="header-row"><a class="brand" href="../index.html">RK<b>3588</b> / COURSE</a><div class="lesson-name">'+esc(name)+'</div><div class="actions"><button class="btn ghost" id="menuBtn" type="button" aria-expanded="false" aria-controls="slideOutline">章节目录</button><button class="btn ghost" id="noteBtn" type="button" aria-pressed="false">讲师提示</button><button class="btn ghost" id="printBtn" type="button">打印全文</button></div></div><div class="player-progress"><i id="progressBar"></i></div></header><div class="player-layout"><nav id="slideOutline" class="slide-outline" aria-label="本节课目录"><h3>本节课程目录</h3>'+toc+'<p style="padding:12px"><a href="../../docs/'+encodeURIComponent(m.slug).replaceAll("(","%28").replaceAll(")","%29")+'.md">Markdown 详细讲义 ↗</a></p></nav><main class="player-main"><div class="longform-intro"><span class="eyebrow">CONTINUOUS READING</span><p>本节课的全部内容已展开在同一页面。向下滚动阅读，或点击左侧目录快速定位；课堂测验、代码复制和验收清单可直接操作。</p></div><article id="lessonArticle" class="lesson-article">'+content+'</article><nav class="lesson-footer-nav" aria-label="课程导航">'+lessonLink(prev,"← 上一讲")+'<a class="btn ghost" href="../index.html">全部课程</a>'+lessonLink(next,"下一讲 →")+'</nav><p class="hotkeys">使用浏览器正常滚动阅读 · 点击目录跳转 · N 显示讲师提示 · P 打印整篇 · F 全屏</p></main></div><button id="backTop" class="back-top" type="button" aria-label="返回顶部">↑ 顶部</button>';
+host.innerHTML='<header class="player-header"><div class="header-row"><a class="brand" href="../index.html">RK<b>3588</b> / COURSE</a><div class="lesson-name">'+esc(name)+'</div><div class="actions"><button class="btn ghost" id="menuBtn" type="button" aria-expanded="false" aria-controls="slideOutline">章节目录</button><button class="btn ghost" id="noteBtn" type="button" aria-pressed="false">讲师提示</button><button class="btn ghost" id="printBtn" type="button">打印全文</button></div></div><div class="player-progress"><i id="progressBar"></i></div></header><div class="player-layout"><nav id="slideOutline" class="slide-outline" aria-label="本节课目录"><h3>本节课程目录</h3>'+toc+'<p style="padding:12px"><a href="../../docs/'+encodeURIComponent(m.slug).replaceAll("(","%28").replaceAll(")","%29")+'.md">Markdown 详细讲义 ↗</a></p></nav><main class="player-main"><article id="lessonArticle" class="lesson-article">'+content+'</article><nav class="lesson-footer-nav" aria-label="课程导航">'+lessonLink(prev,"← 上一讲")+'<a class="btn ghost" href="../index.html">全部课程</a>'+lessonLink(next,"下一讲 →")+'</nav><p class="hotkeys">使用浏览器正常滚动阅读 · 点击目录跳转 · N 显示讲师提示 · P 打印整篇 · F 全屏</p></main></div><button id="backTop" class="back-top" type="button" aria-label="返回顶部">↑ 顶部</button>';
 const nav=document.getElementById("slideOutline");
 const menu=document.getElementById("menuBtn");
 menu.onclick=()=>{
