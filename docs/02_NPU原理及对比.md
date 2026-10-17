@@ -157,14 +157,18 @@ print(standard_mac / (depth_mac + point_mac))
 
 **验收边界：** 在 PC 运行公式程序得到形状和 MAC，对比 CPU/GPU/NPU 的擅长任务，并说明 TOPS 为何不能直接计算 FPS。
 
-## 配套可运行源码
+## 配套可运行源码（第 02 讲）
 
-- [本讲独立操作手册（只含运行、参数与验收）](../examples/notes/lesson_02.md)
+- [本讲独立 Python 实例](../examples/lesson_02.py) · [操作手册与参数说明](../examples/notes/lesson_02.md)
+- [通用依赖与课程代码说明](../examples/README.md)
 
-- [本节实际 Python 程序](../examples/lesson_02.py)（基于 [labs.py](../examples/labs.py) 实现）
-- [全部源码、依赖与执行方法](../examples/README.md)
+在仓库根目录运行：
 
-从仓库根目录执行 `python3 examples/lesson_02.py --help`，然后按代码说明传入真实文件或直接运行该课程的数学/诊断实验。基础实验不等于已经在 RK3588 NPU 上真实运行过模型。
+```bash
+python3 examples/lesson_02.py --height 224 --width 224 --in-channels 32 --out-channels 64
+```
+
+**如何验收：** 输出标准卷积与深度可分离卷积的 shape、MAC 和比值，属于算法公式验证。 以上执行命令需要对应输入、依赖和运行环境；路径包含占位符时先替换实际文件。
 
 ## 原始字幕（仅供核对）
 
