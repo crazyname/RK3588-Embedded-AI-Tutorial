@@ -51,9 +51,11 @@ PC 可先生成仓库自带的真实 ONNX Tiny CNN 并运行 ONNX Runtime。RKNP
 
 **快速体验：** 在仓库根目录运行 `python3 examples/lesson_00.py --output build/lesson00/environment.json`、`python3 examples/lesson_02.py`，再运行 `python3 -m unittest discover -s examples/tests -v`。详见代码说明中对纯 Python、ONNX Runtime 和 RK3588 板端三个执行环境的区分。
 
-## 35 节重编自学教材
+## 教材与课件的分工
 
-全部 HTML 与 Markdown 已按自学需求重编：原理讲解、3 个实操任务、预期检查、故障诊断、完整案例、课堂测试及官方参考。HTML 采用整篇连续滚动，MD 在末尾保留原始视频转写。实验片段并未全部在实际 RK3588 上运行验证，应按 SDK 版本核对。
+- **Markdown 是系统教材**：按照原理与数据协议、计算与现场案例、工程取舍、逐函数源码解释、操作实验、诊断、自测组织。重点回答“为什么如此设计、数据究竟是什么、错误从哪里来”。原始视频字幕折叠保留在文末，供校对而非替代正文。
+- **HTML 是教师指导式实验课件**：先提出一个具体工程问题，讲透核心概念，然后按“准备条件 → 演示命令 → 核验输出”带做，再讲解关键代码与排障。每个步骤均有观察点与失败时的排查方向，不重复展示空泛的课堂安排。
+- **源码和工程实验手册负责真正执行**：`examples/lesson_00.py` 至 `lesson_34.py` 是课程入口，`engineering/` 与 `boards/` 提供实际 SDK/模型/开发板要求。PC 单测、模型转换与 ROCK 5B 的真实 NPU 实验分别验收，不以模拟结果代替硬件数据。
 
 - [12 周自学路线与实验日志模板](courseware/SELF_STUDY_GUIDE.md)
 - [官方资料与推荐书目](courseware/REFERENCES.md)

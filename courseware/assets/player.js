@@ -11,6 +11,7 @@ const fmt=s=>esc(s).replace(/\u0060([^\u0060]+)\u0060/g,"<code>$1</code>");
 const list=a=>"<ul>"+(a||[]).map(t=>"<li>"+fmt(t)+"</li>").join("")+"</ul>";
 const cards=a=>'<div class="columns">'+a.map(t=>'<div class="panel">'+t+'</div>').join("")+'</div>';
 const stepList=(a,start)=>'<ol class="steps-list">'+a.map((s,i)=>'<li><span class="step-no">'+(start+i+1)+'</span><span class="step-body">'+fmt(s)+'<small>观察执行结果，并记录版本、输入、日志或数据。</small></span></li>').join("")+"</ol>";
+const sectionNames={OPENING:"课程导入",SCENARIO:"工程问题",GOALS:"本讲目标",KEYWORDS:"关键术语",THEORY:"原理精讲","GUIDED LAB":"教师带做","CODE READING":"源码拆解",DIAGNOSTIC:"排障方法","CASE STUDY":"应用案例",CHECK:"课堂自测",READING:"参考资料",ACCEPT:"验收清单",SOURCE:"源码与手册"};
 const slides=[];
 function add(cat,title,body,note){slides.push({cat,title,body,note:note||"根据实际设备和软件版本判断，不要用未经验证的结果替代课堂证据。"});}
 const name=data.title||m.title,intro=data.intro||"把理论、转换与运行验证连接成可重复的学习闭环。";

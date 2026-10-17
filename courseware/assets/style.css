@@ -60,3 +60,11 @@
  .continuous .lesson-section button{display:none!important}
  .continuous .lesson-section .quiz-feedback{display:none!important}
 }
+
+/* Instructor-guided reading: compact sections, readable code, no slideshow padding. */
+.continuous .lesson-section{margin-bottom:16px;padding:clamp(20px,2.6vw,30px);box-shadow:none}
+.continuous .lesson-section h2{margin-bottom:16px}
+.continuous .lesson-section .panel{padding:clamp(14px,1.8vw,18px)}
+.continuous .lesson-section .panel p{line-height:1.72}
+.continuous .lesson-section .code-wrap{max-height:none;overflow-x:auto}
+.continuous .lesson-section pre{white-space:pre;overflow-x:auto}
