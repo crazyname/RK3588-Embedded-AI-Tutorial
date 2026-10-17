@@ -158,14 +158,12 @@ detections = decode(outputs, meta, size=640,
 
 ## 配套可运行源码
 
-- [本讲独立操作手册（只含运行、参数与验收）](../examples/notes/lesson_33.md)
+- [第 33 个课程程序（源码编号）](../examples/lesson_33.py) · [对应操作手册](../examples/notes/lesson_33.md)
+- [本专题实际工程源码](../boards/radxa-rock5b/apps/camera_yolov8_lite.py) · [独立工程实验手册](../engineering/yolov8-camera.md)
 
-- [本节可执行 Python 实验](../examples/lesson_33.py)（基础算法实现在 [labs.py](../examples/labs.py)）
-- [配套实际模型工具：lite_infer.py](../examples/hardware/lite_infer.py)
-- [配套实际模型工具：compare_outputs.py](../examples/hardware/compare_outputs.py)
-- [完整运行说明和 SDK/模型前置条件](../examples/README.md)
+`lesson_33.py` 在当前 PC 上对比两个真实 Ultralytics 权重的时延；板端 YOLOv8 摄像头主线是 `camera_yolov8_lite.py`，要求 Model Zoo 优化版六/九输出头，并由独立后处理代码解码。
 
-先从仓库根目录运行 `python3 examples/lesson_33.py --help`。训练、ONNX 与 SDK 实例需要真实模型文件、数据和匹配环境。YOLO26 的 ONNX 导出不保证 RKNN 兼容；YOLOv5/v8 检测头和后处理应以同一版本官方 Model Zoo 为准。RKLLM 仍需使用官方匹配模型与板端运行 SDK，当前示例只实现真实内存估算，没有伪造的大模型部署结果。
+**验收边界：** PC/离线测试不等于 RK3588 实测。真正上板必须记录模型、SDK/Runtime 版本、实际输入、终端输出和结果解释。
 
 ## 原始字幕（仅供核对）
 
