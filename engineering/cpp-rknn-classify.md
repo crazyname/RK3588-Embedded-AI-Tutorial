@@ -21,6 +21,8 @@ cmake -S examples/hardware -B build/native-rknn -DRKNN_INCLUDE_DIR=/actual/rknn/
 板端编译与执行必须结合 [ROCK 5B 手册](../boards/radxa-rock5b/README.md) 和 [C++ RGA 输入对照](../boards/radxa-rock5b/CPP_RGA_IO_BENCHMARK.md)。构建前替换 SDK include/lib 为实际 ARM64 文件；保留 stdout、stderr、输入图、模型哈希及错误日志。
 
 ## 自动化测试
+
+- [新增专项行为测试](../tools/tests/test_engineering_image_io.py)
 - [`tools/tests/test_resource_tools.py`](../tools/tests/test_resource_tools.py)
 
 上列测试为现有交叉参考入口，**不能据此断言该 C++ 工程已有专属功能测试**。必须补实际硬件测试，涉及代码行为的离线单元测试应逐步新增。
