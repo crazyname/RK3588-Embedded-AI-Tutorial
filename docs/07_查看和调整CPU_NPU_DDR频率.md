@@ -150,14 +150,18 @@ python3 -c "import csv; print(next(csv.DictReader(open('build/lesson07/frequency
 
 **验收边界：** 提供真实 CSV，标出每个节点名称和单位；有开发板时可与同条件推理延迟对照，但本讲不要求修改频率或刷写系统。
 
-## 配套可运行源码
+## 配套可运行源码（第 07 讲）
 
-- [本讲独立操作手册（只含运行、参数与验收）](../examples/notes/lesson_07.md)
+- [本讲独立 Python 实例](../examples/lesson_07.py) · [操作手册与参数说明](../examples/notes/lesson_07.md)
+- [通用依赖与课程代码说明](../examples/README.md)
 
-- [本节可运行 Python 实验](../examples/lesson_07.py)（实现于 [labs.py](../examples/labs.py)）
-- [代码环境、依赖、输入输出及使用说明](../examples/README.md)
+在仓库根目录运行：
 
-先从仓库根目录运行 `python3 examples/lesson_07.py --help`。需要 SDK 的程序只有在提供真实模型、匹配的 Toolkit2/ONNX Runtime 与正确输入后才能验证；不能把便携算法演示当作 NPU 性能实测。
+```bash
+python3 examples/lesson_07.py --samples 3 --interval 0.5 --output build/lesson07/frequency.csv
+```
+
+**如何验收：** 保存真实 sysfs 频率与温度的原始时间序列，单位需逐节点判断。 路径包含 `/path/to/` 时必须换成实际文件，不能把 CLI `--help` 或 PC 模拟当成设备实测。
 
 ## 原始字幕（仅供核对）
 
