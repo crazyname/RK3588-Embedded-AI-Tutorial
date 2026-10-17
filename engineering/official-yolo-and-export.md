@@ -33,11 +33,11 @@ PC 导出之后做 ONNX checker，并不证明 RKNN 编译和上板成功；板�
 
 ## 自动化测试
 
-- [新增专项行为测试](../boards/radxa-rock5b/tests/test_dedicated_capture_launcher.py)
+- [相关功能测试](../boards/radxa-rock5b/tests/test_dedicated_capture_launcher.py)
 - [`boards/radxa-rock5b/tests/test_board_tools.py`](../boards/radxa-rock5b/tests/test_board_tools.py)
 - [`tools/tests/test_export_yolov8_fp32.py`](../tools/tests/test_export_yolov8_fp32.py)
 
-上列测试为现有交叉参考入口，**不能据此断言该 C++ 工程已有专属功能测试**。必须补实际硬件测试，涉及代码行为的离线单元测试应逐步新增。
+上列测试为现有交叉参考入口，**不能据此断言该工程已有完整专属功能测试**。必须补实际硬件测试，涉及代码行为的离线单元测试根据实际功能需要完善。
 
 ## 验收标准
 保存官方运行命令、模型权重来源、导出 ONNX 的 opset、图像预处理协议和真实检测结果；不能用帮助信息代替上板基线。将对照值、测试样本和期望结果存储在本地 results 目录，区分成功、失败和未测试状态。

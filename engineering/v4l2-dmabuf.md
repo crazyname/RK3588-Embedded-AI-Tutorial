@@ -28,7 +28,7 @@ g++ -std=c++17 -O2 -Wall -Wextra -Werror boards/radxa-rock5b/tools/v4l2_dmabuf_e
 
 ## 自动化测试
 
-- [新增专项行为测试](../boards/radxa-rock5b/tests/test_v4l2_dmabuf_native.py)
+- [相关功能测试](../boards/radxa-rock5b/tests/test_v4l2_dmabuf_native.py)
 
 对应可审查的测试文件（某些为共用测试文件；**不保证每个子功能都已覆盖**）：
 

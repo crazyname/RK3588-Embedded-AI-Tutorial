@@ -25,7 +25,7 @@ python3 boards/radxa-rock5b/tools/usb_camera_check.py --source /dev/video0 --fra
 
 ## 自动化测试
 
-- [新增专项行为测试](../boards/radxa-rock5b/tests/test_dedicated_capture_launcher.py)
+- [相关功能测试](../boards/radxa-rock5b/tests/test_dedicated_capture_launcher.py)
 
 对应可审查的测试文件（某些为共用测试文件；**不保证每个子功能都已覆盖**）：
 

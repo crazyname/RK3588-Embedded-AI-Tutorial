@@ -24,7 +24,7 @@ python3 examples/lesson_26.py --model m.rknn --input-raw x.raw --native-input-by
 
 ## 零拷贝实际 NPU 推理（需 RK3588 开发板）
 
-新增 [独立 C++ 源码](../hardware/rknn_zero_copy.cpp)，代码实际调用 `rknn_create_mem`、`rknn_set_io_mem`、`rknn_run` 与 `rknn_destroy_mem`。用真实 SDK 头文件和动态库编译，支持单输入单输出 uint8 NHWC 分类模型。请先在板端通过 `rknn_query` 核实输入原生 stride 与 size，再构造包含填充的数据文件。
+另见 [C++ 输入内存绑定源码](../hardware/rknn_zero_copy.cpp)，代码实际调用 `rknn_create_mem`、`rknn_set_io_mem`、`rknn_run` 与 `rknn_destroy_mem`。用真实 SDK 头文件和动态库编译，支持单输入单输出 uint8 NHWC 分类模型。请先在板端通过 `rknn_query` 核实输入原生 stride 与 size，再构造包含填充的数据文件。
 
 ```bash
 python3 examples/lesson_26.py --model model.rknn --input-raw padded_input.raw \

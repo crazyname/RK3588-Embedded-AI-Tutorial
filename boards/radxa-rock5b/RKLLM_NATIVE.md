@@ -64,7 +64,7 @@
 正式性能对照还需要重复运行、记录热节流、温度、电源、GPU/NPU 负载、模型量化参数与上下文。代码没有接入 token callback 的**真实 token ID 逐条时序**时，不可根据文本 chunk 推断 TTFT；可通过精确 SDK release 的性能字段或进一步 instrumentation 实现严格测量。
 
 
-## 多次推理统计：新增离线验收工具
+## 多次推理统计与离线验收
 
 单次 `rkllm_stream` 的性能易受到模型首次加载、CPU/NPU 频率、温度与后台负载影响。先固定 **同一真实模型、提示词、上下文长度、max-new、板卡镜像、Runtime 以及测量流程**，按上面的命令重复推理并保存各次 `--report`（例如 `run01.json`、`run02.json`、`run03.json`）。建议至少进行一次独立预热，并记录实际配置和环境版本；不要将不同实验条件的 JSON 混合平均。
 
@@ -92,7 +92,7 @@ python3 -m unittest discover -s boards/radxa-rock5b/tests -p 'test_summarize_rkl
 
 ## 模型、提示词与报告 SHA256 绑定
 
-为了防止在不知情的情况下用不同模型或不同提示词比较速度，新增 [RKLLM 实验来源清单工具](tools/rkllm_provenance.py)。运行一次原生 C++ 推理并生成 JSON 报告后，在仓库根目录执行：
+为了防止在不知情的情况下用不同模型或不同提示词比较速度，使用 [RKLLM 实验来源清单工具](tools/rkllm_provenance.py)。运行一次原生 C++ 推理并生成 JSON 报告后，在仓库根目录执行：
 
 ```bash
 python3 boards/radxa-rock5b/tools/rkllm_provenance.py \

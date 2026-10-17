@@ -118,7 +118,7 @@ rknn_context ctx = 0;
 
 ### 进阶实验：RKNPU2 C++ 输入路径对照
 
-本讲新增 [同模型标准输入/绑定输入比较源码](../examples/hardware/rknn_compare_input_io.cpp) 与 [ROCK 5B 实测和编译手册](../boards/radxa-rock5b/CPP_RGA_IO_BENCHMARK.md)。需真实 ARM64 runtime、单输入单输出分类模型和完整输入，不能把 CPU mock 成功视为板端数据。
+本讲配套 [同模型标准输入/绑定输入比较源码](../examples/hardware/rknn_compare_input_io.cpp) 与 [ROCK 5B 实测和编译手册](../boards/radxa-rock5b/CPP_RGA_IO_BENCHMARK.md)。需真实 ARM64 runtime、单输入单输出分类模型和完整输入，不能把 CPU mock 成功视为板端数据。
 
 ## 源码精读：关键 API、张量与验收
 

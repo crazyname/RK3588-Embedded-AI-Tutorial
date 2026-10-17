@@ -32,4 +32,4 @@ python3 examples/lesson_33.py --baseline old.pt --optimized new.pt --images a.jp
 
 ## 原生 C++ RKNPU2 YOLOv8 多输出实操
 
-请参照 [ROCK 5B C++ YOLOv8 与 DMA-BUF 实验说明](../../boards/radxa-rock5b/CPP_YOLOV8_NATIVE.md)。新增 [实际 NPU C API 主程序](../hardware/rknn_yolov8_raw.cpp)、[DFL/NMS C++ 后处理](../hardware/yolov8_postprocess.cpp) 与 [真实 RKNNLite 输出 NPZ → C++ FP32 兼容导出](../../tools/export_yolov8_fp32.py)。此项目要求 Model Zoo 优化版 6/9 输出，不能把普通 ONNX 模型输出强行 reshape。尚待 ROCK 5B 实机验收。
+请参照 [ROCK 5B C++ YOLOv8 与 DMA-BUF 实验说明](../../boards/radxa-rock5b/CPP_YOLOV8_NATIVE.md)。配套 [NPU C API 主程序](../hardware/rknn_yolov8_raw.cpp)、[DFL/NMS C++ 后处理](../hardware/yolov8_postprocess.cpp) 与 [真实 RKNNLite 输出 NPZ → C++ FP32 兼容导出](../../tools/export_yolov8_fp32.py)。此项目要求 Model Zoo 优化版 6/9 输出，不能把普通 ONNX 模型输出强行 reshape。尚待 ROCK 5B 实机验收。

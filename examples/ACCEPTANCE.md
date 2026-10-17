@@ -23,8 +23,8 @@
 - 第18讲 Fernet 文件加密不是 RKNN 原生模型加密，密文不能直接交给 RKNN Runtime。
 - 第23讲生成 C++ 张量声明不等于生成了完整的推理代码。
 - 第26讲仅核对 stride/字节数不等于实现零拷贝，需要实际创建/绑定 I/O buffer、缓存同步与对照测试。
-- 第29/33讲 YOLO 必须有配套版本的输出解码、letterbox、NMS 和真实检测图片。
-- 第30–32讲 ONNX 导出成功不意味着 YOLO26 能编译成 RKNN 或在 RK3588 成功推理。
+- 第29讲 YOLOv5 与第31讲 YOLOv8（源码 lesson_33.py） 必须有配套版本的输出解码、letterbox、NMS 和真实检测图片。
+- 第30讲的三个专题（源码 lesson_30.py～lesson_32.py）ONNX 导出成功不意味着 YOLO26 能编译成 RKNN 或在 RK3588 成功推理。
 - 第32讲（源码 lesson_34.py）RKLLM 权重大小推算不等于设备真实生成与 tokens/s 记录。
 
 ## 课程结构检查

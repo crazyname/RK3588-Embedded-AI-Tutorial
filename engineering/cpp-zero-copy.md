@@ -22,7 +22,7 @@ cmake -S examples/hardware -B build/native-rknn -DRKNN_INCLUDE_DIR=/actual/rknn/
 - [原生 C++ 分类/内存绑定假 SDK 行为测试](../examples/hardware/tests/test_native_classification.py)：编译真实 C++ 主程序，在显式 FAKE SDK 上运行成功和错误输入路径；不代表实机 NPU
 - [`boards/radxa-rock5b/tests/test_board_tools.py`](../boards/radxa-rock5b/tests/test_board_tools.py)
 
-上列测试为现有交叉参考入口，**不能据此断言该 C++ 工程已有专属功能测试**。必须补实际硬件测试，涉及代码行为的离线单元测试应逐步新增。
+上列测试为现有交叉参考入口，**不能据此断言该工程已有完整专属功能测试**。必须补实际硬件测试，涉及代码行为的离线单元测试根据实际功能需要完善。
 
 ## 验收标准
 检查输入输出 tensor attr、stride、memory 绑定、缓存同步及推理结果；比较标准 API 与绑定 API 的正确性和真实延迟。将对照值、测试样本和期望结果存储在本地 results 目录，区分成功、失败和未测试状态。
