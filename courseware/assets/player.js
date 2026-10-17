@@ -53,6 +53,33 @@ if(depth.snippet){
  "这一片段主要用于辅助理解；清楚说明依赖、可观察输出和修改范围。");
 }
 
+
+// Source-code guided explanation shared with the corresponding MD theory chapter.
+// No external fetch: all detailed lesson data is embedded in the individual HTML file.
+if(depth.walkthrough){
+ const w=depth.walkthrough;
+ const path=(w.flow||[]).map((part,i)=>(i?'<span class="arrow">→</span>':'')+
+   '<div class="flow-box"><span>'+fmt(part)+'</span></div>').join('');
+ add("CODE READING","源码精读 · 输入如何到达输出",
+   '<div class="panel good"><p>'+fmt(w.intro)+'</p></div>'+
+   '<div class="flow">'+path+'</div>'+
+   '<div class="panel soft"><h3>本讲需要理解的张量/协议</h3><p>'+fmt(w.example)+'</p></div>',
+   "沿输入→关键 API→输出读源码，先看张量的 dtype/shape，再讨论是否得到真实模型结果。");
+ (w.steps||[]).forEach((step,i)=>{
+   add("CODE READING","关键函数 "+(i+1)+" · "+step.api,
+      '<div class="panel"><h3>'+fmt(step.api)+'</h3>'+
+      '<p><strong>输入：</strong>'+fmt(step.input)+'</p>'+
+      '<p><strong>输出：</strong>'+fmt(step.output)+'</p>'+
+      '<p>'+fmt(step.why)+'</p></div>'+
+      (step.code?'<div class="code-wrap"><button type="button" class="copy-code">复制片段</button><pre><code>'+esc(step.code)+'</code></pre></div>':''),
+      "把代码中的变量对应到模型输入、API 的返回值、缓冲区或坐标单位；片段用于理解，完整运行入口见工程手册。");
+ });
+ add("CODE CHECK","对照本讲源码的验收",
+  '<div class="panel good"><h3>什么才算通过</h3><p>'+fmt(w.acceptance)+'</p></div>'+
+  '<p class="footnote">注意：教材公式和举例数据并不等于实际在 ROCK 5B 上测出的结果。</p>',
+  "没有真实输入、输出、SDK 与硬件版本时不勾选实机推理验收。");
+}
+
 add("RECORD","实验报告需要记录什么？",'<div class="three-cols"><div class="panel"><div class="eyebrow">INPUT</div><h3>条件</h3><p>模型、硬件、版本、输入张量、启动参数。</p></div><div class="panel"><div class="eyebrow">PROCESS</div><h3>过程</h3><p>执行动作、返回码、输出日志与阶段耗时。</p></div><div class="panel"><div class="eyebrow">RESULT</div><h3>结论</h3><p>实际现象、与基线差异、待解决的问题。</p></div></div>',"请学生保存可共享的结果，而非仅回答“成功了”。");
 add("DEBUG","常见问题与错误诊断",'<div class="three-cols">'+data.pitfalls.slice(0,3).map((s,i)=>'<div class="panel warn"><div class="eyebrow">RISK 0'+(i+1)+'</div><h3>典型误区</h3><p>'+fmt(s)+'</p><small class="muted">复现 → 缩小范围 → 单变量修改 → 重新验证</small></div>').join("")+'</div>',"每个误区尝试列出最小复现步骤和一个可检查的证据。");
 
@@ -84,36 +111,8 @@ return '<li><a href="'+esc(safeUrl)+'" target="_blank" rel="noopener noreferrer"
 
 add("ACCEPT","本节验收标准",'<p>以下勾选仅用于辅助复习，实际完成请提供可观察的证据。</p><div id="checks">'+data.checks.map((s,i)=>'<label class="check-item"><input data-check="'+i+'" type="checkbox">'+fmt(s)+'</label>').join("")+'</div><p class="footnote">学习进度仅存储在当前浏览器本地；不会上传到服务器。</p>',"未达标的部分对应哪一张幻灯片？请学生指出具体位置。");
 
+// One concise source reference; the actual commands and runbooks are shown below.
 const codeFile="lesson_"+String(data.id).padStart(2,"0")+".py";
-const hardwareByLesson={
-9:["convert_onnx.py"],11:["convert_onnx.py"],12:["onnx_reference.py"],
-13:["onnx_reference.py"],23:["rknn_classify.cpp"],
-24:["lite_infer.py"],25:["rknn_classify.cpp","CMakeLists.txt"],
-26:[],27:["lite_infer.py","prepare_image.py"],28:["rknn_classify.cpp"],
-29:["lite_infer.py","prepare_image.py"],30:["export_yolo_onnx.py"],31:["export_yolo_onnx.py"],
-32:["export_yolo_onnx.py","convert_onnx.py","onnx_reference.py"],33:["lite_infer.py","compare_outputs.py"],
-34:[]
-};
-const sdkFiles=hardwareByLesson[data.id]||[];
-const boardRKLLMLinks=data.id===34?'<li><a href="../../examples/hardware/rkllm/rkllm_stream.cpp">RK3588：原生C++ RKLLM回调推理代码</a></li><li><a href="../../boards/radxa-rock5b/RKLLM_NATIVE.md">ROCK 5B RKLLM编译/模型/性能验收手册</a></li>':'';
-const boardCppLinks=(data.id===25||data.id===26)?'<li><a href="../../examples/hardware/rknn_compare_input_io.cpp">C++ RKNPU2 同模型输入绑定对照</a></li><li><a href="../../examples/hardware/rga_letterbox_rgb888.cpp">C++ RGA RGB888 缩放</a></li><li><a href="../../boards/radxa-rock5b/CPP_RGA_IO_BENCHMARK.md">真实板端版本、编译和验收手册</a></li>':'';
-const videoYoloLinks=(data.id===26||data.id===33)?'<li><a href="../../examples/hardware/v4l2_rga_rknn_yolov8.cpp">C++ V4L2 DMA-BUF→RGA→NPU视频检测程序</a></li><li><a href="../../boards/radxa-rock5b/V4L2_RGA_RKNN_YOLOV8.md">ROCK 5B 实时采集限制和实验手册</a></li>':'';
-const boardCppYoloLinks=(data.id===29||data.id===33)?'<li><a href="../../examples/hardware/rknn_yolov8_raw.cpp">C++ RKNPU2优化版YOLOv8原生多输出推理</a></li><li><a href="../../examples/hardware/yolov8_postprocess.cpp">C++ DFL + NMS 后处理源码</a></li><li><a href="../../boards/radxa-rock5b/CPP_YOLOV8_NATIVE.md">C++实机编译、模型协议与DMA-BUF前置检查</a></li>':'';
-const boardYoloLinks=(data.id===29||data.id===33)?'<li><a href="../../boards/radxa-rock5b/apps/camera_yolov8_lite.py">ROCK 5B：摄像头→RKNNLite YOLOv8检测源码</a></li><li><a href="../../boards/radxa-rock5b/CAMERA_YOLOV8.md">YOLOv8优化版模型协议与硬件实验手册</a></li>':'';
-const boardCameraCode=data.id===27?'<li><a href="../../boards/radxa-rock5b/apps/camera_mobilenet_lite.py">ROCK 5B：USB摄像头→RKNNLite MobileNet实时分类</a></li><li><a href="../../boards/radxa-rock5b/CAMERA_MOBILENET.md">实机接线、命令、测量与排障手册</a></li>':'';
-const practicalNote=data.id===27?"LESSON_27.md":("notes/lesson_"+String(data.id).padStart(2,"0")+".md");
-const codeLinks='<ul><li><a href="../../examples/'+codeFile+
-'">打开本讲实操源码：'+codeFile+'</a></li>'+
-sdkFiles.map(f=>'<li><a href="../../examples/hardware/'+f+
-'">查看配套 SDK 示例：'+f+'</a></li>').join("")+boardCameraCode+boardYoloLinks+boardCppYoloLinks+videoYoloLinks+boardCppLinks+boardRKLLMLinks+
-'<li><a href="../../examples/'+practicalNote+'">本讲操作MD（不重复理论）</a></li><li><a href="../../examples/README.md">代码运行环境、依赖和验证说明</a></li><li><a href="../../examples/CODE_STATUS.md">35节代码真实完成度审计</a></li></ul>';
-add("SOURCE CODE","本讲可执行源码与运行环境",
-'<div class="panel good"><h3>先运行，再对照讲义</h3>'+codeLinks+
-'<p>35 个编号入口已重写为对应的实操程序；验证时请区分 PC 可测的算法、SDK 工具调用和 RK3588 上板验收。SDK 代码需要真实模型、匹配 Runtime 与开发板，模拟结果不得作为 NPU 实测。</p></div>'+
-'<div class="panel soft"><h3>第一条运行命令</h3><div class="code-wrap"><pre><code>python3 examples/'+codeFile+
-' --help</code></pre></div><p>从仓库根目录执行，再根据 README 提供真实输入。Python 通用实现集中在 examples/labs.py。</p></div>',
-"必须确认课件代码是算法实验还是板端完整推理。遇到缺少模型、SDK 或驱动时应明确记录阻塞项。");
-
 add("TRANSFER","课后练习与知识迁移",'<div class="panel">'+list(data.homework)+'</div><div class="panel soft"><h3>提交建议</h3><p>提交版本说明、数据与模型来源、关键步骤、结果截图、问题记录和复盘。涉及代码时提供可运行的最小示例。</p></div>',"下节课尽可能沿用本节的模型、日志和环境记录。");
 const nx=db[data.id+1];
 add("SUMMARY","本节总结",cards(['<h3>三件需要记住的事</h3>'+list(data.goals),'<h3>下一步学习</h3><p>'+(nx?"下一讲："+esc(nx.title):"本系列课程已经完成，请整理项目成果。")+'</p><p>在下一次实验前，请确认本讲的完成标准。</p>']),"闭环复盘：输入是什么、发生了什么、有什么证据。");
