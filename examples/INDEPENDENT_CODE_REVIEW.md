@@ -1,8 +1,8 @@
-# RK3588 35讲独立源码复核与剩余开发工作
+# RK3588 课程源码结构与验证范围
 
-> 复核日期：2026-10-16。此表是对实际源码实现方式的检查，不以 GitHub 的 Languages 百分比、代码行数或 CI 的 `--help` 作为完成证据。
+> 本表区分独立源码、主机侧测试与开发板实测；不以代码行数或 `--help` 作为硬件验收证据。
 
-**结论**：35 个编号 Python 程序均为不同源文件；未见原来的 `from labs import main` 按课程编号转发入口。另有 `examples/hardware/rknn_classify.cpp` 和 `rknn_zero_copy.cpp` 两份 C++ 推理代码。但部分 Python 程序是外部 SDK、模型转换脚本、CMake 或厂商 Demo 的专门启动器，不是每一讲都拥有自包含的完整 NPU 项目。
+**结论**：35 个编号 Python 程序均为不同源文件；不使用按课程编号转发的薄入口。另有 `examples/hardware/rknn_classify.cpp` 和 `rknn_zero_copy.cpp` 两份 C++ 推理代码。但部分 Python 程序是外部 SDK、模型转换脚本、CMake 或厂商 Demo 的专门启动器，不是每一讲都拥有自包含的完整 NPU 项目。
 
 ## 逐讲检查
 
@@ -47,18 +47,18 @@
 ## 当前测试证据
 
 - `.github/workflows/examples-ci.yml`：35 个 CLI 的调用检查、语法检查、教材映射与部分课次真实文件/ONNX 功能测试。
-- `examples/tests/test_lessons_09_34.py`：新加入 14 项数值/ONNX/图片/错误输入测试，CI 通过。
+- `examples/tests/test_lessons_09_34.py`：数值、ONNX、图像及错误输入等测试，CI 通过。
 - C++ 使用公开 `rknn_api.h` 做**语法检查**，不是 RK3588 实机编译和链接，更不是运行正确性。
 - Python `lesson_27.py` 已在 CI 对真实 ONNX Tiny CNN/图片推理；板端 `.rknn` 需真实机器和匹配 SDK。
 
-## 按优先级尚要完成
+## 实机实验的验收事项
 
 1. **统一目标硬件**：ROCK 5B 板级 revision、官方系统镜像、内核驱动、Toolkit2/Lite2/Runtime 版本和模型 SHA256 均固定并记录。
 2. **完善 C++ 推理验收**：对第25/26讲在板端完成构建和输入输出回归；zero-copy 示例仍先 memcpy 到 SDK 分配内存，不是 USB 摄像头至 NPU 的端到端零拷贝；还要测试 stride、cache 同步和真实性能差异。
-3. **相机实时检测工程**：实现 USB UVC/V4L2 → 正确 RGB/letterbox → RKNN YOLOv5/v8 → 针对检测头的解码和 NMS → 框绘制、稳定性、p50/p95/FPS。
-4. **第28/34讲专项完善**：第28讲当前是 ONNX Python 分类类，不是 RKNN C++ 类；第34讲是官方 RKLLM 可执行程序包装层，欠缺真实 token 流/TTFT/tokens/s 和长时间压力测试。
+3. **相机实时检测验收**：对现有 USB UVC/V4L2 → RGB/letterbox → RKNN YOLOv8 → DFL/NMS → 逐帧输出的工程，在真实 ROCK 5B 上检查帧率、坐标、稳定性和 p50/p95。
+4. **课程第 28/32 讲专项验收**：第 28 讲的源码 lesson_28.py 是 ONNX Python 封装，配套有单独 C++ RKNPU2 示例；第 32 讲的源码 lesson_34.py 是外部 RKLLM Demo 启动器，另有原生 C++ RKLLM 回调实现，仍需实机生成与性能日志。
 5. **构建真正的模型和数据基线**：真实模型、样例图片、许可来源、前处理 mean/std、量化数据集、标注数据集及训练配置锁定；不要用占位权重或仅凭 ONNX checker 宣称 RKNN 已支持。
-6. **回归测试持续扩充**：目前覆盖面不足以宣称35讲每个目标都完整验收；后续应增加负例、边界条件、模型转换回归、NPU性能与稳定性数据。
+6. **实验记录**：保留输入模型、程序命令、板端 Runtime/驱动、实际输出、性能采样及未通过原因；PC CI 不代替这些证据。
 
 ## 三种不可混淆的状态
 

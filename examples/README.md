@@ -1,8 +1,8 @@
 [逐讲源码复核与待完成工程](INDEPENDENT_CODE_REVIEW.md)
 
-# RK3588：35 节课程源码与去重实验手册
+# RK3588：35 讲课程源码与实验手册
 
-## 文档分工：不重复
+## 文档分工
 
 - **`docs/*.md`（35份课程 MD）**：负责学习目标、概念、原理、案例、自测、课程字幕与参考资料。
 - **`examples/notes/lesson_XX.md`（34份）+ `examples/LESSON_27.md`（1份）**：负责该实例需要哪些输入文件、如何安装依赖、精确运行命令、输出在哪、如何验收与排错。**不复制理论段落**。
@@ -11,7 +11,7 @@
 
 **验收边界**：35 个脚本独立重写≠35 个实机部署项目均已完成。无 RK3588 时可在 CI 实测 PC 部分；零拷贝、RKLLM、板端 YOLO 等必须有真实板卡及 SDK/模型才能做最终验收。
 
-## 去重实例索引
+## 课程实例索引
 
 | 课次 | 实操源码 | 实操说明 | 对应理论 |
 |---|---|---|---|
@@ -74,7 +74,7 @@ Windows 可以使用 py -3 替代 python3。
     python3 examples/lesson_12.py --onnx model.onnx
     python3 examples/lesson_31.py --labels dataset/labels/train
 
-第 18 讲新增对文件的真实 Fernet 加密/解密（非 RKNN 原生模型加密格式）；第 08 讲调用实际 Demo，不再生成虚拟推理数据。
+第 18 讲提供文件的 Fernet 加密/解密（非 RKNN 原生模型加密格式）；第 08 讲调用实际 Demo，不再生成虚拟推理数据。
 
 ## 真正的 RKNN 模型转换（开发机）
 
@@ -142,7 +142,7 @@ input.npy 必须是按实际模型协议准备的真实 tensor，并非随意生
 该程序真实导出并用 ONNX checker 检查。能导出 ONNX 不意味着特定 YOLO26 模型已经得到 RK3588 RKNN 编译器支持；继续做 ONNX Runtime 与 RKNN 兼容验证。对于官方支持的检测模型完整图像采集与解码，优先使用同一版本的 RKNN Model Zoo 官方 YOLOv5/YOLOv8 完整示例。
 
 
-## 第26讲：真正的零拷贝 C API（设备专用）
+## 第 26 讲：RKNPU2 SDK 输入内存绑定
 
 已提供 [rknn_zero_copy.cpp](hardware/rknn_zero_copy.cpp)；它将真实模型载入 RKNPU2，调用 `rknn_create_mem`、`rknn_set_io_mem` 绑定输入输出缓冲，执行 `rknn_run` 并清理资源。该示例**仅适用于满足 uint8 NHWC 输入与所用 RKNN Runtime 兼容要求的单输入单输出模型**。它需要按 SDK 查询的 `size_with_stride` 准备含对齐填充的 raw 输入，而不是普通图像文件。
 

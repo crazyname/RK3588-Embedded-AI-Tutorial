@@ -25,15 +25,15 @@
 - 第26讲仅核对 stride/字节数不等于实现零拷贝，需要实际创建/绑定 I/O buffer、缓存同步与对照测试。
 - 第29/33讲 YOLO 必须有配套版本的输出解码、letterbox、NMS 和真实检测图片。
 - 第30–32讲 ONNX 导出成功不意味着 YOLO26 能编译成 RKNN 或在 RK3588 成功推理。
-- 第34讲 RKLLM 权重大小推算不等于设备真实生成与 tokens/s 记录。
+- 第32讲（源码 lesson_34.py）RKLLM 权重大小推算不等于设备真实生成与 tokens/s 记录。
 
-## 随时查看即时状态
+## 课程结构检查
 
 在仓库根目录运行：
 
     python3 examples/audit_course.py
 
-在全部替换完毕之后运行：
+需要严格检查课程结构时运行：
 
     python3 examples/audit_course.py --strict
 

@@ -2,7 +2,7 @@
 
 本仓库是一套围绕 **Rockchip RK3588 / RKNPU** 的中文嵌入式 AI 教学资料，从基础理论、RKNN 工具链到目标检测部署与边缘大模型实践。
 
-## 课程完工状态与最短学习主线
+## 学习路线与完成范围
 
 - [课程完工清单（P0/P1/P2、六条实验链路与板端验收）](COURSE_COMPLETION_CHECKLIST.md)
 - 建议路径：先读 [环境准备](SETUP.md) → [ONNX 工具链](engineering/onnx-toolchain.md) → [Python 图片分类](engineering/mobilenet-image.md) → [C++ 分类](engineering/cpp-rknn-classify.md) → [YOLOv8 摄像头](engineering/yolov8-camera.md) → [RKLLM 文本生成](engineering/rkllm-native.md)。RGA 视频链路作为检测后的进阶实验。
@@ -26,11 +26,11 @@ PC 可先生成仓库自带的真实 ONNX Tiny CNN 并运行 ONNX Runtime。RKNP
 - [工程映射清单：源码、专门实验 MD、测试与验收入口](engineering/manifest.json)
 - [自动检测新增工程是否遗漏文档或测试链接](tools/audit_engineering.py)
 
-在仓库根目录执行 `python3 tools/audit_engineering.py --strict`。GitHub Actions 将同步检查这一映射，以免新增 `boards/radxa-rock5b/apps|tools` 或 `examples/hardware` 工程时忘记建立实验手册。**注意：机器审计只检查文件映射与必要章节，不检查测试是否真的运行了 NPU，也不证明已有工程完全具备行为覆盖。** 有些历史 C++ 工程仍缺专属功能测试，已在对应实验手册中明确说明。
+在仓库根目录执行 `python3 tools/audit_engineering.py --strict`。GitHub Actions 同步检查映射，以免后续添加 `boards/radxa-rock5b/apps|tools` 或 `examples/hardware` 工程时忘记建立实验手册。**注意：机器审计只检查文件映射与必要章节，不检查测试是否真的运行了 NPU，也不证明已有工程完全具备行为覆盖。** 部分 C++ 示例的自动化测试使用 Fake SDK，硬件正确性仍应依据真实板端结果验收。
 
-## ROCK 5B 16GB：官方手册驱动的板级实战（新增）
+## ROCK 5B 16GB：官方手册驱动的板级实战
 
-课程选定 **Radxa ROCK 5B（原版，非 5B+）16GB** 作为参考目标板，并依据 Radxa 官方中文文档、系统镜像、电源要求、RKNN 安装和 YOLOv8/MobileNet 部署教程编写了板级实践。
+以 **Radxa ROCK 5B（原版，非 5B+）16GB** 作为参考目标板，并依据 Radxa 官方中文文档、系统镜像、电源要求、RKNN 安装和 YOLOv8/MobileNet 部署教程编写了板级实践。
 
 - [ROCK 5B 硬件清单和完整入口](boards/radxa-rock5b/README.md)
 - [官方手册对照索引](boards/radxa-rock5b/MANUAL_MAP.md)
@@ -41,15 +41,15 @@ PC 可先生成仓库自带的真实 ONNX Tiny CNN 并运行 ONNX Runtime。RKNP
 
 **明确边界：** 这些脚本已按官方手册具体化，但仍需实际开发板运行并保存真实日志。不要把 GitHub CI 的离线测试误称为 RK3588 NPU 实机验收。
 
-## 课程实操源码（新增）
+## 课程实操源码
 
-现在包含 [35 个可执行 Python 课程入口](examples/)、[公共算法实现](examples/labs.py)、[自动化测试](examples/tests/) 以及 [ONNX 转换、真实模型推理与 C++ 示例](examples/hardware/)。**这些不是 35 个全部完成的板端项目**：部分课次的代码是可以在普通电脑运行的数学/系统实验，RKNN/YOLO/RKLLM 等专用硬件功能需要真实 SDK、模型和设备。
+包含 [35 个可执行 Python 课程入口](examples/)、[公共算法实现](examples/labs.py)、[自动化测试](examples/tests/) 以及 [ONNX 转换、真实模型推理与 C++ 示例](examples/hardware/)。**这些不是 35 个全部完成的板端项目**：部分课次的代码是可以在普通电脑运行的数学/系统实验，RKNN/YOLO/RKLLM 等专用硬件功能需要真实 SDK、模型和设备。
 
 - [从零运行示例的完整指南](examples/README.md)
 - [最小真实 ONNX 模型生成器](examples/hardware/create_tiny_onnx.py)
 - [GitHub Actions 自动测试](.github/workflows/examples-ci.yml)
 
-**快速体验：** 在仓库根目录运行 `python3 examples/lesson_00.py --help`、`python3 examples/lesson_29.py --help`；再运行 `python3 -m unittest discover -s examples/tests -v`。详见代码说明中对纯 Python、ONNX Runtime 和 RK3588 板端三个执行环境的区分。
+**快速体验：** 在仓库根目录运行 `python3 examples/lesson_00.py --output build/lesson00/environment.json`、`python3 examples/lesson_02.py`，再运行 `python3 -m unittest discover -s examples/tests -v`。详见代码说明中对纯 Python、ONNX Runtime 和 RK3588 板端三个执行环境的区分。
 
 ## 35 节重编自学教材
 
@@ -58,7 +58,7 @@ PC 可先生成仓库自带的真实 ONNX Tiny CNN 并运行 ONNX Runtime。RKNP
 - [12 周自学路线与实验日志模板](courseware/SELF_STUDY_GUIDE.md)
 - [官方资料与推荐书目](courseware/REFERENCES.md)
 
-## HTML 互动课件（新增）
+## HTML 互动课件
 
 已为全部 **35 节课** 制作可离线使用的 HTML 互动课件：采用单页长文、上下滚动的阅读方式，支持章节目录锚点跳转、课堂案例、知识流程、操作步骤、课堂测验、讲师提示、验收清单和上一讲/下一讲导航。
 
@@ -74,9 +74,9 @@ PC 可先生成仓库自带的真实 ONNX Tiny CNN 并运行 ONNX Runtime。RKNP
 
 建议按章节顺序阅读 `docs/` 下的 Markdown 讲义。**课程共 35 份 `.md` 教学文件**，第 30 讲按三个主题分别整理。
 
-每份讲义包括学习目标、核心知识、实验步骤、验收标准、常见问题和课后练习，并在末尾通过折叠区域保留该节视频的完整原始字幕（含时间戳）。原始 `.txt` 目录已按仓库维护要求删除，字幕附录保留在 Markdown 中。
+每份讲义包括学习目标、核心知识、实验步骤、验收标准、常见问题和课后练习，并在末尾通过折叠区域保留该节视频的完整原始字幕（含时间戳）。原始字幕仅保留在 Markdown 折叠附录中，便于核对内容来源。
 
-> **使用提示：** 源材料是视频自动转写，软件名称、命令和数字存在可能的识别误差。讲义补充了技术背景和风险提醒，但本仓库已经重写 35 个独立课程程序，但没有内置所有第三方预训练模型、网盘数据或系统镜像；实际操作须以所用 SDK 版本和板卡厂商文档为准。
+> **使用提示：** 源材料是视频自动转写，软件名称、命令和数字存在可能的识别误差。讲义提供了技术背景与风险提醒，35 个课程程序各有独立入口，但仓库没有内置所有第三方预训练模型、数据集或系统镜像；实际操作须以所用 SDK 版本和板卡厂商文档为准。
 
 ## 课程目录
 

@@ -33,7 +33,7 @@
 3. 在板上执行：`python3 boards/radxa-rock5b/tools/board_probe.py --strict --output boards/radxa-rock5b/results/rock5b-board.json`
 4. 可选摄像头：`python3 boards/radxa-rock5b/tools/usb_camera_check.py --source /dev/video0 --frames 30 --save-json boards/radxa-rock5b/results/camera.json`
 5. 在 **Radxa OS** 中按厂商文档安装 `rknn-model-zoo-rk3588`，运行预训练 YOLOv8 实例；可用 [厂商实例启动器](tools/run_official_yolov8.py) 检查路径并启动。
-6. [第二阶段硬件专项开发与验收](NEXT_PROJECTS.md)：MobileNet 图像分类、USB 摄像头取帧、NPU 推理、性能测试、YOLO 自定义模型、RGA、C++ 与 RKLLM。
+6. [进阶硬件实验与验收](NEXT_PROJECTS.md)：MobileNet 图像分类、USB 摄像头取帧、NPU 推理、性能测试、YOLO 自定义模型、RGA、C++ 与 RKLLM。
 
 ### 运行前的基本原则
 
@@ -57,31 +57,31 @@
 
 **测试状态**：Python 代码可以在 CI 用伪运行时测试控制流程和预处理，但模型输出和速度仍需在 ROCK 5B 实机核对；不同 SDK release 的 RKNN 模型输入契约可能变化。
 
-## USB 摄像头 → NPU 的真正闭环（新增）
+## USB 摄像头 → NPU 的真正闭环
 
 在静态图片分类和单独摄像头读帧检查通过后，使用 [完整摄像头 MobileNet 实验](CAMERA_MOBILENET.md) 和 [实际 RKNNLite 源码](apps/camera_mobilenet_lite.py) 将两者组合：BGR→RGB、缩放/裁切、RKNNLite 推理、Top-K、单帧耗时与 p95 统计、输出 JSON/JSONL，并使用 [报告校验工具](tools/validate_camera_report.py) 自动检查模型哈希和性能门槛。默认不保存原始摄像头图片。
 
 **测试边界**：CI 用明确标注的 FakeCapture/FakeSDK 测功能和释放逻辑；真正 USB 摄像头/NPU 速度尚未上板实测，不应把这个分类应用误称为 YOLO 目标检测。
 
-## YOLOv8 摄像头实时目标检测工程（新增）
+## YOLOv8 摄像头实时目标检测工程
 
-在 MobileNet 分类流水线之后，新增 [完整 ROCK 5B USB 摄像头 YOLOv8 检测教程](CAMERA_YOLOV8.md)、[RKNNLite 检测主程序](apps/camera_yolov8_lite.py) 和 [独立 DFL/NMS 后处理](apps/yolov8_rknn_postprocess.py)。要求 Model Zoo **优化版** 640×640 / 9 或 6 输出模型，支持画框、逐帧 JSONL 与 FPS/p95。**这是目标检测，与 MobileNet 图像分类不同；真实 RK3588 推理尚待硬件验收**。
+在 MobileNet 分类流水线之后，参见 [ROCK 5B USB 摄像头 YOLOv8 检测教程](CAMERA_YOLOV8.md)、[RKNNLite 检测主程序](apps/camera_yolov8_lite.py) 和 [独立 DFL/NMS 后处理](apps/yolov8_rknn_postprocess.py)。要求 Model Zoo **优化版** 640×640 / 9 或 6 输出模型，支持画框、逐帧 JSONL 与 FPS/p95。**这是目标检测，与 MobileNet 图像分类不同；真实 RK3588 推理尚待硬件验收**。
 
-## C++ RKNPU2 / RGA 输入和性能对照（新增）
+## C++ RKNPU2 / RGA 输入和性能对照
 
-[完整C++原生编译与RGA/RKNN验收手册](CPP_RGA_IO_BENCHMARK.md)现包含标准输入/绑定输入对照、RGA RGB888 缩放、像素误差检验及开发板驱动版本检查。**不将输入内存绑定或CPU的黑边拷贝称为端到端零拷贝。**
+[C++ 原生编译与 RGA/RKNN 验收手册](CPP_RGA_IO_BENCHMARK.md)包含标准输入/绑定输入对照、RGA RGB888 缩放、像素误差检验及开发板驱动版本检查。**不将输入内存绑定或CPU的黑边拷贝称为端到端零拷贝。**
 
-## 原生 RKLLM 生成性能工程（第34讲）
+## 原生 RKLLM 生成性能工程（第32讲）
 
-已经添加 [ROCK 5B RKLLM C API 上板教程](RKLLM_NATIVE.md) 和 [原生 C++ 回调推理源码](../../examples/hardware/rkllm/rkllm_stream.cpp)。和先前的 Python 外部 Demo 启动器不同，这个程序直接调用 RKLLM Runtime，输出真实回调文本，并在 SDK 提供性能字段时记录 token 数、生成时间与 tokens/s。**首次文本回调不一定等于 TTFT；CI Fake Runtime 不代表实机性能。**
+参见 [ROCK 5B RKLLM C API 上板教程](RKLLM_NATIVE.md) 和 [原生 C++ 回调推理源码](../../examples/hardware/rkllm/rkllm_stream.cpp)。原生 C++ 示例直接调用 RKLLM Runtime，输出真实回调文本，并在 SDK 提供性能字段时记录 token 数、生成时间与 tokens/s。**首次文本回调不一定等于 TTFT；CI Fake Runtime 不代表实机性能。**
 
 ## 原生 C++ YOLOv8 检测与 V4L2 DMA-BUF 预检
 
 [完整 C++ YOLOv8 多输出工程及实机执行指南](CPP_YOLOV8_NATIVE.md)，包括 DFL/NMS、RKNPU2 C API、多输出 SDK 模型校验、图片变换、与 Python 数值对照和 V4L2 MMAP→DMA-BUF fd 导出检测。**仍未完成摄像头 DMA-BUF 直通 RGA/NPU。**
 
-## V4L2 DMA-BUF → RGA → RKNPU2 视频实验（新增）
+## V4L2 DMA-BUF → RGA → RKNPU2 视频实验
 
-[从 UVC YUYV 摄像头到真实 C++ YOLOv8 推理的板端操作手册](V4L2_RGA_RKNN_YOLOV8.md)及 [C++ 主程序](../../examples/hardware/v4l2_rga_rknn_yolov8.cpp)已经提供。限定单平面、紧密 stride 的 YUYV，默认生成 JSONL，不保存图像。这里**只实现摄像头→RGA 的 DMA-BUF fd 共享，RGA→NPU 仍有 CPU 拷贝**；设备、精度、FPS 尚待真正 ROCK 5B 验收。
+[从 UVC YUYV 摄像头到真实 C++ YOLOv8 推理的板端操作手册](V4L2_RGA_RKNN_YOLOV8.md)及 [C++ 主程序](../../examples/hardware/v4l2_rga_rknn_yolov8.cpp)可用于学习该链路。限定单平面、紧密 stride 的 YUYV，默认生成 JSONL，不保存图像。这里**只实现摄像头→RGA 的 DMA-BUF fd 共享，RGA→NPU 仍有 CPU 拷贝**；设备、精度、FPS 尚待真正 ROCK 5B 验收。
 
 ## 四、公开来源（请与自己的板卡版本核对）
 

@@ -1,6 +1,6 @@
 # GitHub Pages 课件网站发布指南
 
-本仓库新增了手动发布工作流 [课程发布工作流](https://github.com/crazyname/RK3588-Embedded-AI-Tutorial/blob/main/.github/workflows/pages.yml)。运行它不会上传模型权重或自动安装板端 NPU 驱动。
+本仓库提供手动发布工作流 [课程发布工作流](https://github.com/crazyname/RK3588-Embedded-AI-Tutorial/blob/main/.github/workflows/pages.yml)。运行它不会上传模型权重或自动安装板端 NPU 驱动。
 
 ## 初次启用
 
