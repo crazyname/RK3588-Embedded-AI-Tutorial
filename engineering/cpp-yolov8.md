@@ -25,6 +25,18 @@ python3 -m unittest discover -s examples/hardware/tests -p test_yolov8_cpp_parit
 
 正式板端调用参数和外部模型文件以源码的 `--help`、板级手册及 SDK 对应 release 为准；构建命令只能证明编译步骤，不自动证明硬件运行。留存 stdout、stderr、运行时间和版本信息，不要向公开仓库推送隐私图片或提示词。
 
+## C++ 单图首次上板
+
+使用第 25 讲的 SDK 配置构建 rknn_yolov8_raw。先选 640×640 正方形测试图，以避免普通 resize 和 letterbox 的缩放差异；输出头必须是 Model Zoo 优化版 6/9 输出：
+
+~~~bash
+cmake --build build/native-rknn --target rknn_yolov8_raw -j2
+python3 examples/hardware/prepare_image.py --image /path/to/square640.jpg --output build/yolo_input.npy --raw build/yolo_input.raw --width 640 --height 640 --color RGB --layout NHWC --dtype uint8
+./build/native-rknn/rknn_yolov8_raw /path/to/modelzoo-optimized-yolov8.rknn build/yolo_input.raw 640 640 0.25 1
+~~~
+
+返回 JSON 检测框是一次真实 NPU 调用时的结果；C++ DFL/NMS 与 Python 对照测试只验证数值算法，不是 ROCK 5B 硬件实测。
+
 ## 自动化测试
 
 对应可审查的测试文件（某些为共用测试文件；**不保证每个子功能都已覆盖**）：
