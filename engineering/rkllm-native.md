@@ -22,6 +22,17 @@ python3 -m unittest discover -s examples/hardware/rkllm/tests -p test_native_str
 
 正式板端调用参数和外部模型文件以源码的 `--help`、板级手册及 SDK 对应 release 为准；构建命令只能证明编译步骤，不自动证明硬件运行。留存 stdout、stderr、运行时间和版本信息，不要向公开仓库推送隐私图片或提示词。
 
+## 上板执行路径
+
+在 ROCK 5B 准备来自**相同 RKLLM SDK 版本**、明确支持 RK3588 的已转换模型及 `librkllmrt.so`。先读 [板端 RKLLM 完整操作指南](../boards/radxa-rock5b/RKLLM_NATIVE.md)，其中包含 C++ 构建参数和 runtime/模型匹配说明；本页不臆造编译器路径、模型文件名或不存在的发行包。
+
+```bash
+python3 -m unittest discover -s examples/hardware/rkllm/tests -p test_native_stream.py -v
+grep -n 'rkllm_init\|rkllm_run\|rkllm_destroy\|callback' examples/hardware/rkllm/rkllm_stream.cpp
+```
+
+前一条只检查离线模拟回调；真实验收需运行编译出的板端程序，保留模型路径、实际提示词、首段输出、结束状态、生成文本及设备信息。回调收到的 `chunk` 不一定对应一个 token，不能据此计算 tok/s。
+
 ## 自动化测试
 
 对应可审查的测试文件（某些为共用测试文件；**不保证每个子功能都已覆盖**）：
