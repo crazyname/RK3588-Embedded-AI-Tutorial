@@ -109,6 +109,47 @@ find /sys/devices/system/cpu -name scaling_cur_freq -print 2>/dev/null
 
 > 以具体 release 的官方文档为准；本教程中的设备结果尚未在你的硬件环境实测。
 
+## 源码精读：关键 API、张量与验收
+
+频率是性能解释的实验条件，不是“调高就一定更快”。lesson_07.py 只读取 CPU/NPU/DDR 可见 sysfs 频率和温度，输出带时间戳的 CSV；不写入 governors 或驱动节点。
+
+**数据路径：** `Linux sysfs 可用节点` → `CPU/NPU/DDR 频率与温度` → `多次只读采样` → `frequency.csv` → `与真实推理耗时对照`。
+
+### 1. nodes()：发现 sysfs 而非猜测路径
+
+**输入：** /sys/devices/system/cpu、/sys/class/devfreq、/sys/class/thermal。**输出：** 可读取的 cur_freq、scaling_cur_freq、temp 节点列表。
+
+不同板商 BSP 可能有不同设备路径，也可能因为权限不允许读取。路径名字不能保证全都对应 NPU；看到数值应先判断单位和设备。
+
+```bash
+python3 examples/lesson_07.py --samples 3 --interval 0.5 --output build/lesson07/frequency.csv
+```
+
+### 2. CSV：建立时间序列而非单点截图
+
+**输入：** 每次 sysfs 读取的原始字符串与 Unix 时间。**输出：** unix_time、sysfs_path、raw_value。
+
+CPU/DDR/NPU 频率通常以 kHz 或驱动定义单位表示；温度节点一般是毫摄氏度，展示前要先确认来源。
+
+```bash
+python3 -c "import csv; print(next(csv.DictReader(open('build/lesson07/frequency.csv'))))"
+```
+
+### 3. 频率与 FPS 的因果边界
+
+**输入：** 同一真实模型/输入下的频率、热状态与推理时延。**输出：** 可解释的采样条件，而非一定提升的性能承诺。
+
+即使 NPU 频率升高，CPU 前处理、DDR 带宽与采集瓶颈仍可能主导端到端 FPS；热节流也会改变长时间运行结果。
+
+```python
+# 对照同一段实验的 CSV 和真实推理延迟日志
+# 不修改 sysfs 或调用驱动升级命令
+```
+
+**数据例题：** sysfs raw_value 为 800000 时，只有节点明确以 kHz 报告 CPU 频率才可换成 800 MHz；不要把所有 /sys/class/devfreq 数值都标成 CPU MHz。
+
+**验收边界：** 提供真实 CSV，标出每个节点名称和单位；有开发板时可与同条件推理延迟对照，但本讲不要求修改频率或刷写系统。
+
 ## 配套可运行源码
 
 - [本讲独立操作手册（只含运行、参数与验收）](../examples/notes/lesson_07.md)
