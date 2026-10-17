@@ -35,6 +35,19 @@ python3 -m unittest discover -s examples/hardware/tests -p test_native_video_pip
 
 这两条仅用于 PC 测试；真正验收还须执行 C++ 程序取得连续帧号、图像尺寸、框坐标与终端日志。此工程的 RGA→NPU 路径仍包含 CPU 拷贝，**不宣称端到端 DMA-BUF 零拷贝**。
 
+## ROCK 5B 板端构建与视频
+
+先用 v4l2-ctl --device=/dev/video0 --list-formats-ext 验证摄像头能提供 YUYV 单平面 640×480，不要将 MJPEG 当成 YUYV。RGA 与 RKNPU2 必须使用板端 ARM64 运行库：
+
+~~~bash
+cmake -S examples/hardware -B build/native-rknn -DRKNN_INCLUDE_DIR=/actual/rknn/include -DRKNN_LIB=/actual/arm64/librknnrt.so -DRGA_INCLUDE_DIR=/actual/librga/include -DRGA_LIB=/actual/arm64/librga.so
+cmake --build build/native-rknn --target v4l2_rga_rknn_yolov8 -j2
+./build/native-rknn/v4l2_rga_rknn_yolov8 /path/to/optimized-yolov8.rknn /dev/video0 640 480 10 0.25 > /tmp/camera_detections.jsonl
+python3 boards/radxa-rock5b/tools/validate_cpp_yolo_stream.py --jsonl /tmp/camera_detections.jsonl --width 640 --height 480 --expected-frames 10
+~~~
+
+验收真实连续帧号、类别、原图坐标和 stderr；RGA 缩放之后仍用 CPU 生成 letterbox 并经 rknn_inputs_set 传输，所以不宣称端到端零拷贝。
+
 ## 自动化测试
 
 - [C++ 视频主程序 Fake SDK 原生可执行测试](../examples/hardware/tests/test_native_video_pipeline.py)：编译后执行 `--help`、不存在的模型和摄像头等失败路径；没有伪造成功采集。
