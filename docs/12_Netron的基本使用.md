@@ -1,7 +1,5 @@
 # 第12讲｜Netron的基本使用
 
-> 自学教材重编版：阅读原理、完成可验证实验、分析真实问题，再做测验。原口播转写完整保留在文末。
-
 ## 学习目标
 
 - 使用 Netron 阅读 ONNX 网络图
@@ -112,6 +110,20 @@ Netron 能直接证明什么？
 - [ONNX Python 文档](https://onnx.ai/onnx/)
 
 > 以当前官方 SDK 的文档和模型兼容矩阵为准；教学示例并非用户开发板的实际运行认证。
+
+## 工程机理与知识深化
+
+### 机制、公式与数据协议
+
+ONNX 模型可以看成有向计算图：graph.input 定义模型可见输入，initializer 是常量权重，node 定义算子与输入输出边，graph.output 是结果接口。Netron 能帮助可视化节点与张量，但不会运行模型。解析工具应先做 `onnx.checker.check_model`，再用 shape_inference 尽可能补齐已知维度；未知的符号维不能误填成固定尺寸。
+
+### 真实数值与工程例题
+
+一个 `Transpose([0,2,3,1])` 可能将 NCHW 转成 NHWC，但只凭算子名称不能判断训练前处理是否已正确。若 graph.input 为 `(1,3,224,224)` FLOAT，实际送入 HWC uint8 则类型和轴均不合约定。图里存在 Reshape/Concat 只提示需要检查形状，不自动代表 RKNN 不支持。
+
+### 设计取舍和验收范围
+
+转换前列出 opset、输入名/shape/dtype、输出头数量、Transpose/Reshape 等潜在难点，再参考 Toolkit2 build 错误定位实际不支持节点。性能判断必须另用 profiler；Netron 的节点数不等于算力需求。
 
 ## 源码精读：关键 API、张量与验收
 

@@ -1,7 +1,5 @@
 # 第13讲｜rknn-toolkit2模型推理
 
-> 自学教材重编版：阅读原理、完成可验证实验、分析真实问题，再做测验。原口播转写完整保留在文末。
-
 ## 学习目标
 
 - 理解 `load_rknn → init_runtime → inference → release`
@@ -115,6 +113,20 @@ finally:
 - [RKNN Model Zoo 功能验证](https://github.com/airockchip/rknn_model_zoo)
 
 > 以当前官方 SDK 的文档和模型兼容矩阵为准；教学示例并非用户开发板的实际运行认证。
+
+## 工程机理与知识深化
+
+### 机制、公式与数据协议
+
+主机 Toolkit2 的 load_rknn→init_runtime→inference→release 依次对应模型加载、建立执行环境、实际计算和资源回收。`target=simulator` 的执行语义与板端驱动实现不同，模拟器上的 wall_ms 不能用于宣称 RK3588 算力。推理返回数组仍可能是 logits、未解码检测头或多张量列表，必须根据模型定义解释。
+
+### 真实数值与工程例题
+
+分类模型若输出 `(1,1000)`，通常是 1000 个类别分数，并非“1000 个目标框”；YOLO 多输出可能是三个尺度的框与类别 logits，需特殊后处理。输入 float32 NCHW 和 RGB uint8 NHWC 即使像素来自同一张图也不是同一协议，转换前处理位置要统一。
+
+### 设计取舍和验收范围
+
+先用 Tiny ONNX / reference NPZ 建立可预测基线，再加载对应 RKNN；记录硬件 target、模型 SHA256、输入 NPY dtype/shape、每个输出头 shape，再讨论误差和性能。异常时先分别报告 load_rknn 或 init_runtime 返回码。
 
 ## 源码精读：关键 API、张量与验收
 
