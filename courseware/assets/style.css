@@ -203,3 +203,51 @@ body.continuous{
  .continuous .code-wrap pre{color:#111!important}
  .continuous .quiz-feedback{border:1px solid #ccc}
 }
+
+/* Compact matching course index: no oversized hero or lesson cards. */
+body.catalog-handbook{
+ color-scheme:light;--bg:#fff;--ink:#263748;--muted:#647282;--accent:#146f9a;--line:#dfe5eb;--surface:#f8fafc;
+ background:#fff;color:#273849;font:14px/1.55 Inter,"PingFang SC","Microsoft YaHei",system-ui,sans-serif
+}
+.catalog-handbook a{color:#176a95}
+.catalog-handbook .catalog-shell{width:min(1320px,94vw)}
+.catalog-handbook .catalog-top{padding:10px 0;align-items:center;gap:16px}
+.catalog-handbook .catalog-top .brand{white-space:nowrap;font-size:.88rem;color:#25384a}
+.catalog-handbook .catalog-top .brand b{color:#116e9b}
+.catalog-handbook .catalog-top nav{font-size:.78rem;line-height:2}
+.catalog-handbook .hero{padding:22px 0 14px;max-width:none}
+.catalog-handbook .hero h1{font-size:clamp(1.5rem,2.8vw,2.1rem);line-height:1.35;margin:0 0 6px;letter-spacing:-.02em}
+.catalog-handbook .hero h1 em{color:#146f9a}
+.catalog-handbook .hero p{font-size:.9rem;line-height:1.55;color:#556879;max-width:none;margin:0 0 8px}
+.catalog-handbook .stats{display:flex;gap:15px;flex-wrap:wrap;margin:5px 0 12px;color:#647587;font-size:.78rem}
+.catalog-handbook .stats span{border-right:1px solid #d9e2e9;padding-right:14px}
+.catalog-handbook .stats span:last-child{border:0}
+.catalog-handbook .btn,.catalog-handbook .btn.ghost{display:inline-block;background:#f3f7fa;color:#28536e;border:1px solid #d4e0e8;border-radius:4px;padding:5px 9px;font-size:11.5px;font-weight:600;margin:2px 2px 2px 0}
+.catalog-handbook .btn:hover{background:#e5f0f6;text-decoration:none}
+.catalog-handbook .catalog-guide{margin:0 0 12px;padding:7px 10px;border-left:2px solid #4283a8;background:#f6f9fc;color:#516678;font-size:.83rem}
+.catalog-handbook .tools{margin:12px 0 10px;align-items:center}
+.catalog-handbook .tools input{background:#fff;color:#263748;border:1px solid #ccd8e1;padding:8px 10px;border-radius:4px;min-width:min(300px,80vw);font-size:.86rem}
+.catalog-handbook .tag{padding:5px 8px;border:1px solid #d9e2e9;border-radius:4px;background:#fff;color:#536677;font-size:.78rem}
+.catalog-handbook .tag.active{background:#e7f1f8;color:#175e85;border-color:#90bcd6}
+.catalog-handbook .unit{margin:20px 0 23px}
+.catalog-handbook .unit h2{display:inline-block;font-size:1.12rem;line-height:1.4;margin:0 9px 7px 0;color:#25394b}
+.catalog-handbook .unit .lead{display:inline;color:#8a98a5;font-size:.78rem;margin:0}
+.catalog-handbook .lesson-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px 10px}
+.catalog-handbook .lesson-card{min-height:0;display:grid;grid-template-columns:65px minmax(0,1fr);grid-template-rows:auto auto;column-gap:7px;row-gap:0;background:#fff;color:#263849;border:1px solid #e2e9ef;border-radius:4px;padding:8px 10px;box-shadow:none;transition:border-color .12s}
+.catalog-handbook .lesson-card:hover{transform:none;background:#f8fbfd;border-color:#9dc8df;text-decoration:none}
+.catalog-handbook .lesson-card .number{grid-row:1 / span 2;font-size:.72rem;color:#7290a4;letter-spacing:0;padding-top:3px}
+.catalog-handbook .lesson-card h3{font-size:.86rem;font-weight:680;line-height:1.35;margin:0 0 2px;color:#25435b}
+.catalog-handbook .lesson-card p{font-size:.77rem;line-height:1.4;color:#6c7b88;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+.catalog-handbook .lesson-card .meta{display:none}
+.catalog-handbook .catalog-foot{padding:12px 0 22px;font-size:.77rem}
+.catalog-handbook .catalog-foot p{margin:5px 0}
+@media(max-width:780px){
+ .catalog-handbook .catalog-top{display:block}
+ .catalog-handbook .catalog-top nav{margin-top:6px}
+ .catalog-handbook .lesson-grid{grid-template-columns:1fr}
+ .catalog-handbook .tools input{width:100%}
+}
+@media print{
+ body.catalog-handbook{background:#fff!important;color:#111!important}
+ .catalog-handbook .lesson-card{break-inside:avoid}
+}
