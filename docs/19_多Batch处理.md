@@ -28,6 +28,61 @@
 
 **判断标准：** 验证时用四张不同类别图片避免误判顺序正确。
 
+## 工程机理与知识深化
+
+### 接口和数学模型
+
+Batch 指同一个模型入口沿 N 维同时接收多个样本，多输入是图中拥有多个独立逻辑输入口，两者不能互相替换。NHWC 的 RGB uint8 Batch2 形状 `(2,224,224,3)`，约 301056 字节；若同样大小变为 NCHW float32 则占用约 1.2MB。Batch 能提升吞吐的条件是模型、SDK 与硬件调度实际支持 N>1，不保证每张图的等待时间缩短。
+
+### 实际数据路径与算例
+
+`np.stack([imageA,imageB],axis=0)` 将两个 `(224,224,3)` 数组变成 `(2,224,224,3)`；`np.concatenate(...,axis=2)` 则会错误地得到 `(224,224,6)`，其意义不是批次。分类输出若为 `(2,1000)` 才能一行对一张图排序，必须用记录的图片顺序映射。
+
+### 验收设计与技术边界
+
+先生成实际 Batch NPY 和 JSON 顺序表，再查询 ONNX 模型入口和 RKNN 输入 attr 的第一维；固定 batch=1 的 `.rknn` 不能直接喂 Batch2。报告吞吐时同时记录 batch size、单批延迟、图像/秒以及平均单图等待。
+
+## 源码精读：关键 API、张量与验收
+
+多 Batch 输入的第一步是把 N 张图片预处理成一个张量，但推理设备是否接受 N>1，取决于 ONNX/RKNN 编译时的模型输入形状。lesson_19.py 只负责从真实图片创建 B×H×W×C 的 uint8 数据，并保存原图顺序映射。
+
+**数据路径：** `N 张真实图片` → `RGB + resize 到相同大小` → `np.stack(axis=0)` → `Batch NHWC NPY` → `images 顺序 JSON`。
+
+### 1. 输入数量必须和 --batch 一致
+
+**输入：** --images 的真实文件列表与 --batch 数字。**输出：** 有效 N 张输入，或在数量不等时拒绝。
+
+批输入并不等于程序读到几张就自动凑成某个 N。若模型输入是固定 batch=1，制作 batch=4 文件也不能据此认为 RKNN 支持 4。
+
+```bash
+python3 examples/lesson_19.py --images /path/to/a.jpg /path/to/b.jpg --batch 2 --width 224 --height 224 --output build/lesson19/batch.npy
+```
+
+### 2. np.stack：在第 0 维合并单图张量
+
+**输入：** 两张已处理的 RGB uint8 HWC (224,224,3)。**输出：** dtype uint8、shape=(2,224,224,3)。
+
+stack 会新增批维，要求单图形状一致。NHWC 的 Batch 维是 N，不是把通道数从 3 变成 6；顺序与原始 images 列表一一对应。
+
+```python
+batch = np.stack([image_a, image_b], axis=0)
+assert batch.shape == (2,224,224,3)
+```
+
+### 3. 用保存的 JSON 还原样本与输出对应关系
+
+**输入：** batch.npy、batch.json。**输出：** images 顺序、shape 和 dtype。
+
+实际推理如果输出是 (N,C)，第 i 行对应输入的第 i 张图，但必须确认模型/Runtime 没有改变 batch 顺序与输出格式。
+
+```bash
+python3 -c "import numpy as np,json; a=np.load('build/lesson19/batch.npy'); print(a.shape); print(json.load(open('build/lesson19/batch.json')))"
+```
+
+**数据例题：** 如果输入两张 224×224×3 的 RGB 图片，生成 (2,224,224,3) 的 uint8 数组。输出若是 (2,1000)，通常是每张图片 1000 类分数，但该 shape 必须来自真实模型而非脚本推断。
+
+**验收边界：** 使用两张真实图片生成 NPY 与 JSON，能从 batch 索引定位原图；仅证明组 Batch 正确，是否可由 RK3588 NPU 接收需要同协议模型上板验收。
+
 ## 实验与验证证据
 
 ### 实验 1：检查 batch 维
@@ -107,61 +162,6 @@ print(np.stack(imgs,axis=0).shape)  # (4, 224, 224, 3)
 - [NumPy stack 文档](https://numpy.org/doc/stable/reference/generated/numpy.stack.html)
 
 > 所有示例需用当前 SDK 和硬件验证；不得将教学演示数据当成实测性能结论。
-
-## 工程机理与知识深化
-
-### 接口和数学模型
-
-Batch 指同一个模型入口沿 N 维同时接收多个样本，多输入是图中拥有多个独立逻辑输入口，两者不能互相替换。NHWC 的 RGB uint8 Batch2 形状 `(2,224,224,3)`，约 301056 字节；若同样大小变为 NCHW float32 则占用约 1.2MB。Batch 能提升吞吐的条件是模型、SDK 与硬件调度实际支持 N>1，不保证每张图的等待时间缩短。
-
-### 实际数据路径与算例
-
-`np.stack([imageA,imageB],axis=0)` 将两个 `(224,224,3)` 数组变成 `(2,224,224,3)`；`np.concatenate(...,axis=2)` 则会错误地得到 `(224,224,6)`，其意义不是批次。分类输出若为 `(2,1000)` 才能一行对一张图排序，必须用记录的图片顺序映射。
-
-### 验收设计与技术边界
-
-先生成实际 Batch NPY 和 JSON 顺序表，再查询 ONNX 模型入口和 RKNN 输入 attr 的第一维；固定 batch=1 的 `.rknn` 不能直接喂 Batch2。报告吞吐时同时记录 batch size、单批延迟、图像/秒以及平均单图等待。
-
-## 源码精读：关键 API、张量与验收
-
-多 Batch 输入的第一步是把 N 张图片预处理成一个张量，但推理设备是否接受 N>1，取决于 ONNX/RKNN 编译时的模型输入形状。lesson_19.py 只负责从真实图片创建 B×H×W×C 的 uint8 数据，并保存原图顺序映射。
-
-**数据路径：** `N 张真实图片` → `RGB + resize 到相同大小` → `np.stack(axis=0)` → `Batch NHWC NPY` → `images 顺序 JSON`。
-
-### 1. 输入数量必须和 --batch 一致
-
-**输入：** --images 的真实文件列表与 --batch 数字。**输出：** 有效 N 张输入，或在数量不等时拒绝。
-
-批输入并不等于程序读到几张就自动凑成某个 N。若模型输入是固定 batch=1，制作 batch=4 文件也不能据此认为 RKNN 支持 4。
-
-```bash
-python3 examples/lesson_19.py --images /path/to/a.jpg /path/to/b.jpg --batch 2 --width 224 --height 224 --output build/lesson19/batch.npy
-```
-
-### 2. np.stack：在第 0 维合并单图张量
-
-**输入：** 两张已处理的 RGB uint8 HWC (224,224,3)。**输出：** dtype uint8、shape=(2,224,224,3)。
-
-stack 会新增批维，要求单图形状一致。NHWC 的 Batch 维是 N，不是把通道数从 3 变成 6；顺序与原始 images 列表一一对应。
-
-```python
-batch = np.stack([image_a, image_b], axis=0)
-assert batch.shape == (2,224,224,3)
-```
-
-### 3. 用保存的 JSON 还原样本与输出对应关系
-
-**输入：** batch.npy、batch.json。**输出：** images 顺序、shape 和 dtype。
-
-实际推理如果输出是 (N,C)，第 i 行对应输入的第 i 张图，但必须确认模型/Runtime 没有改变 batch 顺序与输出格式。
-
-```bash
-python3 -c "import numpy as np,json; a=np.load('build/lesson19/batch.npy'); print(a.shape); print(json.load(open('build/lesson19/batch.json')))"
-```
-
-**数据例题：** 如果输入两张 224×224×3 的 RGB 图片，生成 (2,224,224,3) 的 uint8 数组。输出若是 (2,1000)，通常是每张图片 1000 类分数，但该 shape 必须来自真实模型而非脚本推断。
-
-**验收边界：** 使用两张真实图片生成 NPY 与 JSON，能从 batch 索引定位原图；仅证明组 Batch 正确，是否可由 RK3588 NPU 接收需要同协议模型上板验收。
 
 ## 配套可运行源码
 

@@ -26,6 +26,62 @@ Netron 容易定位 `Transpose`、`Reshape`、`Concat` 和输出层，ONNX 官�
 
 **理解判据：** 先可视化、再静态检查、最后运行比对，三者互补。
 
+## 工程机理与知识深化
+
+### 机制、公式与数据协议
+
+ONNX 模型可以看成有向计算图：graph.input 定义模型可见输入，initializer 是常量权重，node 定义算子与输入输出边，graph.output 是结果接口。Netron 能帮助可视化节点与张量，但不会运行模型。解析工具应先做 `onnx.checker.check_model`，再用 shape_inference 尽可能补齐已知维度；未知的符号维不能误填成固定尺寸。
+
+### 真实数值与工程例题
+
+一个 `Transpose([0,2,3,1])` 可能将 NCHW 转成 NHWC，但只凭算子名称不能判断训练前处理是否已正确。若 graph.input 为 `(1,3,224,224)` FLOAT，实际送入 HWC uint8 则类型和轴均不合约定。图里存在 Reshape/Concat 只提示需要检查形状，不自动代表 RKNN 不支持。
+
+### 设计取舍和验收范围
+
+转换前列出 opset、输入名/shape/dtype、输出头数量、Transpose/Reshape 等潜在难点，再参考 Toolkit2 build 错误定位实际不支持节点。性能判断必须另用 profiler；Netron 的节点数不等于算力需求。
+
+## 源码精读：关键 API、张量与验收
+
+Netron 是图结构可视化工具，不能取代 ONNX checker、shape inference 和 RKNN Toolkit2 的编译验证。lesson_12.py 读取真实 ONNX protobuf，输出算子数量、输入/输出张量以及潜在 layout 相关节点，和 Netron 交叉核对。
+
+**数据路径：** `真实 .onnx` → `onnx.checker` → `onnx.shape_inference` → `操作符/输入输出解析` → `graph.json + Netron 可视化`。
+
+### 1. onnx.load 与 checker：确认 ONNX 基础结构
+
+**输入：** 真实模型文件 .onnx。**输出：** 可解析的 ModelProto 或明确错误。
+
+checker 通过不证明算子满足 RKNN NPU 支持表。先锁定 opset、输入输出节点和是否具有动态维度。
+
+```bash
+python3 examples/lesson_12.py --onnx /path/to/model.onnx --output build/lesson12/graph.json
+```
+
+### 2. shape_inference 与 shape()：提取张量契约
+
+**输入：** 每个图 input/output 的 elem_type 与维度。**输出：** 输入/输出名称、ONNX dtype 编号、维度列表。
+
+动态维度可能以符号字符串或 ? 出现，不能未经验证就替换成具体数值。是否 NCHW/NHWC 要结合模型训练约定，单纯看 shape 不一定足够。
+
+```python
+model = onnx.shape_inference.infer_shapes(model)
+for value in model.graph.input:
+    print(value.name, value.type.tensor_type.shape)
+```
+
+### 3. 算子统计与布局敏感节点
+
+**输入：** graph.node 的 op_type、Transpose/Reshape/Concat 等。**输出：** operators 次数表及 layout_sensitive_nodes。
+
+Netron 上看到节点很多不等于性能瓶颈就在该层；需要与 RKNN build 日志和运行时 profiler 一起判断。
+
+```bash
+python3 -c "import json; g=json.load(open('build/lesson12/graph.json')); print(g['inputs'], g['outputs'], g['operators'])"
+```
+
+**数据例题：** TensorProto.FLOAT 在 ONNX 中的 dtype 编号是 1，而不是运行时 NumPy float32 对象；动态图的 '?' 也不是 0 维。打开 Netron 时应将名字、shape、dtype 和算子与 JSON 核对。
+
+**验收边界：** 用同一真实 ONNX 模型生成 graph.json，能在 Netron 中指出图输入、至少一个算子和输出，且不把 checker 当成 NPU 支持认证。
+
 ## 实操实验
 
 ### 实验 1：打开一个真实 ONNX
@@ -110,62 +166,6 @@ Netron 能直接证明什么？
 - [ONNX Python 文档](https://onnx.ai/onnx/)
 
 > 以当前官方 SDK 的文档和模型兼容矩阵为准；教学示例并非用户开发板的实际运行认证。
-
-## 工程机理与知识深化
-
-### 机制、公式与数据协议
-
-ONNX 模型可以看成有向计算图：graph.input 定义模型可见输入，initializer 是常量权重，node 定义算子与输入输出边，graph.output 是结果接口。Netron 能帮助可视化节点与张量，但不会运行模型。解析工具应先做 `onnx.checker.check_model`，再用 shape_inference 尽可能补齐已知维度；未知的符号维不能误填成固定尺寸。
-
-### 真实数值与工程例题
-
-一个 `Transpose([0,2,3,1])` 可能将 NCHW 转成 NHWC，但只凭算子名称不能判断训练前处理是否已正确。若 graph.input 为 `(1,3,224,224)` FLOAT，实际送入 HWC uint8 则类型和轴均不合约定。图里存在 Reshape/Concat 只提示需要检查形状，不自动代表 RKNN 不支持。
-
-### 设计取舍和验收范围
-
-转换前列出 opset、输入名/shape/dtype、输出头数量、Transpose/Reshape 等潜在难点，再参考 Toolkit2 build 错误定位实际不支持节点。性能判断必须另用 profiler；Netron 的节点数不等于算力需求。
-
-## 源码精读：关键 API、张量与验收
-
-Netron 是图结构可视化工具，不能取代 ONNX checker、shape inference 和 RKNN Toolkit2 的编译验证。lesson_12.py 读取真实 ONNX protobuf，输出算子数量、输入/输出张量以及潜在 layout 相关节点，和 Netron 交叉核对。
-
-**数据路径：** `真实 .onnx` → `onnx.checker` → `onnx.shape_inference` → `操作符/输入输出解析` → `graph.json + Netron 可视化`。
-
-### 1. onnx.load 与 checker：确认 ONNX 基础结构
-
-**输入：** 真实模型文件 .onnx。**输出：** 可解析的 ModelProto 或明确错误。
-
-checker 通过不证明算子满足 RKNN NPU 支持表。先锁定 opset、输入输出节点和是否具有动态维度。
-
-```bash
-python3 examples/lesson_12.py --onnx /path/to/model.onnx --output build/lesson12/graph.json
-```
-
-### 2. shape_inference 与 shape()：提取张量契约
-
-**输入：** 每个图 input/output 的 elem_type 与维度。**输出：** 输入/输出名称、ONNX dtype 编号、维度列表。
-
-动态维度可能以符号字符串或 ? 出现，不能未经验证就替换成具体数值。是否 NCHW/NHWC 要结合模型训练约定，单纯看 shape 不一定足够。
-
-```python
-model = onnx.shape_inference.infer_shapes(model)
-for value in model.graph.input:
-    print(value.name, value.type.tensor_type.shape)
-```
-
-### 3. 算子统计与布局敏感节点
-
-**输入：** graph.node 的 op_type、Transpose/Reshape/Concat 等。**输出：** operators 次数表及 layout_sensitive_nodes。
-
-Netron 上看到节点很多不等于性能瓶颈就在该层；需要与 RKNN build 日志和运行时 profiler 一起判断。
-
-```bash
-python3 -c "import json; g=json.load(open('build/lesson12/graph.json')); print(g['inputs'], g['outputs'], g['operators'])"
-```
-
-**数据例题：** TensorProto.FLOAT 在 ONNX 中的 dtype 编号是 1，而不是运行时 NumPy float32 对象；动态图的 '?' 也不是 0 维。打开 Netron 时应将名字、shape、dtype 和算子与 JSON 核对。
-
-**验收边界：** 用同一真实 ONNX 模型生成 graph.json，能在 Netron 中指出图输入、至少一个算子和输出，且不把 checker 当成 NPU 支持认证。
 
 ## 配套可运行源码
 

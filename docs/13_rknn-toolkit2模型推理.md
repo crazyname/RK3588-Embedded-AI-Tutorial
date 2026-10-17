@@ -26,6 +26,64 @@ PC 端 RKNN-Toolkit2 可加载 `.rknn`，通过 `init_runtime` 等接口在受�
 
 **理解判据：** 不要使用随机未保存输入来判断不同版本之间的精度。
 
+## 工程机理与知识深化
+
+### 机制、公式与数据协议
+
+主机 Toolkit2 的 load_rknn→init_runtime→inference→release 依次对应模型加载、建立执行环境、实际计算和资源回收。`target=simulator` 的执行语义与板端驱动实现不同，模拟器上的 wall_ms 不能用于宣称 RK3588 算力。推理返回数组仍可能是 logits、未解码检测头或多张量列表，必须根据模型定义解释。
+
+### 真实数值与工程例题
+
+分类模型若输出 `(1,1000)`，通常是 1000 个类别分数，并非“1000 个目标框”；YOLO 多输出可能是三个尺度的框与类别 logits，需特殊后处理。输入 float32 NCHW 和 RGB uint8 NHWC 即使像素来自同一张图也不是同一协议，转换前处理位置要统一。
+
+### 设计取舍和验收范围
+
+先用 Tiny ONNX / reference NPZ 建立可预测基线，再加载对应 RKNN；记录硬件 target、模型 SHA256、输入 NPY dtype/shape、每个输出头 shape，再讨论误差和性能。异常时先分别报告 load_rknn 或 init_runtime 返回码。
+
+## 源码精读：关键 API、张量与验收
+
+第 13 讲用 Toolkit2 在主机模拟环境或已配置的 RK3588 目标端运行真实 RKNN，保存输出 NPZ；模拟器返回的耗时不是板端 NPU 时间。
+
+**数据路径：** `已转换 .rknn` → `预处理 input.npy` → `load_rknn/init_runtime` → `inference` → `output_*.npz`。
+
+### 1. 读取输入张量而非直接塞 JPG
+
+**输入：** input.npy（模型要求的 shape/dtype/layout）。**输出：** NumPy 输入数组。
+
+NPY 必须在传给 Toolkit2 前完成颜色、尺寸、均值标准差等模型相关处理；不要仅凭尺寸相同就判定输入协议相同。
+
+```python
+x = np.load('build/input.npy', allow_pickle=False)
+print(x.shape, x.dtype)
+```
+
+### 2. load_rknn + init_runtime：指定实际运行位置
+
+**输入：** 兼容的 .rknn 与 --target simulator / rk3588。**输出：** 可供 inference 的 SDK 运行上下文。
+
+主机模拟器与板端目标的 runtime 初始化参数不同；未连接目标时不要用模拟运行推断 NPU 硬件速度。
+
+```python
+r = RKNN()
+r.load_rknn('build/tiny.rknn')
+r.init_runtime()  # 默认本机模拟；连接硬件需对应 SDK/设备配置
+```
+
+### 3. inference 与原始输出归档
+
+**输入：** inputs=[x]、runs 次数。**输出：** 真实输出张量列表，NPZ 中命名 output_0 等。
+
+先看每个输出的 shape 和 dtype，再进入分类或检测后处理；不能把输出张量存在当成预测结果已经正确。
+
+```python
+output = r.inference(inputs=[x])
+np.savez('build/rknn_output.npz', **{'output_'+str(i):v for i,v in enumerate(output)})
+```
+
+**数据例题：** 一次实验应留下 model.rknn、input.npy、output_0 的 shape/dtype 与 SDK 返回日志。对于分类模型一维 score 可排序；对于 YOLO 的多输出必须先按模型协议解码。
+
+**验收边界：** 明确记录 target=simulator 还是板端 rk3588；只有真实板端运行并保存输入和输出才可计入 NPU 实验。
+
 ## 实操实验
 
 ### 实验 1：打印张量协议
@@ -113,64 +171,6 @@ finally:
 - [RKNN Model Zoo 功能验证](https://github.com/airockchip/rknn_model_zoo)
 
 > 以当前官方 SDK 的文档和模型兼容矩阵为准；教学示例并非用户开发板的实际运行认证。
-
-## 工程机理与知识深化
-
-### 机制、公式与数据协议
-
-主机 Toolkit2 的 load_rknn→init_runtime→inference→release 依次对应模型加载、建立执行环境、实际计算和资源回收。`target=simulator` 的执行语义与板端驱动实现不同，模拟器上的 wall_ms 不能用于宣称 RK3588 算力。推理返回数组仍可能是 logits、未解码检测头或多张量列表，必须根据模型定义解释。
-
-### 真实数值与工程例题
-
-分类模型若输出 `(1,1000)`，通常是 1000 个类别分数，并非“1000 个目标框”；YOLO 多输出可能是三个尺度的框与类别 logits，需特殊后处理。输入 float32 NCHW 和 RGB uint8 NHWC 即使像素来自同一张图也不是同一协议，转换前处理位置要统一。
-
-### 设计取舍和验收范围
-
-先用 Tiny ONNX / reference NPZ 建立可预测基线，再加载对应 RKNN；记录硬件 target、模型 SHA256、输入 NPY dtype/shape、每个输出头 shape，再讨论误差和性能。异常时先分别报告 load_rknn 或 init_runtime 返回码。
-
-## 源码精读：关键 API、张量与验收
-
-第 13 讲用 Toolkit2 在主机模拟环境或已配置的 RK3588 目标端运行真实 RKNN，保存输出 NPZ；模拟器返回的耗时不是板端 NPU 时间。
-
-**数据路径：** `已转换 .rknn` → `预处理 input.npy` → `load_rknn/init_runtime` → `inference` → `output_*.npz`。
-
-### 1. 读取输入张量而非直接塞 JPG
-
-**输入：** input.npy（模型要求的 shape/dtype/layout）。**输出：** NumPy 输入数组。
-
-NPY 必须在传给 Toolkit2 前完成颜色、尺寸、均值标准差等模型相关处理；不要仅凭尺寸相同就判定输入协议相同。
-
-```python
-x = np.load('build/input.npy', allow_pickle=False)
-print(x.shape, x.dtype)
-```
-
-### 2. load_rknn + init_runtime：指定实际运行位置
-
-**输入：** 兼容的 .rknn 与 --target simulator / rk3588。**输出：** 可供 inference 的 SDK 运行上下文。
-
-主机模拟器与板端目标的 runtime 初始化参数不同；未连接目标时不要用模拟运行推断 NPU 硬件速度。
-
-```python
-r = RKNN()
-r.load_rknn('build/tiny.rknn')
-r.init_runtime()  # 默认本机模拟；连接硬件需对应 SDK/设备配置
-```
-
-### 3. inference 与原始输出归档
-
-**输入：** inputs=[x]、runs 次数。**输出：** 真实输出张量列表，NPZ 中命名 output_0 等。
-
-先看每个输出的 shape 和 dtype，再进入分类或检测后处理；不能把输出张量存在当成预测结果已经正确。
-
-```python
-output = r.inference(inputs=[x])
-np.savez('build/rknn_output.npz', **{'output_'+str(i):v for i,v in enumerate(output)})
-```
-
-**数据例题：** 一次实验应留下 model.rknn、input.npy、output_0 的 shape/dtype 与 SDK 返回日志。对于分类模型一维 score 可排序；对于 YOLO 的多输出必须先按模型协议解码。
-
-**验收边界：** 明确记录 target=simulator 还是板端 rk3588；只有真实板端运行并保存输入和输出才可计入 NPU 实验。
 
 ## 配套可运行源码
 

@@ -28,6 +28,65 @@
 
 **必须理解：** 图更简洁不等于执行更快；优化有效性最终仍靠板端时延证明。
 
+## 工程机理与知识深化
+
+### 接口和数学模型
+
+图编辑实质是修改 ONNX 的数据依赖有向图。Identity 的输出与输入数值相同，删除它时必须把所有消费者的输入边与 `graph.output` 引用从 dst 重定向到 src，再删 node。`onnx.checker` 检查图结构的合法性，不代表对任意嵌套子图、控制流或重名张量的语义变换都安全；数值回归是另外一道门槛。
+
+### 实际数据路径与算例
+
+输入 `x=[-1,2]`，经过 Identity→Relu 后应是 `[0,2]`；删除 Identity 后直连 Relu 仍应完全一致。若只删除节点而未重连引用，checker 很可能发现未定义张量；若误删非恒等算子，图可能合法但预测不同，需要比较同输入输出 `np.allclose`。
+
+### 验收设计与技术边界
+
+先保留原文件不覆盖，固定回归输入和 ONNX Runtime 版本，应用最小改写后跑 checker 与逐输出数值对照。即使节点数量变少，也不等于 RK3588 推理时延减少；必须重新转换 RKNN 并测试。
+
+## 源码精读：关键 API、张量与验收
+
+第 22 讲用真实 ONNX 图执行一项可解释的改写：删去一输入一输出的 Identity 节点并把消费者连回原始张量。lesson_22.py 的目标是理解图的连接关系，绝不是“随便改图也能提升 NPU 性能”。
+
+**数据路径：** `真实 ONNX ModelProto` → `定位 Identity 节点` → `重连消费者与 graph.output` → `onnx.checker` → `可选 ONNX Runtime 数值回归`。
+
+### 1. 定位 Identity：识别不改数值的直通节点
+
+**输入：** graph.node 中的 op_type='Identity'、input/output 名称。**输出：** 待移除节点与其原输入 src、原输出 dst。
+
+只有明确的一进一出 Identity 才可以直接考虑绕过。其他算子即使看似简单，也不能在不理解数据语义时随意删除。
+
+```python
+for node in model.graph.node:
+    if node.op_type == 'Identity':
+        print(node.name, node.input, node.output)
+```
+
+### 2. 更新所有消费者和 graph.output
+
+**输入：** 原来引用 dst 的后续节点与输出名。**输出：** 引用 src 的更新后图连接。
+
+删节点但不改后续引用会产生找不到张量的问题；本教学脚本不处理嵌套子图，复杂图改写需要更严谨的图语义与数值回归。
+
+```python
+for candidate in model.graph.node:
+    for i, name in enumerate(candidate.input):
+        if name == dst: candidate.input[i] = src
+# 还需重连 graph.output，再删除 Identity
+```
+
+### 3. 数值回归优先于文件是否能保存
+
+**输入：** 同一 .npy 测试输入和改写前后 ONNX session。**输出：** 比较每个对应输出是否 allclose。
+
+checker 主要验证图格式；在涉及语义变化时必须以相同真实输入做 ONNX Runtime 输出对照，并保留最大误差。脚本可选 --input-npy 触发这一检查。
+
+```bash
+python3 examples/lesson_22.py --onnx /path/to/model.onnx --output build/lesson22/optimized.onnx --input-npy /path/to/input.npy
+```
+
+**数据例题：** 假设模型 input→Identity→Relu，删除 Identity 后改成 input→Relu。若输入值 [-1,2]，前后 Relu 输出均应为 [0,2]；这是原理例题，不是自动改写所有 ONNX 图的证明。
+
+**验收边界：** 保存真实改写后 ONNX、checker 结果与同输入的数值回归；不得把删除 Identity 自动称为 RK3588 上的加速优化。
+
 ## 实验与预期结果
 
 ### 实验 1：检查输入图
@@ -111,65 +170,6 @@ print('nodes',len(x.graph.node))
 - [ONNX Runtime 验证工具](https://onnxruntime.ai/docs/)
 
 > 版本敏感功能请依赖当前 SDK 的官方文档；实际运行结果需要用户在目标板上验证。
-
-## 工程机理与知识深化
-
-### 接口和数学模型
-
-图编辑实质是修改 ONNX 的数据依赖有向图。Identity 的输出与输入数值相同，删除它时必须把所有消费者的输入边与 `graph.output` 引用从 dst 重定向到 src，再删 node。`onnx.checker` 检查图结构的合法性，不代表对任意嵌套子图、控制流或重名张量的语义变换都安全；数值回归是另外一道门槛。
-
-### 实际数据路径与算例
-
-输入 `x=[-1,2]`，经过 Identity→Relu 后应是 `[0,2]`；删除 Identity 后直连 Relu 仍应完全一致。若只删除节点而未重连引用，checker 很可能发现未定义张量；若误删非恒等算子，图可能合法但预测不同，需要比较同输入输出 `np.allclose`。
-
-### 验收设计与技术边界
-
-先保留原文件不覆盖，固定回归输入和 ONNX Runtime 版本，应用最小改写后跑 checker 与逐输出数值对照。即使节点数量变少，也不等于 RK3588 推理时延减少；必须重新转换 RKNN 并测试。
-
-## 源码精读：关键 API、张量与验收
-
-第 22 讲用真实 ONNX 图执行一项可解释的改写：删去一输入一输出的 Identity 节点并把消费者连回原始张量。lesson_22.py 的目标是理解图的连接关系，绝不是“随便改图也能提升 NPU 性能”。
-
-**数据路径：** `真实 ONNX ModelProto` → `定位 Identity 节点` → `重连消费者与 graph.output` → `onnx.checker` → `可选 ONNX Runtime 数值回归`。
-
-### 1. 定位 Identity：识别不改数值的直通节点
-
-**输入：** graph.node 中的 op_type='Identity'、input/output 名称。**输出：** 待移除节点与其原输入 src、原输出 dst。
-
-只有明确的一进一出 Identity 才可以直接考虑绕过。其他算子即使看似简单，也不能在不理解数据语义时随意删除。
-
-```python
-for node in model.graph.node:
-    if node.op_type == 'Identity':
-        print(node.name, node.input, node.output)
-```
-
-### 2. 更新所有消费者和 graph.output
-
-**输入：** 原来引用 dst 的后续节点与输出名。**输出：** 引用 src 的更新后图连接。
-
-删节点但不改后续引用会产生找不到张量的问题；本教学脚本不处理嵌套子图，复杂图改写需要更严谨的图语义与数值回归。
-
-```python
-for candidate in model.graph.node:
-    for i, name in enumerate(candidate.input):
-        if name == dst: candidate.input[i] = src
-# 还需重连 graph.output，再删除 Identity
-```
-
-### 3. 数值回归优先于文件是否能保存
-
-**输入：** 同一 .npy 测试输入和改写前后 ONNX session。**输出：** 比较每个对应输出是否 allclose。
-
-checker 主要验证图格式；在涉及语义变化时必须以相同真实输入做 ONNX Runtime 输出对照，并保留最大误差。脚本可选 --input-npy 触发这一检查。
-
-```bash
-python3 examples/lesson_22.py --onnx /path/to/model.onnx --output build/lesson22/optimized.onnx --input-npy /path/to/input.npy
-```
-
-**数据例题：** 假设模型 input→Identity→Relu，删除 Identity 后改成 input→Relu。若输入值 [-1,2]，前后 Relu 输出均应为 [0,2]；这是原理例题，不是自动改写所有 ONNX 图的证明。
-
-**验收边界：** 保存真实改写后 ONNX、checker 结果与同输入的数值回归；不得把删除 Identity 自动称为 RK3588 上的加速优化。
 
 ## 配套可运行源码
 
