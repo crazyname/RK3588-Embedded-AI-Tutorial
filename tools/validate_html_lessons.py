@@ -78,6 +78,24 @@ def audit():
                 errors.append(f"{n:02d}: depth {key} must contain >= {minimum} items")
         if not isinstance(depth.get("case"),dict):
             errors.append(f"{n:02d}: missing applied case")
+
+        # Only core deployment lessons require paired MD/HTML source walkthroughs.
+        # This protects teaching alignment without adding hardware mocks or regression machinery.
+        if 24 <= n <= 34:
+            walk=depth.get("walkthrough")
+            md_path=ROOT/"docs"/(item["slug"]+".md")
+            if not isinstance(walk,dict) or len(walk.get("steps",[]))<3:
+                errors.append(f"{n:02d}: missing substantive API walkthrough")
+            elif not md_path.is_file():
+                errors.append(f"{n:02d}: missing matching Markdown walkthrough")
+            else:
+                markdown=md_path.read_text(encoding="utf8")
+                if "## 源码精读：关键 API、张量与验收" not in markdown:
+                    errors.append(f"{n:02d}: Markdown code walkthrough heading missing")
+                for step in walk["steps"]:
+                    api=step.get("api","")
+                    if not api or api not in markdown:
+                        errors.append(f"{n:02d}: API explanation not synced: {api}")
     if len(catalog)!=35:
         errors.append(f"Expected 35 lessons, found {len(catalog)}")
     print(f"HTML lessons checked={len(catalog)}, problems={len(errors)}")
