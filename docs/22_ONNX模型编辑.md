@@ -157,7 +157,7 @@ python3 examples/lesson_22.py --onnx /path/to/model.onnx --output build/lesson22
 
 **验收边界：** 保存真实改写后 ONNX、checker 结果与同输入的数值回归；不得把删除 Identity 自动称为 RK3588 上的加速优化。
 
-## 配套可运行源码（第 22 讲）
+## 配套可运行源码
 
 - [本讲独立 Python 实例](../examples/lesson_22.py) · [操作手册与参数说明](../examples/notes/lesson_22.md)
 - [通用依赖与课程代码说明](../examples/README.md)

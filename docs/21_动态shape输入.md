@@ -152,7 +152,7 @@ ONNX 模型声明动态维度不等于 RKNN 编译允许任意 shape；实际 RK
 
 **验收边界：** 提交真实动态 ONNX、至少两份合法形状的输入和 shapes.csv；不将 ONNX 成功等同于 RKNN 动态 shape 上板能力。
 
-## 配套可运行源码（第 21 讲）
+## 配套可运行源码
 
 - [本讲独立 Python 实例](../examples/lesson_21.py) · [操作手册与参数说明](../examples/notes/lesson_21.md)
 - [通用依赖与课程代码说明](../examples/README.md)
