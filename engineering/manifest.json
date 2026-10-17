@@ -1,0 +1,212 @@
+{
+  "schema_version": 1,
+  "policy": "Every covered engineering entry must have source, independent experiment runbook, test pointer, acceptance gate and truthful hardware limitations.",
+  "projects": [
+    {
+      "id": "board-inspection",
+      "title": "ROCK 5B 设备初检",
+      "sources": [
+        "boards/radxa-rock5b/tools/board_probe.py"
+      ],
+      "experiment": "engineering/board-inspection.md",
+      "tests": [
+        "boards/radxa-rock5b/tests/test_board_tools.py"
+      ],
+      "acceptance_heading": "## 验收标准",
+      "test_heading": "## 自动化测试",
+      "hardware_heading": "## 验证边界"
+    },
+    {
+      "id": "camera-probe",
+      "title": "USB 摄像头基础检查",
+      "sources": [
+        "boards/radxa-rock5b/tools/usb_camera_check.py"
+      ],
+      "experiment": "engineering/camera-probe.md",
+      "tests": [
+        "boards/radxa-rock5b/tests/test_board_tools.py"
+      ],
+      "acceptance_heading": "## 验收标准",
+      "test_heading": "## 自动化测试",
+      "hardware_heading": "## 验证边界"
+    },
+    {
+      "id": "mobilenet-image",
+      "title": "MobileNet RKNNLite 静态图片分类",
+      "sources": [
+        "boards/radxa-rock5b/apps/mobilenet_image_lite.py"
+      ],
+      "experiment": "engineering/mobilenet-image.md",
+      "tests": [
+        "boards/radxa-rock5b/tests/test_board_tools.py"
+      ],
+      "acceptance_heading": "## 验收标准",
+      "test_heading": "## 自动化测试",
+      "hardware_heading": "## 验证边界"
+    },
+    {
+      "id": "mobilenet-camera",
+      "title": "USB 摄像头 MobileNet 分类",
+      "sources": [
+        "boards/radxa-rock5b/apps/camera_mobilenet_lite.py",
+        "boards/radxa-rock5b/tools/validate_camera_report.py"
+      ],
+      "experiment": "engineering/mobilenet-camera.md",
+      "tests": [
+        "boards/radxa-rock5b/tests/test_camera_mobilenet.py",
+        "boards/radxa-rock5b/tests/test_camera_report.py"
+      ],
+      "acceptance_heading": "## 验收标准",
+      "test_heading": "## 自动化测试",
+      "hardware_heading": "## 验证边界"
+    },
+    {
+      "id": "yolov8-camera",
+      "title": "USB 摄像头 YOLOv8 检测",
+      "sources": [
+        "boards/radxa-rock5b/apps/camera_yolov8_lite.py",
+        "boards/radxa-rock5b/apps/yolov8_rknn_postprocess.py"
+      ],
+      "experiment": "engineering/yolov8-camera.md",
+      "tests": [
+        "boards/radxa-rock5b/tests/test_camera_yolov8.py"
+      ],
+      "acceptance_heading": "## 验收标准",
+      "test_heading": "## 自动化测试",
+      "hardware_heading": "## 验证边界"
+    },
+    {
+      "id": "cpp-yolov8",
+      "title": "原生 C++ RKNPU2 YOLOv8",
+      "sources": [
+        "examples/hardware/rknn_yolov8_raw.cpp",
+        "examples/hardware/yolov8_postprocess.cpp",
+        "examples/hardware/yolov8_decode_files.cpp"
+      ],
+      "experiment": "engineering/cpp-yolov8.md",
+      "tests": [
+        "examples/hardware/tests/test_yolov8_cpp_parity.py"
+      ],
+      "acceptance_heading": "## 验收标准",
+      "test_heading": "## 自动化测试",
+      "hardware_heading": "## 验证边界"
+    },
+    {
+      "id": "rga-preprocess",
+      "title": "RGA 图像缩放与 letterbox",
+      "sources": [
+        "examples/hardware/rga_letterbox_rgb888.cpp",
+        "tools/compare_rga_letterbox.py"
+      ],
+      "experiment": "engineering/rga-preprocess.md",
+      "tests": [
+        "tools/tests/test_rga_letterbox.py"
+      ],
+      "acceptance_heading": "## 验收标准",
+      "test_heading": "## 自动化测试",
+      "hardware_heading": "## 验证边界"
+    },
+    {
+      "id": "v4l2-dmabuf",
+      "title": "V4L2 DMA-BUF fd 导出预检",
+      "sources": [
+        "boards/radxa-rock5b/tools/v4l2_dmabuf_export_probe.cpp"
+      ],
+      "experiment": "engineering/v4l2-dmabuf.md",
+      "tests": [
+        "boards/radxa-rock5b/tests/test_board_tools.py"
+      ],
+      "acceptance_heading": "## 验收标准",
+      "test_heading": "## 自动化测试",
+      "hardware_heading": "## 验证边界"
+    },
+    {
+      "id": "v4l2-rga-rknn",
+      "title": "C++ V4L2→RGA→RKNN 视频检测",
+      "sources": [
+        "examples/hardware/v4l2_rga_rknn_yolov8.cpp",
+        "boards/radxa-rock5b/tools/validate_cpp_yolo_stream.py"
+      ],
+      "experiment": "engineering/v4l2-rga-rknn.md",
+      "tests": [
+        "tools/tests/test_cpp_yolo_stream.py"
+      ],
+      "acceptance_heading": "## 验收标准",
+      "test_heading": "## 自动化测试",
+      "hardware_heading": "## 验证边界"
+    },
+    {
+      "id": "cpp-benchmark",
+      "title": "C++ YOLOv8 性能对照",
+      "sources": [
+        "boards/radxa-rock5b/tools/compare_cpp_yolo_runs.py"
+      ],
+      "experiment": "engineering/cpp-benchmark.md",
+      "tests": [
+        "boards/radxa-rock5b/tests/test_compare_cpp_yolo_runs.py"
+      ],
+      "acceptance_heading": "## 验收标准",
+      "test_heading": "## 自动化测试",
+      "hardware_heading": "## 验证边界"
+    },
+    {
+      "id": "rkllm-native",
+      "title": "RKLLM 原生 C API 流式生成",
+      "sources": [
+        "examples/hardware/rkllm/rkllm_stream.cpp"
+      ],
+      "experiment": "engineering/rkllm-native.md",
+      "tests": [
+        "examples/hardware/rkllm/tests/test_native_stream.py"
+      ],
+      "acceptance_heading": "## 验收标准",
+      "test_heading": "## 自动化测试",
+      "hardware_heading": "## 验证边界"
+    },
+    {
+      "id": "rkllm-aggregate",
+      "title": "RKLLM 多次推理统计",
+      "sources": [
+        "boards/radxa-rock5b/tools/summarize_rkllm_runs.py"
+      ],
+      "experiment": "engineering/rkllm-aggregate.md",
+      "tests": [
+        "boards/radxa-rock5b/tests/test_summarize_rkllm_runs.py"
+      ],
+      "acceptance_heading": "## 验收标准",
+      "test_heading": "## 自动化测试",
+      "hardware_heading": "## 验证边界"
+    },
+    {
+      "id": "rkllm-integrity",
+      "title": "RKLLM 模型与提示词完整性",
+      "sources": [
+        "boards/radxa-rock5b/tools/rkllm_provenance.py"
+      ],
+      "experiment": "engineering/rkllm-integrity.md",
+      "tests": [
+        "boards/radxa-rock5b/tests/test_rkllm_provenance.py"
+      ],
+      "acceptance_heading": "## 验收标准",
+      "test_heading": "## 自动化测试",
+      "hardware_heading": "## 验证边界"
+    },
+    {
+      "id": "onnx-toolchain",
+      "title": "ONNX 基准模型与部署转换",
+      "sources": [
+        "examples/hardware/create_tiny_onnx.py",
+        "examples/hardware/onnx_reference.py",
+        "examples/hardware/convert_onnx.py",
+        "examples/hardware/lite_infer.py"
+      ],
+      "experiment": "engineering/onnx-toolchain.md",
+      "tests": [
+        "examples/tests/test_lesson_27.py"
+      ],
+      "acceptance_heading": "## 验收标准",
+      "test_heading": "## 自动化测试",
+      "hardware_heading": "## 验证边界"
+    }
+  ]
+}
