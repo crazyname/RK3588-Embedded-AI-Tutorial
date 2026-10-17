@@ -166,12 +166,40 @@ const practical={
      command:"cmake -S examples/hardware/rkllm -B build/rkllm-native -DRKLLM_INCLUDE_DIR=/sdk/rkllm/include -DRKLLM_LIB=/sdk/rkllm/aarch64/librkllmrt.so\ncmake --build build/rkllm-native -j2\n./build/rkllm-native/rkllm_stream --model /path/to/model.rkllm --prompt-file /path/to/prompt.txt --max-new 128",
      explain:"须匹配板端模型与 runtime；区分流式文本块、真实 token 数和结束回调，模拟回调测试不算 ROCK 5B 文本生成。"}
 };
+// These commands are the concrete first experiment from each matching examples/notes manual.
+// Paths such as image.jpg, model.onnx and /path/to/ are learner-supplied inputs, not bundled assets.
+const standaloneCommands={
+  0:"python3 examples/lesson_00.py --output build/lesson00/environment.json",
+  1:"python3 examples/lesson_01.py --output build/lesson01/board.json",
+  2:"python3 examples/lesson_02.py --height 224 --width 224 --in-channels 32 --out-channels 64",
+  3:"python3 examples/lesson_03.py --dot build/lesson03/pipeline.dot",
+  4:"python3 examples/lesson_04.py --repo toolkit2 --ref HEAD --output build/upstream.json",
+  5:"python3 examples/lesson_05.py --output build/toolkit_env.json",
+  6:"python3 examples/lesson_06.py --runtime /path/to/librknnrt.so",
+  7:"python3 examples/lesson_07.py --samples 10 --interval 1",
+  8:"python3 examples/lesson_08.py --program ./rknn_mobilenet_demo --model /path/to/model.rknn --image /path/to/test.jpg",
+  9:"python3 examples/lesson_09.py --onnx /path/to/model.onnx --output build/lesson09/model.rknn --mean 0,0,0 --std 1,1,1",
+  10:"python3 examples/lesson_10.py --image /path/to/test.jpg --output build/lesson10/image.npy",
+  11:"python3 examples/lesson_11.py --jobs jobs.json --log-dir build/lesson11",
+  12:"python3 examples/lesson_12.py --onnx /path/to/model.onnx --output build/lesson12/graph.json",
+  13:"python3 examples/lesson_13.py --rknn /path/to/model.rknn --input-npy /path/to/input.npy --target simulator",
+  14:"python3 examples/lesson_14.py --float /path/to/fp.npz --quantized /path/to/int8.npz --max-mae 0.1",
+  15:"python3 examples/lesson_15.py --runs 30 --warmup 3 -- ./rknn_demo /path/to/model.rknn /path/to/test.jpg",
+  16:"python3 examples/lesson_16.py --pid 1234 --samples 10 --interval 1",
+  17:"python3 examples/lesson_17.py --keep-ratio 0.75 --output build/lesson17/pruned.npz",
+  18:"python3 examples/lesson_18.py generate-key --key-file build/test.key",
+  19:"python3 examples/lesson_19.py --images /path/to/a.jpg /path/to/b.jpg --batch 2",
+  20:"python3 examples/lesson_20.py --onnx /path/to/multi.onnx --inputs /path/to/inputs.json",
+  21:"python3 examples/lesson_21.py --onnx /path/to/dynamic.onnx --inputs /path/to/x320.npy /path/to/x640.npy",
+  22:"python3 examples/lesson_22.py --onnx /path/to/src.onnx --output build/stripped.onnx --input-npy /path/to/input.npy",
+  23:"python3 examples/lesson_23.py --onnx /path/to/model.onnx --compile"
+};
 const lab=practical[data.id];
 let lessonActions='<div class="panel good"><h3>本讲配套的第 '+sourceIndex+' 个源码实例</h3>'+
  '<p><a href="../../examples/lesson_'+sourceIndex+'.py">Python 实验入口 ↗</a> · '+
  '<a href="../../'+notePath+'">独立操作手册 ↗</a></p>'+
- '<div class="code-wrap"><button type="button" class="copy-code">复制片段</button><pre><code>'+esc('python3 examples/lesson_'+sourceIndex+'.py --help')+'</code></pre></div>'+
- '<p>该命令只用于核对接口。按操作手册提供的真实输入运行，才能证明功能；实例编号不等于视频讲次（第 30 讲含 3 个专题）。</p></div>';
+ '<div class="code-wrap"><button type="button" class="copy-code">复制片段</button><pre><code>'+esc(standaloneCommands[data.id]||('python3 examples/lesson_'+sourceIndex+'.py --help'))+'</code></pre></div>'+
+ '<p>PC 课程可先运行上述示例；带 /path/to/ 等占位符时必须先准备真实输入。具体环境、参数和验收见操作手册。仅 --help 不能证明功能；实例编号不等于视频讲次（第 30 讲含 3 个专题）。</p></div>';
 if(lab){
  lessonActions+='<div class="panel"><h3>'+esc(lab.name)+'</h3>'+
  (lab.manual?'<p><a href="../../engineering/'+lab.manual+'.md">完整工程实验手册 ↗</a></p>':'')+
