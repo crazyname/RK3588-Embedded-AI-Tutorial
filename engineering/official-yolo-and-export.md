@@ -21,6 +21,8 @@ python3 boards/radxa-rock5b/tools/run_official_yolov8.py --help
 板端编译与执行必须结合 [ROCK 5B 手册](../boards/radxa-rock5b/README.md) 和 [C++ RGA 输入对照](../boards/radxa-rock5b/CPP_RGA_IO_BENCHMARK.md)。构建前替换 SDK include/lib 为实际 ARM64 文件；保留 stdout、stderr、输入图、模型哈希及错误日志。
 
 ## 自动化测试
+
+- [新增专项行为测试](../boards/radxa-rock5b/tests/test_dedicated_capture_launcher.py)
 - [`boards/radxa-rock5b/tests/test_board_tools.py`](../boards/radxa-rock5b/tests/test_board_tools.py)
 - [`tools/tests/test_export_yolov8_fp32.py`](../tools/tests/test_export_yolov8_fp32.py)
 
