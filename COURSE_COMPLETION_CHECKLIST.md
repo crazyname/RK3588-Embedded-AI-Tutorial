@@ -20,12 +20,12 @@
 
 | 链路 | 当前入口 | 最终验收证据 |
 | --- | --- | --- |
-| ONNX → RKNN | [ONNX 工具链](../engineering/onnx-toolchain.md) | 真实 ONNX、转换命令、成功导出的 RKNN 路径和工具版本 |
-| RKNN → Python | [MobileNet 静态分类](../engineering/mobilenet-image.md) | 图像、预处理参数、Top-K/标签输出及板端版本 |
-| RKNN → C++ | [C++ 分类](../engineering/cpp-rknn-classify.md) | CMake/编译命令、同一模型的输入输出及终端记录 |
-| 摄像头 → YOLOv8 | [YOLOv8 摄像头](../engineering/yolov8-camera.md) | 一帧输入、letterbox/DFL/NMS 后检测结果及设备信息 |
-| 摄像头 → RGA → RKNN | [V4L2/RGA/RKNN](../engineering/v4l2-rga-rknn.md) | RGA 图像正确性对照、输出框和缓冲生命周期说明 |
-| RKLLM → 生成文本 | [RKLLM 原生工程](../engineering/rkllm-native.md) | 模型来源与兼容性、构建运行命令、回调输出、生成文本 |
+| ONNX → RKNN | [ONNX 工具链](engineering/onnx-toolchain.md) | 真实 ONNX、转换命令、成功导出的 RKNN 路径和工具版本 |
+| RKNN → Python | [MobileNet 静态分类](engineering/mobilenet-image.md) | 图像、预处理参数、Top-K/标签输出及板端版本 |
+| RKNN → C++ | [C++ 分类](engineering/cpp-rknn-classify.md) | CMake/编译命令、同一模型的输入输出及终端记录 |
+| 摄像头 → YOLOv8 | [YOLOv8 摄像头](engineering/yolov8-camera.md) | 一帧输入、letterbox/DFL/NMS 后检测结果及设备信息 |
+| 摄像头 → RGA → RKNN | [V4L2/RGA/RKNN](engineering/v4l2-rga-rknn.md) | RGA 图像正确性对照、输出框和缓冲生命周期说明 |
+| RKLLM → 生成文本 | [RKLLM 原生工程](engineering/rkllm-native.md) | 模型来源与兼容性、构建运行命令、回调输出、生成文本 |
 
 以上入口已有不等于全部在真实 ROCK 5B 验收通过。完整 DMA-BUF 共享零拷贝不作为 P0：第 26 讲先区分普通拷贝、SDK 内存绑定与 DMA-BUF。
 
