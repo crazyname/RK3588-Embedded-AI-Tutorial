@@ -1,4 +1,4 @@
-# 第34讲进阶：RK3588 / ROCK 5B 原生 RKLLM C API 推理和性能测量
+# 第32讲进阶：RK3588 / ROCK 5B 原生 RKLLM C API 推理和性能测量
 
 这不是在 Python 里简单调用官方可执行程序。项目自己使用 `rkllm.h` 的 `rkllm_createDefaultParam`、`rkllm_init`、`rkllm_run`、回调和 `rkllm_destroy` 完成**单次真实语言模型生成**。但必须在有实际 ARM64 RKLLM Runtime 和匹配 `.rkllm` 的板端运行；仓库 CI 的 Fake Runtime 只验证调用与指标逻辑。
 
