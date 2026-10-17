@@ -238,7 +238,8 @@
       ],
       "experiment": "engineering/v4l2-rga-rknn.md",
       "tests": [
-        "tools/tests/test_cpp_yolo_stream.py"
+        "tools/tests/test_cpp_yolo_stream.py",
+        "examples/hardware/tests/test_native_video_pipeline.py"
       ],
       "acceptance_heading": "## 验收标准",
       "test_heading": "## 自动化测试",
