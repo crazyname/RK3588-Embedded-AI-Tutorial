@@ -113,6 +113,50 @@ for result in results:
 
 > 资料会随发布版本更新；请先阅读官方当前说明，不要对未经验证的模型或者量化格式直接保证板端兼容。
 
+## 源码精读：关键 API、张量与验收
+
+第 30 讲专题一只建立 YOLO26 权重和软件环境的 PC 预测基线，不将其当作已经兼容 RKNN 的板端模型。
+
+**数据路径：** `真实 best.pt` → `YOLO(weights)` → `predict(image)` → `boxes.xyxy/conf/cls` → `JSON 基线`。
+
+### 1. 检查权重与训练框架配套
+
+**输入：** 真实 .pt 权重及 Ultralytics 版本。**输出：** 能识别该权重任务的 YOLO 对象。
+
+仅安装 ultralytics 不等于任意 YOLO26 权重都能正确运行。先固定框架/权重版本，遇不兼容时记录错误。
+
+```python
+from ultralytics import YOLO
+model = YOLO('/path/to/best.pt')
+```
+
+### 2. predict：创建可比较的检测结果
+
+**输入：** 同一张测试图片、imgsz=640、conf=0.25。**输出：** 每张图的 boxes.xyxy、boxes.conf、boxes.cls。
+
+xyxy 是框架已经处理到图像坐标系的结果；以后与 ONNX/RKNN 比较时需保持图片、阈值及前处理一致。
+
+```python
+result = model.predict('/path/to/test.jpg', imgsz=640,
+                       conf=0.25, verbose=False)[0]
+print(result.boxes.xyxy.shape)
+```
+
+### 3. lesson_30.py：保存基线记录
+
+**输入：** --weights、--image、--imgsz、--output。**输出：** 带有实际预测框及 ultralytics 版本的 JSON。
+
+输出只证明 PC 框架对这个文件进行了一次预测，不证明 ONNX、RKNN 或 NPU 加速已经完成。
+
+```bash
+python3 examples/lesson_30.py --weights /path/to/best.pt \
+  --image /path/to/test.jpg --output build/lesson30/predictions.json
+```
+
+**数据例题：** 同一张测试图出现一个 xyxy=[x1,y1,x2,y2] 时，必须满足 x1<=x2、y1<=y2、坐标不越出原图；类别 id 需要映射到该模型自己的 class names。
+
+**验收边界：** 保留权重来源、框架版本、原图及真实 JSON，作为专题二训练、专题三 ONNX/RKNN 对照的基线。
+
 ## 配套可运行源码
 
 - [本讲独立操作手册（只含运行、参数与验收）](../examples/notes/lesson_30.md)
