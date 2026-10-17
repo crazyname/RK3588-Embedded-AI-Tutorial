@@ -111,6 +111,51 @@ Model Zoo 的 benchmark 可能只统计特定条件下的推理时间，不能�
 
 > 资料会随发布版本更新；请先阅读官方当前说明，不要对未经验证的模型或者量化格式直接保证板端兼容。
 
+## 源码精读：关键 API、张量与验收
+
+第 31 讲采用 Rockchip Model Zoo 优化版 YOLOv8 的六或九个输出头，在 RKNNLite 摄像头程序中通过 letterbox、DFL、NMS 还原真实物体的坐标。
+
+**数据路径：** `V4L2 BGR 帧` → `RGB+letterbox 640` → `RKNNLite 六/九输出` → `DFL 64→4 距离` → `NMS` → `原图 xyxy`。
+
+### 1. letterbox()：保留比例和补边偏移
+
+**输入：** 例如原图 1280×720、目标边长 640。**输出：** ratio=0.5、横向 pad=0、纵向 pad=140。
+
+算法要保存 ratio、pad 用于框的逆映射；普通拉伸和 letterbox 不是相同预处理。坐标例题：输入框左上 (160,190) 对应原图 (320,100)。
+
+```python
+rgb, meta = letterbox(frame, size=640)
+print(rgb.shape, meta)
+```
+
+### 2. DFL：从 64-channel logits 解出四个距离
+
+**输入：** 每个尺度的 [1,64,H,W]，按 4 组×16 bins。**输出：** 每格四个预期距离 [left,top,right,bottom]。
+
+对每组 16 个 logits 做 softmax，求 Σ(k×p_k)，再乘该尺度 stride。输出还需结合网格中心变成 xyxy。这个协议只属于匹配的优化版模型。
+
+```python
+logits = logits.reshape(1, 4, 16, H, W)
+prob = softmax(logits, axis=2)
+distance = (prob * np.arange(16).reshape(1, 1, 16, 1, 1)).sum(axis=2)
+```
+
+### 3. decode() 与 NMS：将分类分数映回原图
+
+**输入：** 类别分数、候选框、阈值、meta 中的缩放偏移。**输出：** 每帧 0～N 个 class_id、score、xyxy。
+
+先按阈值过滤、进行同类别 NMS，再做坐标逆变换与 clip。不能把输出 shape 错误的模型通过 reshape 强行适配，也不能将一个 FPS 数直接当 NPU 硬件耗时。
+
+```python
+outputs = sdk.inference(inputs=[rgb])
+detections = decode(outputs, meta, size=640,
+                    num_classes=80, conf=0.25, iou=0.45)
+```
+
+**数据例题：** 在 1280×720→640×640 的例子中，输入空间框 (160,190,480,390) 去掉 (0,140) padding，再除以 0.5 后应得到原图框 (320,100,960,500)。这一计算不依赖模型推理，适合手算验证。
+
+**验收边界：** 在 ROCK 5B 保存真实逐帧 JSONL 和一张同图对照；模型必须明确为优化版 YOLOv8 六/九输出，检查类别映射、框边界、DFL/NMS 与真实帧采集。
+
 ## 配套可运行源码
 
 - [本讲独立操作手册（只含运行、参数与验收）](../examples/notes/lesson_33.md)
